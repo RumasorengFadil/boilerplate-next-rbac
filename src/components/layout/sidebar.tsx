@@ -7,6 +7,7 @@ const items: { href: string; label: string; icon: typeof LayoutDashboard; permis
   { href: "/dashboard", label: "Ringkasan", icon: LayoutDashboard, permission: "dashboard:read" },
   { href: "/dashboard/projects", label: "Proyek", icon: FolderKanban, permission: "projects:read" },
   { href: "/dashboard/users", label: "Pengguna", icon: Users, permission: "users:read" },
+  { href: "/dashboard/content", label: "Konten website", icon: FolderKanban, permission: "content:read" },
   { href: "/dashboard/ai", label: "LunaBiner AI", icon: LayoutDashboard, permission: "ai:manage" },
   { href: "/dashboard/leads", label: "Lead", icon: Users, permission: "leads:read" },
 ];

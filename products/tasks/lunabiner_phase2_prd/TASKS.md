@@ -9,8 +9,8 @@ Status: IN_PROGRESS
 - [x] T01 Audit existing modules, preserve working assistant and define boundaries.
 - [x] T02 Extend roles/permissions and shared transactional audit infrastructure.
 - [x] T03 Add UUID CMS schema, localized contracts and publication workflow.
-- [-] T04 Implement permission-protected content editing and public published-content integration.
-- [ ] T05 Persist contact inquiries and implement lead detail/status/owner/notes/activity.
+- [x] T04 Implement permission-protected content editing and public published-content integration.
+- [-] T05 Persist contact inquiries and implement lead detail/status/owner/notes/activity.
 - [ ] T06 Verify Sprint 1 migrations, authorization, content publication and lead flows; report and commit.
 
 ## Sprint 2 — Acquisition measurement
