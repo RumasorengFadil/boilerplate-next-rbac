@@ -40,3 +40,7 @@ NDJSON tetap tersedia, tetapi jawaban ditahan sampai pemeriksaan selesai lalu di
 Pertanyaan yang diizinkan biasanya menambah dua panggilan classifier kecil. Input yang ditolak melewati retrieval dan generasi jawaban, tetapi summarization percakapan panjang yang existing masih dapat berjalan sebelumnya. Pemeriksaan meningkatkan latency/biaya dan bergantung pada model; tidak menjamin semua prompt adversarial akan selalu terklasifikasi tepat. Transcript lama tidak ditulis ulang. CMS belum menjadi sumber RAG; retrieval tetap menggunakan corpus website statis.
 
 Guardrail berlapis dengan scope sempit, evidence dan pemeriksaan input/output mengikuti [OpenAI safety best practices](https://developers.openai.com/api/docs/guides/safety-best-practices), menggunakan skill OpenAI Docs. Task 2 belum dimulai dan tidak ada perluasan fitur PRD lainnya.
+
+## Pembaruan tracking
+
+Status di atas adalah snapshot penyelesaian Task 1. Setelah konfirmasi pengguna, Task 2 diselesaikan terpisah; hasil dan status terakhir tersedia pada [laporan Task 2](ai_assistant_lunabiner_scope_task2.md).

@@ -15,7 +15,8 @@
 | [Acquisition analytics](features/analytics.md) | Consent, event ingestion, privacy, cookie dan atribusi lead. |
 | [Consultation scheduling](features/scheduling.md) | Internal slot availability, timezone, booking and calendar invitation. |
 | [Scheduling cache fix](reports/2026/10/03/scheduling_prisma_cache_fix.md) | Perbaikan stale Prisma Client pada development dan hasil verifikasi. |
-| [AI LunaBiner-only scope — Task 1](reports/2026/10/03/ai_assistant_lunabiner_scope_task1.md) | Guardrail server, keputusan scope, pengujian dan UI yang masih menunggu konfirmasi. |
+| [AI LunaBiner-only scope — Task 1](reports/2026/10/03/ai_assistant_lunabiner_scope_task1.md) | Guardrail server, keputusan scope, hasil pengujian dan tautan tracking lanjutan. |
+| [AI LunaBiner-only scope — Task 2](reports/2026/10/03/ai_assistant_lunabiner_scope_task2.md) | Penjelasan scope UI bilingual, contoh pertanyaan dan verifikasi desktop/mobile. |
 | [PRD 001 — Company Profile LunaBiner](products/PRD/PRD_001_company-profile-lunabiner.md) | Arsip PRD awal company profile dan scope MVP dari dokumen sumber pengguna. |
 | [PRD 002 — LunaBiner Phase 2](products/PRD/PRD_002_lunabiner-phase-2.md) | Arsip PRD Phase 2 untuk business acquisition platform dari dokumen sumber pengguna. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |

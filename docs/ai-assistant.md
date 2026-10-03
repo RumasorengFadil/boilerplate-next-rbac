@@ -34,6 +34,8 @@ When streaming is enabled, the API retains newline-delimited JSON events (`conve
 
 The floating panel preserves the existing LunaBiner colors and responsive layout. Transcript updates scroll to the latest reply; failed empty reply placeholders are removed while partial streamed answers remain available. The prompt requests plain text and forbids invented domains. New recommendation cards label portfolio examples as illustrative and product previews as concepts; the recommendation flag is enforced on every tool-loop exit. Previously saved message metadata is not rewritten.
 
+The panel shows a persistent Indonesian/English scope notice below its header, including when history is displayed. Its starter questions cover LunaBiner services, business automation and consultation rather than general AI advice. The input's localized accessible label and placeholder refer to LunaBiner; `aria-describedby` links the input to the notice. While awaiting a reviewed response, a localized status says the answer is being prepared/checked. The notice and composer do not shrink; the transcript scrolls within the existing viewport-bounded panel, with long message text wrapping.
+
 ## Knowledge and RAG
 
 Current retrieval content source is the existing static website feature. The CMS exists separately but is not yet integrated into this RAG source. Services, illustrative case studies, insights, product previews, company description and contact FAQ are normalized and chunked. Products are concepts; example case studies are explicitly not completed client work.
