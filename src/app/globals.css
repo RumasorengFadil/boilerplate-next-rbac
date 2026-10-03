@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 @layer base {
-  * { @apply border-slate-200; }
-  body { @apply bg-slate-50 text-slate-950 antialiased; }
+  * { @apply border-[#DDE7E7]; }
+  html { scroll-behavior: smooth; }
+  body { @apply bg-[#F8FAFA] text-[#132A32] antialiased; }
   input, textarea { font: inherit; }
 }
 @layer components {
@@ -14,4 +15,8 @@
   .eyebrow { @apply text-sm font-medium text-slate-600; }
   .auth-page { @apply grid min-h-screen place-items-center bg-slate-100 p-4; }
   .auth-card { @apply w-full max-w-md rounded-lg border bg-white p-6 shadow-sm; }
+  .site-shell { @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12; }
+  .section-space { @apply py-20 sm:py-24 lg:py-32; }
+  .section-kicker { @apply text-xs font-bold uppercase tracking-[0.18em] text-[#08747A]; }
+  .display-title { @apply font-semibold tracking-[-0.045em] text-[#132A32]; }
 }

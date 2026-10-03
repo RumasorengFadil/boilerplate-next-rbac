@@ -1,5 +1,6 @@
 export const APP_CONFIG = {
-  name: process.env.NEXT_PUBLIC_APP_NAME ?? "Your App",
-  url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  description: "A reusable Next.js application foundation.",
+  name: "LunaBiner",
+  url: process.env.NEXT_PUBLIC_APP_URL ?? "https://lunabiner.com",
+  description: "Software, automation, data, and AI solutions for business.",
+  whatsapp: "628159370857",
 } as const;

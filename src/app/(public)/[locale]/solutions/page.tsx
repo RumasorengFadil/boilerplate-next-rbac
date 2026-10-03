@@ -1,0 +1,4 @@
+import { Cta, SectionIntro, ServiceGrid } from "@/features/website/components";
+import type { Locale } from "@/features/website/content";
+import { t } from "@/features/website/content";
+export default async function Solutions({ params }: { params: Promise<{ locale: Locale }> }) { const { locale } = await params; return <><section className="section-space border-b"><div className="site-shell"><SectionIntro kicker="SOLUTIONS" title={t(locale, "Sistem digital yang dibentuk dari cara bisnis Anda bekerja.", "Digital systems shaped around how your business works.")} body={t(locale, "Kami menggabungkan capability yang tepat untuk menjawab proses, data, dan target pertumbuhan bisnis Anda.", "We combine the right capabilities to address your processes, data, and growth goals.")} /></div></section><section className="section-space bg-[#EAF5F4]"><div className="site-shell"><ServiceGrid locale={locale} /></div></section><Cta locale={locale} /></>; }
