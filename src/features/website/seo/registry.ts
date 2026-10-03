@@ -2,7 +2,8 @@ import type { Locale } from "../content";
 import { seoDocumentSchema, seoLocaleSchema, seoPageKeySchema, type SeoDocument, type SeoPageKey } from "./contracts";
 
 type Copy = { title: string; description: string; keywords: string[]; category: string };
-type PageDefinition = { path: string; pageType: SeoDocument["pageType"]; id: Copy; en: Copy };
+type PageDefinition = { path: string; pageType: SeoDocument["pageType"]; entityType?: SeoDocument["entityType"]; id: Copy; en: Copy };
+// Editorial source only. getPageSeo() in index.ts returns the full metadata/schema bundle.
 export const seoPages: Record<SeoPageKey, PageDefinition> = {
   home: {
     path: "", pageType: "WebPage",
@@ -25,7 +26,7 @@ export const seoPages: Record<SeoPageKey, PageDefinition> = {
     en: { title: "LunaBiner Labs & Product Explorations", description: "Discover LunaBiner Labs product explorations, including Enterprise Chat and AI Cashflow concepts. Explore their direction and discuss your business needs.", keywords: ["LunaBiner Labs", "Enterprise Chat", "AI Cashflow", "business product concepts"], category: "LUNABINER LABS" },
   },
   insights: {
-    path: "/insights", pageType: "CollectionPage",
+    path: "/insights", pageType: "CollectionPage", entityType: "Blog",
     id: { title: "Insights Teknologi & Bisnis", description: "Baca perspektif LunaBiner tentang penerapan AI, otomasi, integrasi sistem, dan data untuk memahami kebutuhan teknologi dalam konteks bisnis.", keywords: ["insights LunaBiner", "AI untuk bisnis", "integrasi sistem", "data bisnis"], category: "INSIGHTS TEKNOLOGI & BISNIS" },
     en: { title: "Technology & Business Insights", description: "Read LunaBiner's perspectives on AI adoption, automation, system integration and data to understand technology needs in a practical business context.", keywords: ["LunaBiner insights", "AI for business", "system integration", "business data"], category: "TECHNOLOGY & BUSINESS INSIGHTS" },
   },
@@ -46,8 +47,9 @@ export const seoPages: Record<SeoPageKey, PageDefinition> = {
   },
 };
 
-export function getPageSeo(key: SeoPageKey, locale: Locale): SeoDocument {
+export function getPageSeoDocument(key: SeoPageKey, locale: Locale): SeoDocument {
   const page = seoPages[seoPageKeySchema.parse(key)];
   const language = seoLocaleSchema.parse(locale);
-  return seoDocumentSchema.parse({ ...page[language], locale: language, path: page.path, pageType: page.pageType, headline: page[language].title });
+  return seoDocumentSchema.parse({ ...page[language], locale: language, path: page.path, pageType: page.pageType,
+    ...(page.entityType ? { entityType: page.entityType } : {}), headline: page[language].title });
 }

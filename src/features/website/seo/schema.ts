@@ -27,9 +27,10 @@ export function buildPageSchema(input: SeoDocument, rawItems: SchemaItem[] = [])
   };
   const graph: JsonLdObject[] = [page, image];
   if (document.entityType) {
-    const entityId = `${url}#content`;
+    const entityId = `${url}#${document.entityType === "Blog" ? "blog" : "content"}`;
     page.mainEntity = { "@id": entityId };
-    graph.push({ "@type": document.entityType, "@id": entityId, headline: document.headline, name: document.headline,
+    graph.push({ "@type": document.entityType, "@id": entityId, headline: document.headline,
+      name: document.entityType === "Blog" ? brandedTitle(document.title) : document.headline,
       description: document.description, url, inLanguage: document.locale, image: { "@id": image["@id"] },
       mainEntityOfPage: { "@id": `${url}#webpage` }, publisher: organization,
       ...(document.authorName ? { author: { "@type": "Person", name: document.authorName } } : {}),
@@ -40,7 +41,9 @@ export function buildPageSchema(input: SeoDocument, rawItems: SchemaItem[] = [])
   }
   if (items.length) {
     const itemListId = `${url}#items`;
-    page.mainEntity = { "@id": itemListId };
+    page.mainEntity = document.entityType
+      ? [{ "@id": `${url}#${document.entityType === "Blog" ? "blog" : "content"}` }, { "@id": itemListId }]
+      : { "@id": itemListId };
     graph.push({ "@type": "ItemList", "@id": itemListId, numberOfItems: items.length,
       itemListElement: items.map((item, index) => ({ "@type": "ListItem", position: index + 1, item: {
         "@type": item.type, name: item.name, description: item.description,

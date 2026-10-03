@@ -14,7 +14,7 @@ export const seoDocumentSchema = z.object({
   keywords: z.array(z.string().trim().min(1).max(200)).max(30),
   category: z.string().trim().min(1).max(100),
   pageType: z.enum(["WebPage", "AboutPage", "ContactPage", "CollectionPage"]),
-  entityType: z.enum(["Article", "CreativeWork"]).optional(),
+  entityType: z.enum(["Article", "CreativeWork", "Blog"]).optional(),
   authorName: z.string().trim().min(1).max(100).optional(),
   publishedAt: z.iso.datetime().optional(),
   modifiedAt: z.iso.datetime().optional(),

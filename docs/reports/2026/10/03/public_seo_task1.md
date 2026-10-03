@@ -48,3 +48,7 @@ Fondasi SEO ditempatkan dalam domain website, bukan infrastruktur generic. Satu 
 - Task 3 — Sinkronisasi sitemap, uji rendered metadata/canonical/hreflang sebagai crawler, OG image endpoint dan JSON-LD, dokumentasi/report final.
 
 SEO friendly di sini berarti metadata deskriptif per halaman, canonical konsisten, bahasa sesuai konten dan schema tanpa klaim palsu; bukan janji ranking atau rich results. Keywords bukan Google ranking factor sesuai [Google Search Central](https://developers.google.com/search/blog/2009/09/google-does-not-use-keywords-meta-tag). Tidak melanjutkan Task 2 tanpa konfirmasi sesuai AGENTS.md.
+
+## Koreksi setelah review
+
+Referensi metadata/schema tambahan dari pengguna ditangani pada [laporan koreksi Task 1](public_seo_task1_correction.md): facade `{ metadata, schema }`, field metadata category dan Blog untuk Insights. Snapshot verifikasi di atas tetap dipertahankan; Task 2 belum dimulai.

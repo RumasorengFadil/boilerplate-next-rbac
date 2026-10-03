@@ -5,7 +5,8 @@ import { randomUUID, createHash } from "node:crypto";
 import { mkdtemp, writeFile } from "node:fs/promises";
 
 const { seoPageKeys, seoDocumentSchema } = await import("../src/features/website/seo/contracts.ts");
-const { getPageSeo } = await import("../src/features/website/seo/registry.ts");
+const { getPageSeoDocument: getPageSeo } = await import("../src/features/website/seo/registry.ts");
+const { getPageSeo: getPageSeoBundle, buildSeo } = await import("../src/features/website/seo/index.ts");
 const { buildMetadata, pageUrl } = await import("../src/features/website/seo/metadata.ts");
 const { buildSiteSchema, buildPageSchema, serializeJsonLd } = await import("../src/features/website/seo/schema.ts");
 const { seoFromPublishedEntry, getArticleSeoContent, getCaseStudySeoContent } = await import("../src/features/website/seo/content.ts");
@@ -31,10 +32,34 @@ test("all fixed public pages have distinct localized titles, descriptions, canon
       assert.ok(metadata.openGraph.images[0].url.startsWith(metadata.alternates.canonical + "/"));
       assert.equal(metadata.twitter.images[0].url, metadata.openGraph.images[0].url);
       assert.ok(metadata.keywords.length > 0);
+      assert.equal(metadata.category,document.category);
       urls.push(metadata.openGraph.images[0].url);
     }
     assert.equal(new Set(urls).size, documents.length);
   }
+});
+
+test("SEO facade returns complete metadata/schema bundles matching the supplied reference", () => {
+  for (const locale of ["id","en"]) for (const key of seoPageKeys) {
+    const seo=getPageSeoBundle(key,locale);
+    assert.deepEqual(Object.keys(seo),["metadata","schema"]);
+    for (const field of ["title","description","keywords","robots","openGraph","twitter","alternates","category"]) assert.ok(seo.metadata[field],field);
+    assert.equal(seo.metadata.openGraph.siteName,"LunaBiner");
+    assert.equal(seo.metadata.twitter.site,undefined); // No unverified social account.
+    assert.deepEqual(seo.metadata.robots,{index:true,follow:true});
+    assert.equal(seo.schema["@graph"][0].url,seo.metadata.alternates.canonical);
+    assert.equal(seo.schema["@graph"][0].name,seo.metadata.title.absolute);
+    if (key==="insights") {
+      const blog=seo.schema["@graph"].find(node=>node["@type"]==="Blog");
+      assert.equal(blog["@id"],seo.metadata.alternates.canonical+"#blog");
+      assert.equal(blog.name,seo.metadata.title.absolute);
+      assert.equal(blog.description,seo.metadata.description);
+      assert.ok(blog.publisher["@id"].endsWith("/#organization"));
+    }
+    assert.ok(!JSON.stringify(seo).toLowerCase().includes("bisadev"));
+  }
+  const bundle=buildSeo(getPageSeo("insights","id"),[{type:"Article",name:"Test article",description:"Published article context.",path:"/insights/test-article"}]);
+  assert.equal(bundle.schema["@graph"][0].mainEntity.length,2);
 });
 
 test("SEO contracts reject foreign URLs, traversal, query canonicals and unsupported locale", () => {

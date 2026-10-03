@@ -27,6 +27,7 @@ export function buildMetadata(input: SeoDocument): Metadata {
   const image = { url: ogImageUrl(document), width: 1200, height: 630, alt: document.headline };
   return {
     title: { absolute: title }, description: document.description, keywords: [...new Set(document.keywords)],
+    category: document.category,
     openGraph: {
       title, description: document.description, url: pageUrl(document.locale, document.path), siteName: APP_CONFIG.name,
       locale: document.locale === "id" ? "id_ID" : "en_US", alternateLocale: document.locale === "id" ? ["en_US"] : ["id_ID"],
