@@ -4,6 +4,7 @@ import { requirePermission } from "@/server/authorization";
 import { scoreSignals, scoringMutationSchema } from "./scoring-schema";
 import { saveScoringConfig, recalculateLeadScore } from "./scoring";
 import type { LeadState } from "./actions";
+import { formPayload } from "@/server/form-data";
 export async function saveScoringAction(_: LeadState, form: FormData): Promise<LeadState> {
   await requirePermission("operations:manage");
   const result=scoringMutationSchema.safeParse({version:Number(form.get("version")),rules:{enabled:form.get("enabled")==="on",problemMinChars:Number(form.get("problemMinChars")),timelineDays:Number(form.get("timelineDays")),behaviorDays:Number(form.get("behaviorDays")),weights:Object.fromEntries(scoreSignals.map(key=>[key,Number(form.get(key))]))}});
@@ -13,6 +14,6 @@ export async function saveScoringAction(_: LeadState, form: FormData): Promise<L
 }
 export async function recalculateScoringAction(_:LeadState,form:FormData):Promise<LeadState> {
   await requirePermission("leads:write");
-  try {await recalculateLeadScore(Object.fromEntries(form));revalidatePath("/dashboard/leads");revalidatePath(`/dashboard/leads/${form.get("id")}`);return {success:true,message:"Score dihitung ulang dan dicatat pada timeline."};}
+  try {await recalculateLeadScore(formPayload(form));revalidatePath("/dashboard/leads");revalidatePath(`/dashboard/leads/${form.get("id")}`);return {success:true,message:"Score dihitung ulang dan dicatat pada timeline."};}
   catch {return {message:"Belum diperbarui. Muat ulang lead terbaru."};}
 }

@@ -12,6 +12,7 @@ const items: { href: string; label: string; icon: typeof LayoutDashboard; permis
   { href: "/dashboard/leads", label: "Lead", icon: Users, permission: "leads:read" },
   { href: "/dashboard/analytics", label: "Analytics", icon: LayoutDashboard, permission: "analytics:read" },
   { href: "/dashboard/leads/scoring", label: "Aturan scoring", icon: Users, permission: "operations:manage" },
+  { href: "/dashboard/consultations", label: "Konsultasi", icon: Users, permission: "leads:read" },
 ];
 
 export function Sidebar({ role }: { role: Role }) {

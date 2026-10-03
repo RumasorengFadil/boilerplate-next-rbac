@@ -18,7 +18,7 @@ DELETE `/api/analytics/consent`: same-origin, no payload; deletes three analytic
 
 Top 20 public pages, event totals, AI conversations, failures and recommendation-card frequencies are available. AI topic categories use rules over at most the latest 5,000 messages, never return raw chat content. New chat requests record PROCESSING/COMPLETED/FAILED; assistant metadata records duration, retrieval degradation and heuristic UNVERIFIED response classification when metrics are enabled. Historical request statuses are not backfilled. The heuristic is not a semantic correctness evaluation. Recommendation-card frequency does not imply visitor selection.
 
-Consultation and ordered service/case funnel remain pending scheduling integration. No fake booking count is presented.
+Consultation and ordered service/case funnel remain pending analytics integration after user review. The scheduler itself is available; the metrics page explicitly labels booking measurement as not connected. No fake booking count is presented.
 
 ## Database
 

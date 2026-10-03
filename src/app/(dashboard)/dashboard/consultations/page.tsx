@@ -1,0 +1,10 @@
+import Link from "next/link";
+import {db} from "@/lib/db";
+import {requirePermission} from "@/server/authorization";
+import {hasPermission} from "@/lib/permissions";
+import {SlotForm,CancelBooking,WithdrawSlot} from "@/features/scheduling/form";
+export default async function ConsultationsPage(){
+  const user=await requirePermission("leads:read");
+  const[bookings,slots]=await Promise.all([db.consultationBooking.findMany({orderBy:{createdAt:"desc"},take:100,include:{slot:true,lead:{select:{id:true,name:true,email:true,serviceInterest:true}}}}),hasPermission(user.role,"operations:manage")?db.consultationSlot.findMany({where:{enabled:true,startsAt:{gt:new Date()},bookings:{none:{status:"CONFIRMED"}}},orderBy:{startsAt:"asc"},take:200}):[]]);
+  return <section><h1 className="page-title">Konsultasi & ketersediaan</h1><p className="mt-3 text-sm text-slate-600">Satu kalender tim · slot disimpan UTC · tidak ada email otomatis.</p><div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_1fr]"><div className="space-y-4">{bookings.map(booking=><article key={booking.id} className="card"><Link href={`/dashboard/leads/${booking.leadId}`} className="font-semibold text-[#08747A]">{booking.lead.name}</Link><p className="mt-2 break-words text-sm">{booking.lead.email} · {booking.lead.serviceInterest} · {booking.status}</p><p className="mt-3 text-sm">{booking.slot.startsAt.toISOString()} UTC · pilihan visitor: {booking.timezone}</p><p className="mt-3 whitespace-pre-wrap text-sm">{booking.topic}</p>{booking.status==="CONFIRMED"&&hasPermission(user.role,"leads:write")&&<CancelBooking id={booking.id} version={booking.version}/>}</article>)}{!bookings.length&&<p className="card">Belum ada booking.</p>}</div>{hasPermission(user.role,"operations:manage")&&<aside className="space-y-6"><SlotForm/><div className="card"><h2 className="font-semibold">Slot tersedia</h2>{slots.map(slot=><div className="mt-4 border-t pt-4" key={slot.id}><p className="mb-3 text-sm">{slot.startsAt.toISOString()} · {slot.service}</p><WithdrawSlot id={slot.id}/></div>)}</div></aside>}</div></section>;
+}

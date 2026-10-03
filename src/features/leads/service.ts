@@ -5,19 +5,21 @@ import { recordAudit } from "@/server/audit";
 import { capturedLeadSchema, leadMutationSchema, leadNoteSchema } from "./schema";
 import { z } from "zod";
 import { scoreLead } from "./scoring";
+import type { Prisma } from "@prisma/client";
 
 // Internal capture API: caller must verify origin, consent and ownership where relevant.
 export async function captureLead(raw: unknown, visitorId?: string) {
+  return db.$transaction(tx=>captureLeadInTransaction(tx, raw, visitorId));
+}
+export async function captureLeadInTransaction(tx: Prisma.TransactionClient, raw: unknown, visitorId?: string) {
   const { consent, targetDate, ...input } = capturedLeadSchema.parse(raw);
   if (!consent) throw new Error("Consent required.");
-  return db.$transaction(async tx => {
-    if (visitorId) z.uuid().parse(visitorId);
-    const data = { ...input, targetDate: targetDate ? new Date(`${targetDate}T00:00:00Z`) : null, visitorId };
-    const scoring = await scoreLead(tx, data);
-    const lead = await tx.lead.create({ data: { ...data, ...scoring, consentAt: new Date() } });
-    await tx.leadActivity.create({ data: { leadId: lead.id, action: "lead.captured", details: { source: lead.source, language: lead.language } } });
-    return lead;
-  });
+  if (visitorId) z.uuid().parse(visitorId);
+  const data = { ...input, targetDate: targetDate ? new Date(`${targetDate}T00:00:00Z`) : null, visitorId };
+  const scoring = await scoreLead(tx, data);
+  const lead = await tx.lead.create({ data: { ...data, ...scoring, consentAt: new Date() } });
+  await tx.leadActivity.create({ data: { leadId: lead.id, action: "lead.captured", details: { source: lead.source, language: lead.language } } });
+  return lead;
 }
 export async function updateLead(raw: unknown) {
   const user = await requirePermission("leads:write");

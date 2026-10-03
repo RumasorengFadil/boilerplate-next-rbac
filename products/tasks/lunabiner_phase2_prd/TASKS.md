@@ -4,6 +4,8 @@ Task: LunaBiner Phase 2 business acquisition platform
 Source: docs/products/PRD/PRD_002_lunabiner-phase-2.md
 Status: IN_PROGRESS
 
+Review checkpoint: user requested stopping after Appointment Scheduling (T10). This checkpoint is complete; remaining tasks are deferred pending review, not blocked and not represented as implemented. Do not start T11 or other later modules without a new request.
+
 ## Sprint 1 — CMS, leads and RBAC
 
 - [x] T01 Audit existing modules, preserve working assistant and define boundaries.
@@ -22,7 +24,7 @@ Status: IN_PROGRESS
 
 ## Sprint 3 — Follow-up workflows
 
-- [-] T10 Implement internal scheduling, timezone/availability, booking conflicts and calendar invitation.
+- [x] T10 Implement internal scheduling, timezone/availability, booking conflicts and calendar invitation.
 - [ ] T11 Implement newsletter subscription/unsubscription and administration.
 - [ ] T12 Implement CRM adapter/outbox abstraction and controlled delivery.
 

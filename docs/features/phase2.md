@@ -31,3 +31,7 @@ AI capture reuses shared leads capture after owner/consent checks. All new leads
 `updateLeadAction`: id UUID, version integer, status enum, ownerId optional compatible User ID; leads:write required. Owner must be ADMIN/SUPER_ADMIN/MARKETING/SALES; stale versions roll back. `addNoteAction`: id/body (2–4000 chars), same permission. Mutation/timeline/audit are atomic; audit excludes contact data/note body/transcript. Responses are success/message form states; invalid input, version/owner errors and unavailable records are friendly failures. Operators choose lifecycle status.
 
 Production infrastructure, provider/service connections, real portfolio claims and production performance/restore checks must be verified separately. Optional integrations will use adapters rather than guessed credentials or unauthorized external account changes.
+
+## Review checkpoint
+
+User requested stopping after Appointment Scheduling. CMS/lead/access, collection/dashboard metrics, configurable scoring and internal scheduling are delivered and verified. [Scheduling details](scheduling.md) documents slots, booking, permissions and calendar tokens. Shared `formPayload` removes React transport keys before strict lead/booking schemas; browser follow-up/recalculation were reverified. T08b full ordered funnel and T11 onward are deliberately deferred until review, not claimed implemented.
