@@ -146,6 +146,29 @@ test("embedding ingestion stores vectors and cosine retrieval returns sources", 
   delete process.env.EMBEDDING_BASE_URL; delete process.env.EMBEDDING_API_KEY;
   global.fetch = fetchOriginal;
 });
+test("recommendation cards disclose illustrative portfolio and product concepts", async () => {
+  global.fetch = async () => Response.json({ choices: [{ message: { content: "Verified context only.", tool_calls: [] } }] });
+  try {
+    const portfolio = await respondToAssistant([{ role: "user", content: "energy" }], defaultSettings, "id", null);
+    assert.ok(portfolio.recommendations.some(item => item.title.startsWith("Contoh ilustratif:")));
+    const product = await respondToAssistant([{ role: "user", content: "cashflow" }], defaultSettings, "en", null);
+    assert.ok(product.recommendations.some(item => item.title.startsWith("Product concept:")));
+  } finally { global.fetch = fetchOriginal; }
+});
+test("recommendation disable flag is respected after exhausting tool rounds", async () => {
+  let calls = 0;
+  global.fetch = async () => {
+    calls++;
+    return Response.json({ choices: [{ message: calls <= 3
+      ? { content: null, tool_calls: [{ id: "call-" + calls, type: "function", function: { name: "search_services", arguments: '{"query":"automation"}' } }] }
+      : { content: "Final response.", tool_calls: [] } }] });
+  };
+  try {
+    const result = await respondToAssistant([{ role: "user", content: "automation" }], { ...defaultSettings, recommendationsEnabled: false }, "en", null);
+    assert.equal(calls, 4);
+    assert.deepEqual(result.recommendations, []);
+  } finally { global.fetch = fetchOriginal; }
+});
 test("long conversation summarizes older messages and bounds recent context", async () => {
   const conversation = await db.aiConversation.create({data:{sessionId:randomUUID()}});
   await db.aiMessage.createMany({data:Array.from({length:14},(_,i)=>({conversationId:conversation.id,role:i%2?"ASSISTANT":"USER",content:"message "+i,createdAt:new Date(Date.now()+i)}))});

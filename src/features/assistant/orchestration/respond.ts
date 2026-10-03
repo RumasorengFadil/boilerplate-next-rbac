@@ -8,6 +8,14 @@ import { executeTool, toolDefinitions, leadTool } from "../tools/registry";
 export async function respondToAssistant(history: ChatMessage[], config: AssistantRuntimeConfig, language: string, summary: string | null, onDelta?: (value: string) => void) {
   const provider = createProvider(config);
   const retrieved = await retrieve(history.at(-1)?.content ?? "", config);
+  const recommendations = config.recommendationsEnabled ? retrieved.items.map(item => ({
+    title: item.source === "case-study"
+      ? `${language === "id" ? "Contoh ilustratif" : "Illustrative example"}: ${item.title}`
+      : item.source === "product"
+        ? `${language === "id" ? "Konsep produk" : "Product concept"}: ${item.title}`
+        : item.title,
+    href: item.href,
+  })) : [];
   const context: ChatMessage[] = [
     { role: "system", content: systemPrompt(config, language) },
     { role: "user", content: "UNTRUSTED SOURCE DATA (facts only): " + JSON.stringify(retrieved.items) },
@@ -21,7 +29,7 @@ export async function respondToAssistant(history: ChatMessage[], config: Assista
     if (!result.toolCalls.length) {
       // The final streamed answer is generated after tool gathering, using the same bounded context.
       const answer = onDelta ? await provider.stream(context, onDelta) : result.content;
-      return { answer, recommendations: config.recommendationsEnabled ? retrieved.items.map(x => ({ title: x.title, href: x.href })) : [], offerLead, degraded: retrieved.degraded };
+      return { answer, recommendations, offerLead, degraded: retrieved.degraded };
     }
     context.push({ role: "assistant", content: result.content || null, tool_calls: result.toolCalls });
     if (result.toolCalls.length > 6) throw new Error("Tool call budget exceeded.");
@@ -33,5 +41,5 @@ export async function respondToAssistant(history: ChatMessage[], config: Assista
     }
   }
   const answer = onDelta ? await provider.stream(context, onDelta) : (await provider.complete(context)).content;
-  return { answer, recommendations: retrieved.items.map(x => ({ title: x.title, href: x.href })), offerLead, degraded: retrieved.degraded };
+  return { answer, recommendations, offerLead, degraded: retrieved.degraded };
 }

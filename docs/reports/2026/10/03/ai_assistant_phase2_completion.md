@@ -1,5 +1,5 @@
 # LunaBiner AI Assistant — Consolidated implementation report
-Overall status: PARTIALLY COMPLETED (code implemented and local integration verified; target infrastructure activation blocked).
+Overall status: COMPLETED (Updated AI Assistant Phase 2 scope implemented and verified locally, including live provider activation).
 
 ## Summary
 Completed the missing assistant work from the Updated Phase 2 PRD inside the existing modular monolith. Historical reports 04–09 describe intermediate scaffolding; use this report and docs/ai-assistant.md for current behavior.
@@ -16,15 +16,25 @@ Completed the missing assistant work from the Updated Phase 2 PRD inside the exi
 - [x] Server RBAC, origin validation, JSON size limits, DB rate limiting, user-safe errors, plain-text output and admin audit events.
 - [x] JSON + streaming provider/API/client modes.
 - [x] Documentation and automated tests, fresh migrations exercised on isolated PostgreSQL.
-- [!] Target DB migration: DATABASE_URL absent in this workspace.
-- [!] Live LLM/embedding activation: no configured environment credentials. No chat-provided key copied or used.
-- [ ] Browser visual/responsive QA and live model grounding evaluation after activation.
+- [x] Local `lunabiner` DB configured in ignored `.env.local`; all three migrations applied without resetting data; initial runtime configuration created.
+- [x] Live OpenAI chat and embedding connectivity verified using user-configured local keys, never printed or committed. Corrected malformed embedding URL through local override and enabled AI.
+- [x] Published knowledge indexed into 14 vector chunks; live semantic retrieval returned four matches without fallback.
+- [x] Browser desktop (1280×720) and mobile (390×844) visual QA; live ID/EN, history refresh, unknown-fact/injection refusal and streaming checked.
+- [x] Error placeholders removed, transcript auto-scroll added, illustrative/concept cards labelled, recommendation disable flag enforced after tool budget exhaustion.
+- [x] Regression validation, living documentation and focused commit.
+
+## Current Step / Progress
+- Completed: local activation, remaining acceptance checks and usability fixes.
+- In Progress: None.
+- Pending: None within the Updated AI Assistant Phase 2 PRD.
+- Blocked: None.
+- Notes: production deployment, verified client portfolio data and future booking/CRM integrations are separate work, not claimed as delivered.
 
 ## Files Changed
-Assistant feature config, prompts, provider factory/adapter, retrieval/vector/index, conversation service, tools/consent schema, UI + lead form; assistant API routes; startup instrumentation; dashboard AI/lead pages; permissions/sidebar; website shared product knowledge; Prisma schema/migrations; test suites and living documentation.
+Assistant feature config, prompts, provider factory/adapter, retrieval/vector/index, conversation service, tools/consent schema, UI + lead form; assistant API routes; startup instrumentation; dashboard AI/lead pages; permissions/sidebar; website shared product knowledge; Prisma schema/migrations; test suites and living documentation. Local activation follow-up changes components.tsx, orchestration/respond.ts, prompts/system.ts, tests/assistant.test.mjs, installation/AI docs and this consolidated report; ignored `.env.local` is not versioned.
 
 ## Database Changes
-New UUID AI/lead entities plus runtime settings JSON, vector chunks, database rate buckets, audit events, summary counters, request lease and consent timestamp. Migrations 20261003010000_ai_conversations and 20261003020000_ai_runtime. Existing user/session/project CUID identifiers preserved. Fresh migrations applied successfully only to disposable PostgreSQL on localhost:55439.
+New UUID AI/lead entities plus runtime settings JSON, vector chunks, database rate buckets, audit events, summary counters, request lease and consent timestamp. Migrations 20261003010000_ai_conversations and 20261003020000_ai_runtime. Existing user/session/project CUID identifiers preserved. All three migrations (including initial schema) applied to local `lunabiner` at localhost:5432; no reset. Runtime configuration initialized and streaming enabled in its JSON settings; 14 published knowledge chunks indexed. Acceptance conversation remains in the local database. Destructive automated fixtures ran only against disposable PostgreSQL on localhost:55439, never user data.
 
 ## API Changes
 - POST /api/assistant/chat: origin + request/schema/rate validation, anonymous session, owned UUID context, grounding/tools/persistence; JSON or NDJSON streaming.
@@ -41,15 +51,17 @@ docs/ai-assistant.md, docs/README.md, docs/database/schema.md, docs/deployment/i
 
 ## Tests Performed
 - Prisma client generation, lint, TypeScript and production build passed.
-- 14 unit/integration tests passed against isolated PostgreSQL: config validation, UUID persistence/owner protection, consent, allowed tools, prompt language/grounding/injection contract, sanitized provider errors, SSE parsing, secret boundaries, lexical fallback, real vector ingestion/retrieval with mock embeddings, tool execution and summary compaction.
+- 16 unit/integration tests passed against isolated PostgreSQL: config validation, UUID persistence/owner protection, consent, allowed tools, prompt language/grounding/injection contract, sanitized provider errors, SSE parsing, secret boundaries, lexical fallback, real vector ingestion/retrieval with mock embeddings, tool execution, summary compaction, illustrative/concept recommendation labels and recommendation disable behavior after tool rounds. An initial rerun used the wrong isolated DB role; corrected target and final rerun passed all 16.
 - HTTP tests passed on production Next.js with local mock provider: origin rejection, malformed prompt, chat/history refresh/ownership, consent/UUID lead, streaming, secrets absent from responses and ADMIN/MEMBER authorization. Tests use synthetic credentials only.
-- Model output evaluation uses mocks; no claim of live LLM factual accuracy or adversarial completeness.
+- Live OpenAI chat and embedding health checks returned HTTP 200. Live index/retrieval passed without degradation; actual browser conversations exercised general RAG explanation in Indonesian, refusal to invent client/pricing data despite an injection attempt, and English grounded services via streaming.
+- Secret scan of all 50 production browser asset files passed without exposing key values.
+- Live evaluations are a small acceptance sample, not a guarantee of factual accuracy or adversarial completeness.
 
 ## Manual Test
-None. Automated HTTP integration performed; interactive browser visual QA not yet performed.
+Desktop and mobile assistant opened on the existing site, with brand colors, margins and reachable input checked. Production preview on local port 3017 exercised real answers, history restored after refresh, unknown-fact refusal and English streaming. Mobile long-transcript review revealed missing auto-scroll; fixed and verified latest answer/CTA visible. Consent/lead creation and admin authorization were verified by automated HTTP tests, not manual submission of real contact data. Existing user development server was not stopped.
 
 ## Known Limitations
-- Actual assistant requires target DB migration and environment infrastructure configuration.
+- Local activation is complete. A separate production deployment still requires its own DB, secret manager, migrations and index; this task did not deploy or publish the website.
 - Native Anthropic/Gemini adapters are extension slots per the PRD minimum-provider requirement.
 - Scheduling is a prepared contract only (as PRD requested), no confirmed booking UI.
 - Static portfolio examples are explicitly labelled illustrative in AI source data; not verified completed client projects.
@@ -58,6 +70,7 @@ None. Automated HTTP integration performed; interactive browser visual QA not ye
 - Request retries may leave failed user messages in the transcript; no fabricated assistant answer is persisted.
 - Streaming tool discovery has a preliminary completion followed by final streamed generation.
 - Trusted reverse proxy must overwrite IP forwarding headers.
+- Historical persisted recommendation cards retain their original titles; new answers use explicit illustrative/concept labels.
 
 ## Remaining Tasks
-Provision DATABASE_URL and provider/embedding environment credentials through secret manager; apply migrations; configure runtime in /dashboard/ai; reindex; run live provider and browser checks. CMS/CRM scheduling/newsletter broad product Phase 2 are outside this Updated AI Assistant PRD and were not represented as completed.
+None within the Updated AI Assistant Phase 2 PRD. Production rollout and broader CMS/CRM scheduling/newsletter product Phase 2 are outside this Updated AI Assistant PRD and are not represented as completed. Runtime settings can be adjusted by an existing ADMIN at /dashboard/ai; reindex after published content changes.

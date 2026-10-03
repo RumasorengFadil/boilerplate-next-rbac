@@ -20,6 +20,8 @@ OpenAI/OpenAI-compatible chat completions are implemented with response validati
 
 Tool gathering precedes streaming generation when streaming is enabled. The API returns newline-delimited JSON events (`conversationId`, `delta`, `done`, recommendations/error) or a normal JSON answer when disabled. Errors are user-safe and do not expose provider payloads.
 
+The floating panel preserves the existing LunaBiner colors and responsive layout. Transcript updates scroll to the latest reply; failed empty reply placeholders are removed while partial streamed answers remain available. The prompt requests plain text and forbids invented domains. New recommendation cards label portfolio examples as illustrative and product previews as concepts; the recommendation flag is enforced on every tool-loop exit. Previously saved message metadata is not rewritten.
+
 ## Knowledge and RAG
 
 Current content source is the existing static website feature; there is no CMS yet. Services, illustrative case studies, insights, product previews, company description and contact FAQ are normalized and chunked. Products are concepts; example case studies are explicitly not completed client work.
@@ -46,13 +48,13 @@ Admin updates/reindex/cleanup use server RBAC and audit events. `/dashboard/lead
 
 ## Troubleshooting and activation
 
-1. Provision PostgreSQL and set DATABASE_URL privately. Run `npx prisma migrate deploy`.
+1. Provision PostgreSQL and set DATABASE_URL privately. Run `npx prisma migrate deploy` with the deployment environment loaded. For local `.env.local` configuration, use the command in [installation](deployment/installation.md); Prisma CLI alone reads `.env`, not Next.js environment precedence.
 2. Configure provider/embedding credentials through the deployment secret manager, enable AI, and restart.
 3. Sign in with existing ADMIN credentials, edit AI settings, then reindex.
 4. Test chat, reload history, consent and streaming. If indexing fails, check endpoint/model/embedding credential; original index is retained.
 5. Failed provider/DB requests return generic messages. Use infrastructure health checks; do not print key-bearing provider responses.
 
-Repository code has been tested against an isolated PostgreSQL and local mock provider. No production database migration or live provider call has been performed without configured infrastructure.
+Repository code has been tested against isolated PostgreSQL and a local mock provider. The local `lunabiner` database has also received all three migrations, and live OpenAI chat/embedding connectivity and vector indexing have been verified. See the [consolidated report](reports/2026/10/03/ai_assistant_phase2_completion.md) for current acceptance checks. Production deployment still needs its own private infrastructure configuration.
 
 ## Tests
 
