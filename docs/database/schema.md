@@ -26,3 +26,6 @@ Prisma menggunakan PostgreSQL dan schema berada di `prisma/schema.prisma`.
 Migration `20261003010000_ai_conversations` adds configuration, conversation/message and lead tables. Migration `20261003020000_ai_runtime` adds settings, summary tracking, request leases, consent timestamp, vectors, rate limits and audit events. Only anonymous/new AI-domain identifiers use UUID; existing User/Session/Project CUIDs stay compatible. Lead conversationId/userId/updatedBy are context references, not FK constraints.
 
 Migrasi awal ada di `prisma/migrations/20261003000000_init/migration.sql`. Gunakan `npm run db:migrate` di development. Untuk perubahan schema baru, buat migrasi Prisma, review SQL-nya, lalu perbarui tabel ini dan laporan implementasi.
+# Lead scoring
+
+Migration `20261003070000_phase2_scoring` adds nullable Lead.scoreDetails JSONB (reason/observed/config snapshot), companySize TEXT and targetDate timestamp. Existing score values are preserved. UUID LeadScoreConfig contains unique global key, JSON rules, optimistic version and updatedAt; CHECK key=global/version>0, PK UUID, unique key index. No new foreign keys. Config changes do not mass-update leads; explicit recalculation increments Lead.version transactionally with activity/audit. Applied locally without reset.

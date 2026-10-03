@@ -18,11 +18,11 @@ Status: IN_PROGRESS
 - [x] T07 Add validated privacy-conscious analytics ingestion and consent-aware browser tracking.
 - [x] T08a Implement guarded dashboard metrics and AI analytics with consent-aware attribution.
 - [ ] T08b Complete consultation and ordered visitor/service/case/lead funnel after T10.
-- [-] T09 Implement explainable configurable lead scoring from observed signals.
+- [x] T09 Implement explainable configurable lead scoring from observed signals.
 
 ## Sprint 3 — Follow-up workflows
 
-- [ ] T10 Implement internal scheduling, timezone/availability, booking conflicts and calendar invitation.
+- [-] T10 Implement internal scheduling, timezone/availability, booking conflicts and calendar invitation.
 - [ ] T11 Implement newsletter subscription/unsubscription and administration.
 - [ ] T12 Implement CRM adapter/outbox abstraction and controlled delivery.
 

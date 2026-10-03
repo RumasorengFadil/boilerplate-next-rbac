@@ -17,7 +17,7 @@ export async function submitInquiry(_: InquiryState, formData: FormData): Promis
     await limitPublicSubmission("contact");
     await captureLead({ consent: inquiry.consent, name: inquiry.name, company: inquiry.company, email: inquiry.email,
       phone: inquiry.whatsapp, challenge: inquiry.challenge, serviceInterest: inquiry.need, budget: inquiry.budget,
-      timeline: inquiry.timeline, language: inquiry.language, source: "CONTACT", sourcePage: `/${inquiry.language}/contact` }, 0, await consentedVisitorId());
+      timeline: inquiry.timeline, companySize: inquiry.companySize, targetDate: inquiry.targetDate, language: inquiry.language, source: "CONTACT", sourcePage: `/${inquiry.language}/contact` }, await consentedVisitorId());
   } catch { return { success: false, message: inquiry.language === "en" ? "Your request could not be saved. Please retry shortly." : "Kebutuhan belum tersimpan. Coba kembali beberapa saat lagi." }; }
   const message = [
     "Halo LunaBiner, saya ingin berdiskusi tentang kebutuhan bisnis.",

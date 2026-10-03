@@ -6,7 +6,7 @@ Overall status: PARTIALLY COMPLETED
 Implement PRD 002 incrementally inside the existing modular monolith. Preserve working AI scope; the broad Phase 2 PRD is not complete. Sprint 1 CMS/lead/RBAC, opt-in analytics collection and guarded dashboard metrics verified; configurable scoring is next.
 
 ## Task Status
-See products/tasks/lunabiner_phase2_prd/TASKS.md. T01–T07 and T08a completed; T09 in progress; T08b and T10–T22 pending.
+See products/tasks/lunabiner_phase2_prd/TASKS.md. T01–T07, T08a and T09 completed; T10 in progress; T08b and T11–T22 pending.
 
 ## Files Changed
 Lead schema/service/actions/forms, contact schema/action/form, lead list/detail, shared rate limiter, assistant capture/limiter, new migration and tests.
@@ -43,7 +43,7 @@ None.
 CMS uses escaped plain text, existing asset paths and bounded lists (100 admin/200 public); no media upload or list pagination yet. Admin editor labels are presently Indonesian; full module ID/EN QA remains in T21. CMS→RAG integration is T13, not represented as implemented. 2FA, account role mutation and the remaining broad PRD modules remain pending. Production/offsite infrastructure requires separate verification.
 
 ## Remaining Tasks
-T08b and T09–T22 remain. Configurable scoring, full funnel, CRM adapters, booking and production backup QA are pending. Contact scores currently zero; AI retains prior scoring until T09.
+T08b and T10–T22 remain. Full funnel, CRM adapters, booking and production backup QA are pending. Scoring is disabled until admin supplies business weights; existing lead scores are preserved.
 
 ## Analytics collection stage
 - Delivered opt-in ID/EN banner, public PAGE_VIEW/CTA_CLICK/WHATSAPP_CLICK/AI_OPEN ingestion, strict same-origin/body/path/consent validation, pseudonymous cookies and consent withdrawal. No form/chat/query/raw IP in analytics events.
@@ -55,3 +55,9 @@ T08b and T09–T22 remain. Configurable scoring, full funnel, CRM adapters, book
 - Added permission-protected metrics page, exact opt-in attribution, consistent-window AI conversion, categorized topics, recommendation-card counts and request failure/degradation metadata.
 - Typecheck/lint/build, isolated analytics integration and production CMS/analytics/assistant HTTP regression passed. No paid provider calls or manual browser verification.
 - No database migration or API contract change in this stage. Booking/ordered funnel explicitly tracked as T08b; consultation is displayed as unavailable, not fabricated zero.
+
+## Configurable scoring stage
+- Added versioned UUID configuration, bounded eight-signal scoring and stored explanations/classification. Contact/AI capture use the same rules; explicit audited recalculation preserves historical scores by default. Admin-only settings; sales can recalculate but cannot change policy.
+- Migration 20261003070000_phase2_scoring applied to local and isolated DB without reset. Added contact size/date fields, scoring settings/detail UI/actions and tests. No external API, dependency or architecture change.
+- Typecheck/lint/build passed; three isolated scoring/lead tests and final 18-test scoring/assistant regression passed. No manual browser verification claimed.
+- Living phase2/schema docs and task tracking updated. Initial zero weights/disabled mode require operator policy, not credentials.

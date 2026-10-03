@@ -11,6 +11,7 @@ const items: { href: string; label: string; icon: typeof LayoutDashboard; permis
   { href: "/dashboard/ai", label: "LunaBiner AI", icon: LayoutDashboard, permission: "ai:manage" },
   { href: "/dashboard/leads", label: "Lead", icon: Users, permission: "leads:read" },
   { href: "/dashboard/analytics", label: "Analytics", icon: LayoutDashboard, permission: "analytics:read" },
+  { href: "/dashboard/leads/scoring", label: "Aturan scoring", icon: Users, permission: "operations:manage" },
 ];
 
 export function Sidebar({ role }: { role: Role }) {

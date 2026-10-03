@@ -9,6 +9,8 @@ export const inquirySchema = z.object({
   challenge: z.string().trim().min(20).max(2000),
   timeline: z.string().trim().max(80).optional(),
   budget: z.string().trim().max(80).optional(),
+  companySize: z.enum(["UNKNOWN", "SMALL", "MEDIUM", "ENTERPRISE"]).default("UNKNOWN"),
+  targetDate: z.preprocess(value => value === "" ? undefined : value, z.iso.date().optional()),
   language: z.enum(["id", "en"]).default("id"),
   consent: z.literal(true),
   website: z.literal("").optional(),
