@@ -11,3 +11,6 @@
 ## Documentation
 
 Read `docs/governance/ARCHITECTURE_BLUEPRINT.md` and `docs/governance/DESIGN.md` before structural or UI work. Keep the former portable and free of product-domain rules. Record product requirements separately instead of treating examples as requirements.
+
+## PRD Versioning
+Setiap PRD yang akan diimplementasikan wajib disimpan di `docs/products/PRD/` dengan format `PRD_<NNN>_<nama-fitur>.md`, contoh `PRD_001_ai-assistant.md`. Sebelum implementasi, cek nomor PRD terakhir lalu gunakan nomor berikutnya secara berurutan (`001`, `002`, `003`, dst.). Jangan overwrite PRD lama dan simpan versi PRD terlebih dahulu sebelum mulai implementasi.
