@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { @apply border-slate-200; }
+  body { @apply bg-slate-50 text-slate-950 antialiased; }
+  input, textarea { font: inherit; }
+}
+@layer components {
+  .input { @apply min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-slate-700 focus:ring-2 focus:ring-slate-200; }
+  .card { @apply rounded-lg border bg-white p-5 shadow-sm; }
+  .page-title { @apply mt-1 text-3xl font-semibold tracking-tight; }
+  .eyebrow { @apply text-sm font-medium text-slate-600; }
+  .auth-page { @apply grid min-h-screen place-items-center bg-slate-100 p-4; }
+  .auth-card { @apply w-full max-w-md rounded-lg border bg-white p-6 shadow-sm; }
+}

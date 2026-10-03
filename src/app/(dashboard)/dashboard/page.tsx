@@ -1,0 +1,4 @@
+import Link from "next/link";
+import { db } from "@/lib/db";
+import { requirePermission } from "@/server/authorization";
+export default async function DashboardPage() { const user = await requirePermission("projects:read"); const projectCount = await db.project.count({ where: user.role === "ADMIN" ? {} : { ownerId: user.id } }); return <section><p className="eyebrow">Dashboard</p><h1 className="page-title">Ringkasan</h1><div className="mt-6 grid gap-4 sm:grid-cols-2"><article className="card"><p className="text-sm text-slate-600">Proyek yang terlihat</p><p className="mt-2 text-3xl font-semibold">{projectCount}</p></article><article className="card"><p className="text-sm text-slate-600">Contoh modul</p><Link className="mt-2 inline-block font-medium underline" href="/dashboard/projects">Kelola proyek</Link></article></div></section>; }
