@@ -12,6 +12,6 @@ Lead management extends existing `Lead` instead of creating a competing inbox. N
 
 ## Current implementation
 
-Delivered foundation: six roles with explicit domain permissions, specialist-safe dashboard reads, and shared transactional audit schema/helper. Migration applied to local lunabiner without resetting data; permission tests, typecheck and production build passed. No account was promoted or created. CMS and operational modules remain tracked separately; assistant already exists, contact form is still WhatsApp-only and lead page is still read-only at this stage.
+Delivered foundation: six roles with explicit domain permissions, specialist-safe dashboard reads, shared transactional audit schema/helper and CMS storage/contracts/service. CMS uses strict ID/EN inputs, optimistic versions, review/publication transitions and trusted server publisher permission. Due schedules are evaluated on public query; no scheduled job is claimed. Migration applied to local lunabiner without resetting data; permission/CMS tests, typecheck and production build passed. No account was promoted or created. CMS editor/public consumption are in progress; contact remains WhatsApp-only and leads read-only until their tracked tasks finish.
 
 Production infrastructure, provider/service connections, real portfolio claims and production performance/restore checks must be verified separately. Optional integrations will use adapters rather than guessed credentials or unauthorized external account changes.

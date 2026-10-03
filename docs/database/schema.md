@@ -1,5 +1,7 @@
 # Database
 
+Migration `20261003040000_phase2_cms` adds ContentKind (ARTICLE/CASE_STUDY/PRODUCT), ContentStatus (DRAFT/REVIEW/SCHEDULED/PUBLISHED/ARCHIVED) and `ContentEntry`: UUID PK, kind/slug unique pair, status, translations/details JSONB, optional authorId FK User SET NULL, optional publishedAt, optimistic version, createdAt/updatedAt. Index `(kind, status, publishedAt)` supports public reads. All payloads validate through CMS Zod contracts. Publication requires complete ID/EN, review transition and content:publish permission; due schedules are public by query-time evaluation, not a cron status mutation.
+
 Migration `20261003030000_phase2_roles_audit` adds SUPER_ADMIN, CONTENT_EDITOR, MARKETING and SALES to Role without changing existing rows. `AuditEvent`: UUID PK; nullable actorId FK to User (SET NULL on deletion); action/module/recordId; optional before/after JSONB and ip; createdAt. Indexes `(module, recordId, createdAt)` and `(actorId, createdAt)`. No reset; user IDs remain compatible. Audit excludes credential fields.
 
 Prisma menggunakan PostgreSQL dan schema berada di `prisma/schema.prisma`.
