@@ -1,0 +1,32 @@
+import { z } from "zod";
+export const settingsSchema = z.object({
+  activeModel: z.string().trim().min(1).max(100).default("gpt-4o-mini"),
+  embeddingModel: z.string().min(1).max(100).default("text-embedding-3-small"),
+  summaryModel: z.string().max(100).default(""),
+  temperature: z.number().min(0).max(2).default(0.2),
+  maxOutputTokens: z.number().int().min(64).max(4096).default(700),
+  timeoutMs: z.number().int().min(1000).max(120000).default(30000),
+  maxRetries: z.number().int().min(0).max(3).default(1),
+  streamingEnabled: z.boolean().default(false),
+  ragEnabled: z.boolean().default(true),
+  ragTopK: z.number().int().min(1).max(20).default(4),
+  ragMinScore: z.number().min(0).max(1).default(0.25),
+  ragMaxContextChunks: z.number().int().min(1).max(20).default(6),
+  contextMessageLimit: z.number().int().min(2).max(30).default(8),
+  summaryThreshold: z.number().int().min(10).max(100).default(20),
+  conversationRetentionDays: z.number().int().min(1).max(365).default(90),
+  defaultLanguage: z.enum(["id", "en"]).default("id"),
+  supportedLanguages: z.array(z.enum(["id", "en"])).min(1).default(["id", "en"]),
+  autoDetectLanguage: z.boolean().default(true),
+  allowGeneralTechQuestions: z.boolean().default(true),
+  requireGroundingForCompanyClaims: z.literal(true).default(true),
+  recommendationsEnabled: z.boolean().default(true),
+  leadCaptureEnabled: z.boolean().default(true),
+  toolsEnabled: z.boolean().default(true),
+  rateLimitPerMinute: z.number().int().min(1).max(120).default(15),
+  metricsEnabled: z.boolean().default(true),
+  systemPrompt: z.string().max(8000).default(""),
+  promptVersion: z.string().max(80).default("v2"),
+}).strict();
+export type AssistantRuntimeConfig = z.infer<typeof settingsSchema>;
+export const defaultSettings = settingsSchema.parse({});

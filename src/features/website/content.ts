@@ -19,5 +19,12 @@ const articles = [
   { slug: "data-untuk-keputusan", category: "Data & Analytics", title: { id: "Data yang siap dipakai untuk keputusan sehari-hari", en: "Data that is ready for everyday decisions" }, excerpt: { id: "Dari data yang tersebar menuju informasi yang benar-benar membantu tim bekerja.", en: "From scattered data to information that genuinely helps teams work." } },
 ] as const;
 
-export const website = { services, projects, articles };
+export const website = { services, projects, articles,
+  companyDescription: "LunaBiner is a technology partner connecting software, automation, data and AI into practical business solutions. Partner teknologi untuk sistem digital terintegrasi.",
+  faq: [{ question: "How can I contact LunaBiner?", answer: "Contact LunaBiner through the website contact page or WhatsApp +62 815-9370-857. Pricing, delivery timelines, and project experience require direct confirmation from the team." }],
+  products: [
+    { name: "Enterprise Chat", text: { id: "Platform komunikasi privat untuk organisasi yang membutuhkan kontrol, keamanan, dan fleksibilitas deployment.", en: "A private communications platform for organizations that need control, security, and deployment flexibility." }, items: ["Private company chat", "Self-hosted / on-premise", "Admin control"] },
+    { name: "AI Cashflow", text: { id: "Pengelolaan arus kas cerdas yang membantu mengubah dokumen dan transaksi menjadi insight yang dapat ditindaklanjuti.", en: "Intelligent cashflow management that turns documents and transactions into actionable insight." }, items: ["Receipt & invoice extraction", "Auto categorization", "Cashflow insight"] },
+  ],
+};
 export const t = (locale: Locale, id: string, en: string) => locale === "id" ? id : en;
