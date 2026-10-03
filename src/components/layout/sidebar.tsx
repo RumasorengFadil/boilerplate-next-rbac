@@ -10,6 +10,7 @@ const items: { href: string; label: string; icon: typeof LayoutDashboard; permis
   { href: "/dashboard/content", label: "Konten website", icon: FolderKanban, permission: "content:read" },
   { href: "/dashboard/ai", label: "LunaBiner AI", icon: LayoutDashboard, permission: "ai:manage" },
   { href: "/dashboard/leads", label: "Lead", icon: Users, permission: "leads:read" },
+  { href: "/dashboard/analytics", label: "Analytics", icon: LayoutDashboard, permission: "analytics:read" },
 ];
 
 export function Sidebar({ role }: { role: Role }) {

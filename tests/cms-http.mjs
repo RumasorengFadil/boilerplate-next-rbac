@@ -36,6 +36,8 @@ try {
     assert.equal(response.status,["ADMIN","CONTENT_EDITOR"].includes(role)?200:307);
     const detail = await fetch(base+"/dashboard/leads/"+leadId,{headers:{Cookie:"session="+token},redirect:"manual"});
     assert.equal(detail.status,["ADMIN","SALES"].includes(role)?200:307);
+    const metrics = await fetch(base+"/dashboard/analytics",{headers:{Cookie:"session="+token},redirect:"manual"});
+    assert.equal(metrics.status,["ADMIN","SALES"].includes(role)?200:307);
     if (detail.status===200) assert.ok((await detail.text()).includes("Synthetic isolated lead detail"));
     if(response.status===200) { const html=await response.text(); assert.ok(html.includes('name="id.title"'));assert.ok(html.includes('name="en.body"'));assert.equal(/<option[^>]*>PUBLISHED<\/option>/.test(html),role==="ADMIN"); }
   }

@@ -3,10 +3,10 @@
 Overall status: PARTIALLY COMPLETED
 
 ## Summary
-Implement PRD 002 incrementally inside the existing modular monolith. Preserve working AI scope; the broad Phase 2 PRD is not complete. Sprint 1 CMS/lead/RBAC and opt-in analytics collection verified; dashboard metrics are next.
+Implement PRD 002 incrementally inside the existing modular monolith. Preserve working AI scope; the broad Phase 2 PRD is not complete. Sprint 1 CMS/lead/RBAC, opt-in analytics collection and guarded dashboard metrics verified; configurable scoring is next.
 
 ## Task Status
-See products/tasks/lunabiner_phase2_prd/TASKS.md. T01–T07 completed; T08 in progress; T09–T22 pending.
+See products/tasks/lunabiner_phase2_prd/TASKS.md. T01–T07 and T08a completed; T09 in progress; T08b and T10–T22 pending.
 
 ## Files Changed
 Lead schema/service/actions/forms, contact schema/action/form, lead list/detail, shared rate limiter, assistant capture/limiter, new migration and tests.
@@ -43,10 +43,15 @@ None.
 CMS uses escaped plain text, existing asset paths and bounded lists (100 admin/200 public); no media upload or list pagination yet. Admin editor labels are presently Indonesian; full module ID/EN QA remains in T21. CMS→RAG integration is T13, not represented as implemented. 2FA, account role mutation and the remaining broad PRD modules remain pending. Production/offsite infrastructure requires separate verification.
 
 ## Remaining Tasks
-T08–T22 remain. Configurable scoring, analytics, CRM adapters, booking and production backup QA are pending. Contact scores currently zero; AI retains prior scoring until T09.
+T08b and T09–T22 remain. Configurable scoring, full funnel, CRM adapters, booking and production backup QA are pending. Contact scores currently zero; AI retains prior scoring until T09.
 
 ## Analytics collection stage
 - Delivered opt-in ID/EN banner, public PAGE_VIEW/CTA_CLICK/WHATSAPP_CLICK/AI_OPEN ingestion, strict same-origin/body/path/consent validation, pseudonymous cookies and consent withdrawal. No form/chat/query/raw IP in analytics events.
 - Added migration 20261003060000_phase2_analytics locally and isolated-test DB; optional Lead.visitorId only attached with analytics consent. Shared HTTP infrastructure reused by AI/public routes.
 - Contract and production HTTP privacy/origin/cookie tests passed; typecheck/lint/build passed. No manual browser consent QA claimed yet.
 - Living analytics doc added/indexed. Dashboard/metrics, retention and scoring remain tracked separately.
+
+## Analytics dashboard stage
+- Added permission-protected metrics page, exact opt-in attribution, consistent-window AI conversion, categorized topics, recommendation-card counts and request failure/degradation metadata.
+- Typecheck/lint/build, isolated analytics integration and production CMS/analytics/assistant HTTP regression passed. No paid provider calls or manual browser verification.
+- No database migration or API contract change in this stage. Booking/ordered funnel explicitly tracked as T08b; consultation is displayed as unavailable, not fabricated zero.

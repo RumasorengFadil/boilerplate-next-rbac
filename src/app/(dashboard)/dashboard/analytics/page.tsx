@@ -1,0 +1,17 @@
+import { z } from "zod";
+import { acquisitionMetrics } from "@/features/analytics/metrics";
+export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+  const { days } = await searchParams;
+  const valid = z.coerce.number().int().min(1).max(90).safeParse(days ?? 30);
+  const data = await acquisitionMetrics(valid.success ? valid.data : 30);
+  const conversion = data.visitors ? (100*data.convertedVisitors/data.visitors).toFixed(1)+"%" : "—";
+  const aiConversion = data.conversations ? (100*data.aiConvertedConversations/data.conversations).toFixed(1)+"%" : "—";
+  const cards = [["Visitors opt-in",data.visitors],["Page views opt-in",data.pageViews],["Semua lead",data.leads],["Visitor → lead (opt-in)",conversion],["CTA clicks",data.ctaClicks],["WhatsApp clicks",data.whatsappClicks],["AI opens opt-in",data.aiOpens],["AI conversations",data.conversations],["AI → lead",aiConversion],["Failed AI requests",data.failed],["Unverified answers (heuristic)",data.unanswered],["Retrieval fallback",data.degraded]];
+  return <section><h1 className="page-title">Analytics & acquisition</h1><form className="mt-5 flex flex-wrap gap-3"><label className="grid gap-2 text-sm">Periode (hari)<input className="input max-w-40" type="number" min={1} max={90} name="days" defaultValue={data.days} /></label><button className="min-h-11 self-end rounded-lg border px-5 py-3">Terapkan</button></form>
+    <p className="mt-4 text-sm text-slate-600">Data opt-in bukan seluruh traffic. Konversi visitor hanya menggunakan lead dengan atribusi consent; tidak mencampur semua lead sebagai numerator.</p>
+    <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(([label,value])=><article className="card" key={label}><p className="text-sm text-slate-600">{label}</p><p className="mt-3 text-3xl font-semibold">{value}</p></article>)}</div>
+    <div className="mt-6 grid gap-6 lg:grid-cols-2"><section className="card"><h2 className="font-semibold">Halaman teratas (service / case / article)</h2>{data.pages.map(page=><p key={page.path} className="mt-3 break-words text-sm">{page.path} · {page._count._all}</p>)}{!data.pages.length && <p className="mt-3 text-sm">Belum ada event opt-in.</p>}</section><section className="card"><h2 className="font-semibold">Topik pertanyaan AI</h2><p className="mt-2 text-xs text-slate-500">Kategori rule-based, maksimal 5.000 pesan terakhir; isi chat tidak ditampilkan.</p>{data.topics.map(([topic,count])=><p key={topic} className="mt-3 text-sm">{topic} · {count}</p>)}</section></div>
+    <section className="card mt-6"><h2 className="font-semibold">Kartu layanan AI paling sering ditampilkan</h2><p className="mt-2 text-xs text-slate-500">Dari metadata rekomendasi, maksimal 5.000 jawaban terakhir; bukan jaminan layanan dipilih visitor.</p>{data.recommended.map(([name,count])=><p className="mt-3 text-sm" key={name}>{name} · {count}</p>)}</section>
+    <section className="card mt-6"><h2 className="font-semibold">Funnel</h2><div className="mt-4 grid gap-4 sm:grid-cols-4">{[["Visitors opt-in",data.visitors],["Attributed lead visitors",data.convertedVisitors],["Qualified leads (all)",data.qualified],["Consultation", "Belum tersedia"]].map(([label,value])=><div key={label}><p className="text-sm">{label}</p><p className="mt-2 text-xl font-semibold">{value}</p></div>)}</div><p className="mt-4 text-xs text-slate-500">Qualified lead adalah status saat ini, bukan rekonstruksi historis. Tahap booking dihubungkan setelah modul scheduling selesai.</p></section>
+  </section>;
+}
