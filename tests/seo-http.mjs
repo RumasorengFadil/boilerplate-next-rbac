@@ -51,6 +51,15 @@ try {
       assert.equal(response.status, 200, route);
       const html = await response.text();
       const seo = metadata(html);
+      assert.equal((html.match(/<h1\b/g) || []).length, 1, route + " primary heading");
+      assert.equal(attributes(html.match(/<html\b[^>]*>/)[0]).lang, locale);
+      assert.equal((html.match(/<title>/g) || []).length, 1);
+      assert.equal((html.match(/rel="canonical"/g) || []).length, 1);
+      const alternates = [...html.matchAll(/<link\b[^>]*>/g)].map(match => attributes(match[0])).filter(tag => tag.rel === "alternate" && tag.hrefLang);
+      assert.equal(alternates.length, 3);
+      for (const language of ["id", "en", "x-default"]) {
+        assert.equal(new URL(alternates.find(tag => tag.hrefLang === language).href).pathname, "/" + (language === "x-default" ? "id" : language) + path);
+      }
       assert.ok(seo.title.includes("LunaBiner"), route);
       assert.ok(!seo.title.includes("LunaBiner | LunaBiner"));
       assert.equal(new URL(seo.canonical).pathname, route);
@@ -104,7 +113,49 @@ try {
     }
   }
   assert.equal((await get("/fr/about/opengraph-image/main")).status, 404);
+  for (const agent of ["facebookexternalhit", "Googlebot", "Mozilla/5.0", "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)"]) {
+    const response = await fetch(base + "/en/insights/" + slug, { headers: { "User-Agent": agent, "x-lunabiner-locale": "id" } });
+    const html = await response.text();
+    assert.equal(attributes(html.match(/<html\b[^>]*>/)[0]).lang, "en"); // Inbound spoofing is overwritten.
+    const seo = metadata(html);
+    assert.ok(seo.title.startsWith(text.seoTitle));
+    assert.match(seo.values.robots, /index.*follow/);
+    if (agent === "facebookexternalhit") assert.ok(html.split("</head>")[0].includes('property="og:title"'));
+  }
+  for (const path of ["/login", "/register"]) {
+    const html = await (await get(path)).text();
+    assert.match(metadata(html).values.robots, /noindex/);
+  }
+  assert.equal((await fetch(base + "/dashboard", { redirect: "manual" })).status, 307);
+  const robots = await (await get("/robots.txt")).text();
+  assert.ok(robots.includes("Disallow: /dashboard")); assert.ok(robots.includes("Disallow: /api/"));
+  async function readSitemap() {
+    const response = await get("/sitemap.xml");
+    assert.equal(response.status, 200);
+    const xml = await response.text();
+    const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => decode(match[1]));
+    assert.equal(new Set(urls).size, urls.length);
+    return { xml, urls };
+  }
+  const sitemap = await readSitemap();
+  assert.ok(sitemap.urls.some(url => new URL(url).pathname === "/id/consultation"));
+  assert.ok(sitemap.urls.some(url => new URL(url).pathname === "/en/work/" + project.id));
+  assert.ok(!sitemap.xml.includes(draft.slug));
+  assert.ok(!sitemap.urls.some(url => /dashboard|api\/|opengraph-image/.test(url)));
+  assert.ok(robots.includes("Sitemap: " + new URL(sitemap.urls[0]).origin + "/sitemap.xml"));
+  for (const url of sitemap.urls) {
+    const response = await get(new URL(url).pathname);
+    assert.equal(response.status, 200);
+    const seo = metadata(await response.text());
+    assert.equal(seo.canonical, url);
+  }
+  // Publication visibility is request-time, not captured at build or cached indefinitely.
+  await db.contentEntry.update({ where: { id: draft.id }, data: { status: "PUBLISHED", publishedAt: new Date() } });
+  assert.ok((await readSitemap()).xml.includes(draft.slug));
+  await db.contentEntry.update({ where: { id: draft.id }, data: { status: "DRAFT" } });
+  assert.ok(!(await readSitemap()).xml.includes(draft.slug));
   console.log("PASS: " + checked + " public ID/EN pages with complete metadata, canonical, JSON-LD and distinct 1200x630 PNGs; CMS/static detail and private/missing 404s.");
+  console.log("PASS: sitemap canonical crawl, live publication changes, hreflang, root language, noindex/private robots and social/search/desktop/mobile user agents.");
 } finally {
   if (app && app.exitCode === null) {
     await new Promise(resolve => { app.once("exit", resolve); app.kill("SIGTERM"); });

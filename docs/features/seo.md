@@ -2,7 +2,7 @@
 
 ## Current status
 
-Tasks 1 and 2 are implemented. The eight public page families (home, solutions, work, products, insights, about, contact and consultation) and article/case-study detail pages expose contextual ID/EN metadata, native JSON-LD and working OG image endpoints. No migration or CMS form change is required. Task 3 remains pending: sitemap synchronization, comprehensive crawler audit and final SEO QA.
+Tasks 1–3 are implemented. The eight public page families (home, solutions, work, products, insights, about, contact and consultation) and article/case-study detail pages expose contextual ID/EN metadata, native JSON-LD and working OG image endpoints. Sitemap, crawl directives and HTML language are synchronized. No migration or CMS form change is required. Local automated checks do not replace production deployment, domain verification or Search Console submission.
 
 ## Architecture and data flow
 
@@ -33,9 +33,13 @@ const seo = getPageSeo("insights", "id");
 
 The JSON-LD graph is equivalent structured data to separate schema objects and avoids duplicating Organization in every page. Metadata title remains `{ absolute: string }` intentionally; schema name/OG/Twitter receive the resolved string, not that object.
 
-Root layout retains metadataBase and global defaults only. Each public page returns the shared metadata in `generateMetadata` and renders its corresponding graph through `JsonLd`. Public layout renders Organization/WebSite JSON-LD once; pages reference these stable IDs instead of duplicating the organization. Twitter uses the corresponding contextual OG image. The public main element has `lang=id|en`; the existing root HTML language remains ID. Auditing the root-language architecture for EN belongs to Task 3, not an unannounced root-layout restructuring.
+Root layout retains metadataBase and global defaults only, with noindex/nofollow as the safe default for non-public pages. Each public page explicitly opts into index/follow and returns the shared metadata in `generateMetadata`, rendering its corresponding graph through `JsonLd`. Public layout renders Organization/WebSite JSON-LD once; pages reference these stable IDs instead of duplicating the organization. Twitter uses the corresponding contextual OG image. Public main and root HTML language match ID/EN.
+
+Language architecture decision: proxy overwrites the internal x-lunabiner-locale request header from the URL (/en or /en/* → en, otherwise id). The async root layout validates it with Zod and reads it through headers(). The matcher covers page requests, excluding API/Next/assets/sitemap/robots. No client-supplied locale is trusted for public pages, no translation or auth decision uses this header, and existing server authorization remains required. headers() makes pages request-rendered, including previously static about/contact/solutions/login/register; this explicit tradeoff avoids duplicate root layouts and provides correct HTML to crawlers. Header also synchronizes document.documentElement.lang when locale changes through client-side navigation, because root layouts persist in the router.
 
 Static and unverified CMS case-study UI/schema explicitly identify illustrative examples, without changing card spacing, typography, responsive layout or inventing verified client results. Existing numeric static URLs remain compatible; persisted CMS IDs remain UUIDs.
+
+Every public page has one primary H1. SectionIntro defaults to H2 for inner/home sections and accepts as="h1" for the main headings of solutions/work/products/insights/about/contact/consultation. Styling and responsive classes remain unchanged.
 
 ## OG endpoints and deployment
 
@@ -43,13 +47,26 @@ Public, read-only `GET /{locale}{pagePath}/opengraph-image/main` returns `image/
 
 Architecture decision: explicit `opengraph-image/main/route.ts` handlers are used rather than metadata-file image conventions. Installed Next 16.3.8 generates route-group image suffixes and evaluates `generateImageMetadata` during static-parameter collection. Explicit handlers keep metadata, Twitter and schema image URLs stable and avoid build-time queries for unknown detail parameters. `main` is an image variant name, not a database identifier. Next ImageResponse remains the renderer.
 
-The renderer requires Node filesystem access to the local logo. The current standalone build trace includes this logo; keep public assets and .next/static in the deployed artifact as described in [installation](../deployment/installation.md). Set NEXT_PUBLIC_APP_URL to the actual public HTTPS origin **before building**, since public configuration can be embedded into the build. Other authentication/API/rate-limiting behavior is unchanged. Sitemap and robots were not modified in Task 2; auth/dashboard pages remain outside this marketing metadata scope.
+The renderer requires Node filesystem access to the local logo. The current standalone build trace includes this logo; keep public assets and .next/static in the deployed artifact as described in [installation](../deployment/installation.md). Set NEXT_PUBLIC_APP_URL to the actual public HTTPS origin **before building**, since public configuration can be embedded into the build. Authentication/API/rate-limiting behavior is unchanged.
+
+## Sitemap and crawl policy
+
+- GET /sitemap.xml is force-dynamic and calls server-only buildPublicSitemap. All eight fixed paths come from the SEO registry, including consultation; ID/EN and x-default alternates reuse localizedUrls, the same helper as page metadata.
+- All eligible CMS ARTICLE/CASE_STUDY details are included using publicContentWhere (PUBLISHED/due SCHEDULED with publication date). The query is not capped at the 200-card collection display limit. Products have no detail route and are not invented as separate sitemap URLs.
+- Existing static article and illustrative case routes remain reachable even when CMS cards replace the listing; they remain in the sitemap. A Map deduplicates paths, with published CMS overriding matching static article paths. Persisted cases use UUIDs; numeric static compatibility links are unchanged.
+- lastModified is the actual CMS updatedAt. Static content has no trustworthy revision date, so lastModified is omitted rather than set to the time of every request. No sitemap priority/changefreq is invented.
+- Publication/withdrawal is reflected at request time without rebuild. DB errors propagate rather than returning a misleading partial sitemap. Large future inventories must split sitemaps before the standard 50,000-URL limit; current scope uses one sitemap.
+- GET /robots.txt uses the same validated origin for its sitemap directive, allows public/OG assets and disallows /dashboard and /api/. Login/register remain crawlable so compliant crawlers can read their noindex metadata. Crawl directives are not authorization; RBAC/session checks still protect private data.
+- Auth/dashboard/API/OG endpoints are never page entries in the sitemap. Missing/unpublished details return 404 with Next's noindex handling.
+- Default Next metadata streaming remains enabled: HTML-limited social bots receive tags in head; JavaScript-capable crawlers can inspect the complete DOM. No blanket streaming disable or unverified rich-result/ranking promise is introduced.
 
 ## Verification and SEO limits
 
 Run `node --test tests/seo.test.mjs` using an **isolated test PostgreSQL** only: the suite creates/cleans synthetic CMS records. Tests cover unique bilingual metadata, canonical/OG consistency, unsafe URL rejection, JSON-LD escaping, schema contexts, published filtering, real CMS dates/author, static compatibility and actual PNG generation. Generated PNG QA artifacts are temporary under `/private/tmp/lunabiner-seo-og-*`, never committed. `tests/server-loader.mjs` resolves `next/og.js` for direct Node ESM tests; the production import remains `next/og`.
 
-`tests/seo-http.mjs` verifies production-rendered HTML and real OG PNG endpoints for all eight fixed pages in both languages, CMS UUID case/article detail, static detail and unpublished/missing 404s. It requires a freshly built app and the isolated PostgreSQL test role/port (lunabiner_test, 55439); it refuses other database targets and starts/stops its own test server on 55445. Synthetic UUID fixtures are cleaned up. It does not send requests to the LLM or external crawlers.
+Run the complete DB-backed regression suite with `node --test --test-concurrency=1 tests/*.test.mjs`; existing integration tests share one isolated database and analytics counts can observe other files' temporary fixtures under parallel execution. Run the HTTP suite after regression cleanup, not concurrently with fixture mutation.
+
+`tests/seo-http.mjs` verifies production-rendered HTML and real OG PNG endpoints for all eight fixed pages in both languages, CMS UUID case/article detail, static detail and unpublished/missing 404s. It also crawls sitemap loc URLs against page canonicals, tests live publication/withdrawal, unique canonical/title, reciprocal ID/EN/x-default alternates, root language/spoofed headers, private noindex/robots and social/search/desktop/mobile User Agents. It requires a freshly built app and the isolated PostgreSQL test role/port (lunabiner_test, 55439); it refuses other database targets and starts/stops its own test server on 55445. Synthetic UUID fixtures are cleaned up. It does not send requests to the LLM or external crawlers. SEO unit tests cover all publication statuses and real/omitted lastModified.
 
 Use concise, descriptive titles and per-page descriptions, without keyword stuffing or duplicate generic copy. Google can rewrite titles/snippets; title lengths are not a guaranteed character cutoff. Meta keywords are included at the user's request, but are not a Google ranking factor. Structured data describes existing visible content and does not guarantee rich results or rankings. CMS editorial claims still require human review; Zod validation is not semantic fact checking.
 

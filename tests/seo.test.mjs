@@ -13,7 +13,41 @@ const { seoFromPublishedEntry, getArticleSeoContent, getCaseStudySeoContent } = 
 const { renderOgImage } = await import("../src/features/website/seo/og-image.tsx");
 const { db } = await import("../src/lib/db.ts");
 const { getPublicPageSeo, publicSeoLocale } = await import("../src/features/website/seo/routes.ts");
+const { buildPublicSitemap } = await import("../src/features/website/seo/sitemap.ts");
 after(async () => db.$disconnect());
+
+test("sitemap shares canonical/hreflang, real CMS dates and publication visibility without a card-list limit", async () => {
+  const ids = [];
+  const text = { title: "Sitemap fixture", excerpt: "A synthetic published business article.", body: "Sitemap test body", seoTitle: "", seoDescription: "" };
+  try {
+    for (const [status, due] of [["DRAFT", true], ["REVIEW", true], ["ARCHIVED", true], ["SCHEDULED", false], ["SCHEDULED", true], ["PUBLISHED", true]]) {
+      const entry = await db.contentEntry.create({ data: { kind: "ARTICLE", slug: "sitemap-" + randomUUID(), status, publishedAt: new Date(Date.now() + (due ? -86400000 : 86400000)), translations: { id: text, en: text }, details: {} } });
+      ids.push(entry.id);
+      const sitemap = await buildPublicSitemap();
+      const item = sitemap.find(row => row.url === pageUrl("id", "/insights/" + entry.slug));
+      const eligible = status === "PUBLISHED" || status === "SCHEDULED" && due;
+      assert.equal(Boolean(item), eligible);
+      if (item) {
+        assert.equal(item.lastModified.toISOString(), entry.updatedAt.toISOString());
+        assert.equal(item.alternates.languages.en, pageUrl("en", "/insights/" + entry.slug));
+        assert.equal(item.alternates.languages["x-default"], item.url);
+      }
+    }
+    const sitemap = await buildPublicSitemap();
+    assert.equal(new Set(sitemap.map(item => item.url)).size, sitemap.length);
+    for (const locale of ["id", "en"]) {
+      assert.ok(sitemap.some(item => item.url === pageUrl(locale, "/consultation")));
+      const about = sitemap.find(item => item.url === pageUrl(locale, "/about"));
+      assert.equal(about.lastModified, undefined); // Never invent an edit timestamp.
+    }
+    assert.ok(!sitemap.some(item => /dashboard|api\/|opengraph-image/.test(item.url)));
+    const batch = Array.from({ length: 201 }, () => ({ id: randomUUID(), kind: "ARTICLE", slug: "sitemap-batch-" + randomUUID(), status: "PUBLISHED", publishedAt: new Date("2026-01-01"), translations: { id: text, en: text }, details: {} }));
+    ids.push(...batch.map(item => item.id));
+    await db.contentEntry.createMany({ data: batch });
+    const complete = await buildPublicSitemap();
+    for (const entry of batch) assert.ok(complete.some(item => item.url === pageUrl("id", "/insights/" + entry.slug)));
+  } finally { await db.contentEntry.deleteMany({ where: { id: { in: ids } } }); }
+});
 
 test("public route SEO validates locales and describes the published listing instead of fallback examples", async () => {
   assert.throws(() => publicSeoLocale("fr"), /Not found/);

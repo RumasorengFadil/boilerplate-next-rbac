@@ -10,4 +10,6 @@ Register dan login memvalidasi input dengan Zod, menyimpan password dengan bcryp
 
 `src/proxy.ts` tidak memvalidasi token; ia hanya memperbaiki pengalaman redirect berdasarkan cookie. Akses sebenarnya divalidasi di server melalui `getSessionUser`, `requireUser`, dan `requirePermission`. Permission didefinisikan sekali di `src/lib/permissions.ts`. Menu sidebar hanya presentasi dan bukan kontrol keamanan.
 
+Untuk SEO bilingual, proxy juga menangani page requests (kecuali API/Next/assets/sitemap/robots) dan menimpa header internal x-lunabiner-locale berdasarkan pathname. Root layout memvalidasi ID/EN dengan Zod; header bukan identitas, role, sumber terjemahan atau otorisasi. Default metadata non-public adalah noindex/nofollow; robots melarang crawl dashboard/API. Ini hanya kebijakan crawler, bukan perlindungan akses. Guard server dan behavior redirect cookie tetap dipertahankan.
+
 Semua route handler mutasi harus memvalidasi body dan semua server action harus memanggil guard yang relevan sebelum mengubah data. Tambahkan rate limit untuk endpoint autentikasi ketika infrastruktur deployment tersedia.

@@ -20,6 +20,9 @@ export function ogImageUrl(document: SeoDocument) {
 export function brandedTitle(title: string) {
   return title.toLowerCase().includes(APP_CONFIG.name.toLowerCase()) ? title : `${title} | ${APP_CONFIG.name}`;
 }
+export function localizedUrls(path: string) {
+  return { id: pageUrl("id", path), en: pageUrl("en", path), "x-default": pageUrl("id", path) };
+}
 
 export function buildMetadata(input: SeoDocument): Metadata {
   const document = seoDocumentSchema.parse(input);
@@ -37,9 +40,7 @@ export function buildMetadata(input: SeoDocument): Metadata {
         : { type: "website" as const }),
     },
     twitter: { card: "summary_large_image", title, description: document.description, images: [{ url: image.url, alt: image.alt }] },
-    alternates: { canonical: pageUrl(document.locale, document.path), languages: {
-      id: pageUrl("id", document.path), en: pageUrl("en", document.path), "x-default": pageUrl("id", document.path),
-    } },
+    alternates: { canonical: pageUrl(document.locale, document.path), languages: localizedUrls(document.path) },
     robots: { index: true, follow: true },
   };
 }

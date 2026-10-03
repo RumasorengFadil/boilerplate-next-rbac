@@ -20,6 +20,8 @@ Untuk membuat migration baru saat development, gunakan loader environment yang s
 
 Set `NEXT_PUBLIC_APP_URL` ke origin HTTPS production yang benar sebelum `npm run build` (tanpa subpath, query atau fragment), agar canonical, hreflang, schema dan OG URL tidak menunjuk localhost/preview. Variabel ini publik dan bukan tempat menyimpan credential.
 
+Halaman HTML kini request-rendered agar lang pada root sesuai ID/EN dari proxy. Jangan mengubahnya menjadi export statis atau menghilangkan proxy request-header forwarding. Sitemap dibaca saat request sehingga membutuhkan koneksi database read-only yang tersedia; publication/withdrawal tidak memerlukan rebuild. Pastikan reverse proxy meneruskan request ke Next dan tidak menyajikan cache HTML lintas path/locale. Setelah deploy, periksa /id/about dan /en/about untuk lang/canonical, /sitemap.xml untuk published URLs/hreflang, /robots.txt serta endpoint OG. Search Console/domain verification/submission merupakan langkah operasional terpisah setelah origin resmi benar.
+
 Endpoint OG berjalan pada Node dan membaca `public/images/lunabiner-logo.png`. Output tracing saat ini menyertakan logo; deployment tetap perlu menyertakan seluruh `public/` dan `.next/static/` untuk logo/font/aset halaman. Untuk standalone, salin assets ke `.next/standalone/public/` dan `.next/standalone/.next/static/`, lalu jalankan `node .next/standalone/server.js` sesuai konfigurasi host/port platform. Jangan menghapus aset dari artifact. Setelah upgrade, rebuild dan restart app; tidak ada migration baru untuk SEO. Lihat [Public SEO](../features/seo.md).
 
 ## LunaBiner AI
