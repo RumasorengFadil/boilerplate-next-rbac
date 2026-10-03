@@ -15,8 +15,8 @@ Status: IN_PROGRESS
 
 ## Sprint 2 — Acquisition measurement
 
-- [-] T07 Add validated privacy-conscious analytics ingestion and consent-aware browser tracking.
-- [ ] T08 Implement dashboard metrics, conversion funnel and AI analytics.
+- [x] T07 Add validated privacy-conscious analytics ingestion and consent-aware browser tracking.
+- [-] T08 Implement dashboard metrics, conversion funnel and AI analytics.
 - [ ] T09 Implement explainable configurable lead scoring from observed signals.
 
 ## Sprint 3 — Follow-up workflows

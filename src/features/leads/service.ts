@@ -3,14 +3,16 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/server/authorization";
 import { recordAudit } from "@/server/audit";
 import { capturedLeadSchema, leadMutationSchema, leadNoteSchema } from "./schema";
+import { z } from "zod";
 
 // Internal capture API: caller must verify origin, consent and ownership where relevant.
-export async function captureLead(raw: unknown, score = 0) {
+export async function captureLead(raw: unknown, score = 0, visitorId?: string) {
   const { consent, ...input } = capturedLeadSchema.parse(raw);
   if (!consent) throw new Error("Consent required.");
   return db.$transaction(async tx => {
     if (!Number.isInteger(score) || score < 0 || score > 100) throw new Error("Invalid score.");
-    const lead = await tx.lead.create({ data: { ...input, score, consentAt: new Date() } });
+    if (visitorId) z.uuid().parse(visitorId);
+    const lead = await tx.lead.create({ data: { ...input, score, visitorId, consentAt: new Date() } });
     await tx.leadActivity.create({ data: { leadId: lead.id, action: "lead.captured", details: { source: lead.source, language: lead.language } } });
     return lead;
   });

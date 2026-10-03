@@ -1,5 +1,7 @@
 # Database
 
+Migration `20261003060000_phase2_analytics` adds UUID AnalyticsEvent with pseudonymous visitor/session UUID, kind enum, public path/target/language/createdAt; indexes `(createdAt,kind)`, `(visitorId,createdAt)`, `(path,kind,createdAt)`. Lead gains optional visitorId UUID attribution field without FK; existing rows stay null. No raw IP or form/chat payload in event storage.
+
 Migration `20261003050000_phase2_leads` extends Lead with budget/timeline/sourcePage, optional ownerId FK User (SET NULL), optimistic version and `(ownerId,status)` index. `LeadNote`: UUID PK, leadId FK cascade, optional authorId User FK SET NULL, body/createdAt; `LeadActivity`: UUID PK, leadId cascade, optional actorId SET NULL, action/details JSONB/createdAt. Both index `(leadId,createdAt)`. Existing leads remain without fabricated activities. AiRateBucket is reused by shared infrastructure with hashed per-scope/session/IP/minute keys; no duplicate limiter table.
 
 Migration `20261003040000_phase2_cms` adds ContentKind (ARTICLE/CASE_STUDY/PRODUCT), ContentStatus (DRAFT/REVIEW/SCHEDULED/PUBLISHED/ARCHIVED) and `ContentEntry`: UUID PK, kind/slug unique pair, status, translations/details JSONB, optional authorId FK User SET NULL, optional publishedAt, optimistic version, createdAt/updatedAt. Index `(kind, status, publishedAt)` supports public reads. All payloads validate through CMS Zod contracts. Publication requires complete ID/EN, review transition and content:publish permission; due schedules are public by query-time evaluation, not a cron status mutation.

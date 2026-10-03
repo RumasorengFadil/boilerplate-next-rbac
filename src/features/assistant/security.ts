@@ -4,16 +4,8 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { rateLimit as sharedRateLimit, RateLimitError } from "@/server/public-rate-limit";
 import { getAssistantEnv } from "./config/env";
-export class RequestError extends Error { constructor(public status: number) { super("Assistant request rejected."); } }
-export function assertOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  if (!origin || new URL(origin).host !== request.headers.get("host")) throw new RequestError(403);
-}
-export async function readBody(request: Request) {
-  const text = await request.text();
-  if (text.length > 12000) throw new RequestError(413);
-  try { return JSON.parse(text); } catch { throw new RequestError(400); }
-}
+import { RequestError } from "@/server/http";
+export { RequestError, assertOrigin, readBody } from "@/server/http";
 export async function session(create = false) {
   const store = await cookies(); const raw = store.get("ai_session")?.value;
   if (z.string().uuid().safeParse(raw).success) return raw!;

@@ -181,6 +181,7 @@ model Lead {
   ownerId        String?
   owner          User? @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   version        Int @default(1)
+  visitorId      String? @db.Uuid
   notes          LeadNote[]
   activities     LeadActivity[]
   conversationId String?    @db.Uuid
@@ -212,6 +213,27 @@ model LeadActivity {
   details Json?
   createdAt DateTime @default(now())
   @@index([leadId, createdAt])
+}
+
+enum AnalyticsKind {
+  PAGE_VIEW
+  CTA_CLICK
+  WHATSAPP_CLICK
+  AI_OPEN
+}
+
+model AnalyticsEvent {
+  id String @id @default(uuid()) @db.Uuid
+  visitorId String @db.Uuid
+  sessionId String @db.Uuid
+  kind AnalyticsKind
+  path String
+  target String?
+  language String
+  createdAt DateTime @default(now())
+  @@index([createdAt, kind])
+  @@index([visitorId, createdAt])
+  @@index([path, kind, createdAt])
 }
 
 model AiKnowledgeChunk {
