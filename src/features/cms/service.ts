@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { Prisma, type ContentKind } from "@prisma/client";
 import { db } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
@@ -13,9 +14,9 @@ export function presentContent(entry: Awaited<ReturnType<typeof db.contentEntry.
   const translations = entry.translations as { id: unknown; en: unknown };
   return { ...entry, translations: { id: translationSchema.parse(translations.id), en: translationSchema.parse(translations.en) }, details: detailsSchema.parse(entry.details) };
 }
-export async function publishedContent(kind?: ContentKind) {
+export const publishedContent = cache(async (kind?: ContentKind) => {
   return (await db.contentEntry.findMany({ where: publicContentWhere(kind), orderBy: [{ publishedAt: "desc" }, { id: "asc" }], take: 200 })).map(presentContent);
-}
+});
 export async function saveContent(raw: unknown) {
   const user = await requirePermission("content:write");
   const input = contentInputSchema.parse(raw);

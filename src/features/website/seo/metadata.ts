@@ -15,7 +15,7 @@ export function pageUrl(locale: Locale, path: string) {
   return `${siteOrigin()}/${seoLocaleSchema.parse(locale)}${parsed}`;
 }
 export function ogImageUrl(document: SeoDocument) {
-  return `${pageUrl(document.locale, document.path)}/opengraph-image`;
+  return `${pageUrl(document.locale, document.path)}/opengraph-image/main`;
 }
 export function brandedTitle(title: string) {
   return title.toLowerCase().includes(APP_CONFIG.name.toLowerCase()) ? title : `${title} | ${APP_CONFIG.name}`;

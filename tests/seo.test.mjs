@@ -12,7 +12,31 @@ const { buildSiteSchema, buildPageSchema, serializeJsonLd } = await import("../s
 const { seoFromPublishedEntry, getArticleSeoContent, getCaseStudySeoContent } = await import("../src/features/website/seo/content.ts");
 const { renderOgImage } = await import("../src/features/website/seo/og-image.tsx");
 const { db } = await import("../src/lib/db.ts");
+const { getPublicPageSeo, publicSeoLocale } = await import("../src/features/website/seo/routes.ts");
 after(async () => db.$disconnect());
+
+test("public route SEO validates locales and describes the published listing instead of fallback examples", async () => {
+  assert.throws(() => publicSeoLocale("fr"), /Not found/);
+  assert.equal(publicSeoLocale("en"), "en");
+  const ids = [];
+  const text = { title: "SEO route fixture", excerpt: "Published content for route schema verification.", body: "Test body", seoTitle: "", seoDescription: "" };
+  try {
+    for (const [key, kind] of [["insights", "ARTICLE"], ["work", "CASE_STUDY"], ["products", "PRODUCT"]]) {
+      const entry = await db.contentEntry.create({ data: { kind, slug: "route-" + randomUUID(), status: "PUBLISHED", publishedAt: new Date("2026-01-01"), translations: { id: text, en: text }, details: { verifiedProject: false, productStatus: "COMING_SOON" } } });
+      ids.push(entry.id);
+      for (const locale of ["id", "en"]) {
+        const seo = await getPublicPageSeo(key, locale);
+        assert.ok(seo.metadata.description.includes(text.excerpt));
+        assert.ok(seo.metadata.openGraph.images[0].url.endsWith("/opengraph-image/main"));
+        const list = seo.schema["@graph"].find(node => node["@type"] === "ItemList");
+        const item = list.itemListElement.find(node => node.item.name.includes(text.title)).item;
+        if (key === "work") assert.ok(item.url.endsWith("/work/" + entry.id));
+        if (key === "products") assert.equal(item.creativeWorkStatus, "Concept");
+        assert.ok(!JSON.stringify(seo.schema).includes('"offers"'));
+      }
+    }
+  } finally { await db.contentEntry.deleteMany({ where: { id: { in: ids } } }); }
+});
 
 test("all fixed public pages have distinct localized titles, descriptions, canonicals and OG URLs", () => {
   for (const locale of ["id", "en"]) {
@@ -124,6 +148,7 @@ test("published CMS SEO overrides use real author/dates and strip markup, missin
     await db.contentEntry.update({where:{id:projectRow.id},data:{status:"PUBLISHED"}});
     const project=await getCaseStudySeoContent("id",projectRow.id);
     assert.equal(project.seo.path,"/work/"+projectRow.id);
+    assert.ok(project.seo.keywords.length > 0); // Complete metadata even without optional CMS tags/category.
     assert.equal(project.seo.entityType,"CreativeWork");assert.equal(project.seo.illustrative,true);
   } finally { await db.contentEntry.deleteMany({where:{id:{in:ids}}}); }
 });

@@ -9,7 +9,7 @@ registerHooks({
     if (specifier === "next/og") return next("next/og.js", context);
     if (specifier === "next/headers") return { url: 'data:text/javascript,export async function cookies(){return {get(name){const value=name==="session"?globalThis.__phase2TestCookie:globalThis.__phase2SubmissionCookie;return value?{value}:undefined},set(name,value){if(name==="public_submission")globalThis.__phase2SubmissionCookie=value}}};export async function headers(){return new Headers({"x-forwarded-for":globalThis.__phase2TestIp||"127.0.0.1"})}', shortCircuit: true };
     if (specifier === "next/cache") return { url: "data:text/javascript,export function revalidatePath(){}", shortCircuit: true };
-    if (specifier === "next/navigation") return { url: 'data:text/javascript,export function redirect(){throw new Error("Unauthorized")}', shortCircuit: true };
+    if (specifier === "next/navigation") return { url: 'data:text/javascript,export function redirect(){throw new Error("Unauthorized")};export function notFound(){throw new Error("Not found")}', shortCircuit: true };
     let base;
     if (specifier.startsWith("@/")) base = path.join(process.cwd(), "src", specifier.slice(2));
     else if (specifier.startsWith(".") && context.parentURL?.startsWith("file:")) base = path.resolve(path.dirname(fileURLToPath(context.parentURL)), specifier);

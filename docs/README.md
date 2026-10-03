@@ -17,6 +17,7 @@
 | [Public SEO](features/seo.md) | Fondasi metadata bilingual, canonical, schema dan renderer OG; status integrasi route. |
 | [Public SEO — Task 1](reports/2026/10/03/public_seo_task1.md) | Tracking fondasi SEO, hasil pengujian dan task integrasi yang tersisa. |
 | [Public SEO — Task 1 correction](reports/2026/10/03/public_seo_task1_correction.md) | Bundle metadata/schema lengkap, category dan schema Blog mengikuti referensi pengguna. |
+| [Public SEO — Task 2](reports/2026/10/03/public_seo_task2.md) | Integrasi public ID/EN, detail published, JSON-LD dan OG image; verifikasi HTML/PNG aktual. |
 | [Scheduling cache fix](reports/2026/10/03/scheduling_prisma_cache_fix.md) | Perbaikan stale Prisma Client pada development dan hasil verifikasi. |
 | [AI LunaBiner-only scope — Task 1](reports/2026/10/03/ai_assistant_lunabiner_scope_task1.md) | Guardrail server, keputusan scope, hasil pengujian dan tautan tracking lanjutan. |
 | [AI LunaBiner-only scope — Task 2](reports/2026/10/03/ai_assistant_lunabiner_scope_task2.md) | Penjelasan scope UI bilingual, contoh pertanyaan dan verifikasi desktop/mobile. |

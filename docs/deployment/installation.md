@@ -16,6 +16,12 @@ node -e 'require("@next/env").loadEnvConfig(process.cwd());require("child_proces
 
 Untuk membuat migration baru saat development, gunakan loader environment yang sama dengan argumen `migrate dev`. Jangan menjalankan reset pada database berisi data yang ingin dipertahankan.
 
+## Public SEO dan standalone assets
+
+Set `NEXT_PUBLIC_APP_URL` ke origin HTTPS production yang benar sebelum `npm run build` (tanpa subpath, query atau fragment), agar canonical, hreflang, schema dan OG URL tidak menunjuk localhost/preview. Variabel ini publik dan bukan tempat menyimpan credential.
+
+Endpoint OG berjalan pada Node dan membaca `public/images/lunabiner-logo.png`. Output tracing saat ini menyertakan logo; deployment tetap perlu menyertakan seluruh `public/` dan `.next/static/` untuk logo/font/aset halaman. Untuk standalone, salin assets ke `.next/standalone/public/` dan `.next/standalone/.next/static/`, lalu jalankan `node .next/standalone/server.js` sesuai konfigurasi host/port platform. Jangan menghapus aset dari artifact. Setelah upgrade, rebuild dan restart app; tidak ada migration baru untuk SEO. Lihat [Public SEO](../features/seo.md).
+
 ## LunaBiner AI
 
 Apply reviewed migrations with `npx prisma migrate deploy` before enabling the assistant. Configure the six infrastructure variables in `.env.example` through the secret manager; runtime tuning belongs to the database. Follow [AI activation and troubleshooting](../ai-assistant.md). Reverse proxies must overwrite forwarded IP headers for rate limiting. Reindex knowledge after changing published content.

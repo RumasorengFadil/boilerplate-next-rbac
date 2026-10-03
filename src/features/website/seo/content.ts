@@ -22,7 +22,11 @@ export function seoFromPublishedEntry(entry: Entry, locale: Locale): SeoDocument
     locale, path: entry.kind === "ARTICLE" ? `/insights/${entry.slug}` : `/work/${entry.id}`,
     title: prefix + (plainText(text.seoTitle) || plainText(text.title)), headline: prefix + plainText(text.title),
     description: plainText(text.seoDescription).length >= 10 ? plainText(text.seoDescription) : plainText(text.excerpt),
-    keywords: [...new Set([entry.details.category, ...entry.details.tags].filter(Boolean))].slice(0, 30),
+    keywords: [...new Set([
+      entry.kind === "ARTICLE" ? "LunaBiner Insights" : (locale === "id" ? "studi kasus LunaBiner" : "LunaBiner case studies"),
+      entry.details.category, ...entry.details.tags,
+      ...(entry.kind === "CASE_STUDY" ? [...entry.details.capabilities] : []),
+    ].filter(Boolean))].slice(0, 30),
     category: entry.details.category || (entry.kind === "ARTICLE" ? "INSIGHTS" : "PORTFOLIO"),
     pageType: "WebPage", entityType: entry.kind === "ARTICLE" ? "Article" : "CreativeWork",
     ...(entry.kind === "ARTICLE" && entry.details.authorName ? { authorName: entry.details.authorName } : {}),
