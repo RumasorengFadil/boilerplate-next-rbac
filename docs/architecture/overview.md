@@ -5,3 +5,5 @@
 `src/features/` memegang domain. `src/lib/` adalah infrastruktur lintas domain (database, session, permission, helper). `src/server/` menyediakan guard otorisasi. `src/context/providers/` menampung provider global. Root layout memasang query client dan toast.
 
 Alur akses: proxy mengecek cookie untuk redirect cepat → dashboard layout menjalankan `requireUser` → page/action yang butuh kemampuan tertentu menjalankan `requirePermission` → fungsi akses database menjalankan query dengan scope user bila diperlukan. Jangan hilangkan tahap terakhir: role admin dan member mempunyai scope proyek berbeda.
+
+Fondasi SEO publik berada di `src/features/website/seo/`: registry bilingual, metadata/canonical builders, resolver konten published server-only, JSON-LD aman dan renderer OG Node. Pada Task 1 helper ini belum terhubung ke route publik; integrasi dijadwalkan terpisah. Lihat [Public SEO](../features/seo.md) untuk kontrak dan status implementasi.

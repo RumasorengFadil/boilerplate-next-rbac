@@ -14,6 +14,8 @@
 | [LunaBiner Phase 2](features/phase2.md) | Keputusan modular, scope dan tracking implementasi PRD 002. |
 | [Acquisition analytics](features/analytics.md) | Consent, event ingestion, privacy, cookie dan atribusi lead. |
 | [Consultation scheduling](features/scheduling.md) | Internal slot availability, timezone, booking and calendar invitation. |
+| [Public SEO](features/seo.md) | Fondasi metadata bilingual, canonical, schema dan renderer OG; status integrasi route. |
+| [Public SEO — Task 1](reports/2026/10/03/public_seo_task1.md) | Tracking fondasi SEO, hasil pengujian dan task integrasi yang tersisa. |
 | [Scheduling cache fix](reports/2026/10/03/scheduling_prisma_cache_fix.md) | Perbaikan stale Prisma Client pada development dan hasil verifikasi. |
 | [AI LunaBiner-only scope — Task 1](reports/2026/10/03/ai_assistant_lunabiner_scope_task1.md) | Guardrail server, keputusan scope, hasil pengujian dan tautan tracking lanjutan. |
 | [AI LunaBiner-only scope — Task 2](reports/2026/10/03/ai_assistant_lunabiner_scope_task2.md) | Penjelasan scope UI bilingual, contoh pertanyaan dan verifikasi desktop/mobile. |
