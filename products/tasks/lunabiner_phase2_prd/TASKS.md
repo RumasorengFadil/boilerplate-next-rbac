@@ -10,12 +10,12 @@ Status: IN_PROGRESS
 - [x] T02 Extend roles/permissions and shared transactional audit infrastructure.
 - [x] T03 Add UUID CMS schema, localized contracts and publication workflow.
 - [x] T04 Implement permission-protected content editing and public published-content integration.
-- [-] T05 Persist contact inquiries and implement lead detail/status/owner/notes/activity.
-- [ ] T06 Verify Sprint 1 migrations, authorization, content publication and lead flows; report and commit.
+- [x] T05 Persist contact inquiries and implement lead detail/status/owner/notes/activity.
+- [x] T06 Verify Sprint 1 migrations, authorization, content publication and lead flows; report and commit.
 
 ## Sprint 2 — Acquisition measurement
 
-- [ ] T07 Add validated privacy-conscious analytics ingestion and consent-aware browser tracking.
+- [-] T07 Add validated privacy-conscious analytics ingestion and consent-aware browser tracking.
 - [ ] T08 Implement dashboard metrics, conversion funnel and AI analytics.
 - [ ] T09 Implement explainable configurable lead scoring from observed signals.
 

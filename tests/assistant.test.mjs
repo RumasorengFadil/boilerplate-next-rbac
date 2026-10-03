@@ -11,6 +11,7 @@ registerHooks({
   resolve(specifier, context, next) {
     if (specifier === "server-only") return { url: "data:text/javascript,export {}", shortCircuit: true };
     if (specifier === "next/headers") return next("next/headers.js", context);
+    if (specifier === "next/navigation") return next("next/navigation.js", context);
     let base;
     if (specifier.startsWith("@/")) base = path.join(root, "src", specifier.slice(2));
     else if (specifier.startsWith(".") && context.parentURL?.startsWith("file:")) base = path.resolve(path.dirname(fileURLToPath(context.parentURL)), specifier);

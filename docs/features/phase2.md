@@ -16,6 +16,14 @@ Delivered: six roles, specialist-safe dashboard reads, shared transactional audi
 
 Homepage/insights/work/products use published CMS content when that kind has records, otherwise existing static cards remain. Article detail uses a slug and CMS case detail uses UUID; static legacy case URLs remain compatible. Body renders escaped plain paragraphs, not executable HTML. CMS listing caps at 200 public records; pagination/search and media upload are not delivered in this stage. Images reference existing `/images/` assets. Reindex AI manually after publication once the separate CMS→RAG task is integrated; current RAG still reads static source.
 
-Verified: five contract/permission tests, CMS transactional integration and production HTTP tests (private draft 404, ID/EN body, editor fields and role guards), typecheck/lint/build. Fixtures ran only on isolated PostgreSQL. Contact is still WhatsApp-only and leads remain read-only until T05 finishes.
+Verified: contract/permission tests, CMS/lead transactional integration, production HTTP CMS/lead/assistant regression and typecheck/lint/build. Fixtures ran only on isolated PostgreSQL.
+
+## Lead capture and follow-up
+
+`submitInquiry` accepts name/company/email/whatsapp/need/challenge/timeline/budget, language ID/EN, explicit consent and empty website honeypot. Zod validation and five-per-minute session/IP throttling precede transactional CONTACT lead/activity capture. Unavailable DB never yields success. WhatsApp is an optional link after persistence, not an automatic redirect. Required public_submission cookie is HttpOnly/SameSite Strict/Secure in production, one-hour lifetime. Next.js server-action origin checks protect writes; trusted proxy must replace forwarded IP headers.
+
+AI capture reuses shared leads capture after owner/consent checks, retaining prior conservative score until T09. Contact leads score zero for now; PRD scoring is not complete. Public capture never accepts owner/status. `/dashboard/leads` requires leads:read, validates q/status filters and caps at 100; UUID detail shows source/contact/budget/timeline, up to 100 notes/activity/transcript messages each. This is a shared sales inbox, not per-owner tenancy.
+
+`updateLeadAction`: id UUID, version integer, status enum, ownerId optional compatible User ID; leads:write required. Owner must be ADMIN/SUPER_ADMIN/MARKETING/SALES; stale versions roll back. `addNoteAction`: id/body (2–4000 chars), same permission. Mutation/timeline/audit are atomic; audit excludes contact data/note body/transcript. Responses are success/message form states; invalid input, version/owner errors and unavailable records are friendly failures. Operators choose lifecycle status.
 
 Production infrastructure, provider/service connections, real portfolio claims and production performance/restore checks must be verified separately. Optional integrations will use adapters rather than guessed credentials or unauthorized external account changes.

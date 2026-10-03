@@ -2,13 +2,22 @@
 
 import { inquirySchema } from "./schema";
 import { APP_CONFIG } from "@/config/app-config";
+import { captureLead } from "@/features/leads/service";
+import { limitPublicSubmission } from "@/server/public-rate-limit";
 
 export type InquiryState = { success: boolean; message: string; redirectUrl?: string };
 
 export async function submitInquiry(_: InquiryState, formData: FormData): Promise<InquiryState> {
-  const result = inquirySchema.safeParse(Object.fromEntries(formData));
+  if (_.success) return _;
+  const result = inquirySchema.safeParse({ ...Object.fromEntries(formData), consent: formData.get("consent") === "on" });
   if (!result.success) return { success: false, message: "Mohon periksa kembali informasi yang wajib diisi." };
   const inquiry = result.data;
+  try {
+    await limitPublicSubmission("contact");
+    await captureLead({ consent: inquiry.consent, name: inquiry.name, company: inquiry.company, email: inquiry.email,
+      phone: inquiry.whatsapp, challenge: inquiry.challenge, serviceInterest: inquiry.need, budget: inquiry.budget,
+      timeline: inquiry.timeline, language: inquiry.language, source: "CONTACT", sourcePage: `/${inquiry.language}/contact` });
+  } catch { return { success: false, message: inquiry.language === "en" ? "Your request could not be saved. Please retry shortly." : "Kebutuhan belum tersimpan. Coba kembali beberapa saat lagi." }; }
   const message = [
     "Halo LunaBiner, saya ingin berdiskusi tentang kebutuhan bisnis.",
     `Nama: ${inquiry.name}`,
@@ -20,5 +29,5 @@ export async function submitInquiry(_: InquiryState, formData: FormData): Promis
     inquiry.timeline && `Timeline: ${inquiry.timeline}`,
     inquiry.budget && `Budget: ${inquiry.budget}`,
   ].filter(Boolean).join("\n");
-  return { success: true, message: "Mengarahkan Anda ke WhatsApp LunaBiner…", redirectUrl: `https://wa.me/${APP_CONFIG.whatsapp}?text=${encodeURIComponent(message)}` };
+  return { success: true, message: inquiry.language === "en" ? "Your request has been saved. You can continue via WhatsApp." : "Kebutuhan Anda sudah tersimpan. Anda dapat melanjutkan melalui WhatsApp.", redirectUrl: `https://wa.me/${APP_CONFIG.whatsapp}?text=${encodeURIComponent(message)}` };
 }

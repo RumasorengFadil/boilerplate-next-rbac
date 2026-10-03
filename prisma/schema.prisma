@@ -63,6 +63,9 @@ model User {
   projects     Project[] @relation("ProjectOwner")
   auditEvents  AuditEvent[]
   contentEntries ContentEntry[]
+  assignedLeads Lead[] @relation("LeadOwner")
+  leadNotes LeadNote[]
+  leadActivities LeadActivity[]
 }
 
 model ContentEntry {
@@ -172,11 +175,43 @@ model Lead {
   language       String     @default("id")
   status         LeadStatus @default(NEW)
   score          Int        @default(0)
+  budget         String?
+  timeline       String?
+  sourcePage     String?
+  ownerId        String?
+  owner          User? @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  version        Int @default(1)
+  notes          LeadNote[]
+  activities     LeadActivity[]
   conversationId String?    @db.Uuid
   consentAt      DateTime @default(now())
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   @@index([status, createdAt])
+  @@index([ownerId, status])
+}
+
+model LeadNote {
+  id String @id @default(uuid()) @db.Uuid
+  leadId String @db.Uuid
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  authorId String?
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body String
+  createdAt DateTime @default(now())
+  @@index([leadId, createdAt])
+}
+
+model LeadActivity {
+  id String @id @default(uuid()) @db.Uuid
+  leadId String @db.Uuid
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  actorId String?
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action String
+  details Json?
+  createdAt DateTime @default(now())
+  @@index([leadId, createdAt])
 }
 
 model AiKnowledgeChunk {

@@ -36,6 +36,8 @@ Only the named registry can execute validated tools: search_services, search_cas
 
 ## Persistence and privacy
 
+AI capture now uses shared leads-domain capture after consent/ownership validation and writes a captured activity atomically. `/dashboard/leads` supports status, owner, notes and related transcripts using leads:read/leads:write (ADMIN/SUPER_ADMIN/MARKETING/SALES); it is no longer read-only or AI-only. Scoped throttling is shared server infrastructure reusing existing rate-bucket storage.
+
 Anonymous UUID cookie is HttpOnly, SameSite Strict and Secure in production. Browser sessionStorage contains only the conversation UUID, not the owner cookie or credentials. Reload fetches the latest 100 transcript messages with ownership and retention checks. New conversation drops the browser reference. It does not delete prior records. Overlapping chat requests receive 409. Lease expires after 10 minutes if a process dies.
 
 Context sends only recent configured messages, bounded stored summary, retrieved data and the system prompt. Older messages are incrementally summarized after the configured threshold. Retention denies expired conversations; admin cleanup deletes expired rows (messages cascade) and old rate buckets.
