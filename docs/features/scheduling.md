@@ -24,6 +24,8 @@ GET `/api/consultations/<uuid>/calendar?token=<64 hex characters>`: no account a
 
 ## Verification and limits
 
+Development troubleshooting: an undefined consultationBooking/consultationSlot delegate means the process has a stale generated client/singleton, not an empty booking list. Startup generates Prisma Client; shared db cache is schema-fingerprinted and replaces legacy clients. Restart a dev process that still has the old generated package loaded. See installation instructions; never reset data to fix a missing delegate.
+
 Contract and isolated PostgreSQL tests cover invalid consent/UUID/timezone/spam fields, framework metadata handling, overlap rejection, concurrent booking atomicity, RBAC, cancellation/stale versions and hashed calendar-token access. Production HTTP checks verify ID/EN pages, admin/sales access and private ICS. Browser QA at 1440px and 390px verifies actual reservation/confirmation, lead/status/recalculation/cancellation and New York date rollover. These are local checks, not production acceptance. Only synthetic fixtures were used and cleaned afterward.
 
 No outbound email, external calendar, recurring availability, multi-team capacity, self-service cancel link or pagination is delivered. Availability is curated explicitly by admin; zero slots means visitors use contact. Admin labels remain Indonesian. Broader full-funnel/AI-to-consultation attribution is deferred for review, not claimed complete.
