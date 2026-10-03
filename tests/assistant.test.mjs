@@ -50,10 +50,18 @@ const { retrieve } = await import("../src/features/assistant/retrieval/index.ts"
 const { rebuildKnowledge } = await import("../src/features/assistant/retrieval/index.ts");
 const { respondToAssistant } = await import("../src/features/assistant/orchestration/respond.ts");
 const fetchOriginal = global.fetch;
-test("general technology questions and ID/EN prompt contract", () => {
+function withScopeChecks(handler) {
+  return async (url,options)=>{
+    const body=JSON.parse(options.body);
+    if (/^LUNABINER_(SCOPE|OUTPUT)_CHECK/.test(body.messages[0]?.content ?? "")) return Response.json({choices:[{message:{content:JSON.stringify({decision:"ALLOW"}),tool_calls:[]}}]});
+    return handler(url,options);
+  };
+}
+test("LunaBiner-only policy and ID/EN prompt contract", () => {
   for (const lang of ["id","en"]) {
     const prompt = systemPrompt(defaultSettings,lang);
-    assert.match(prompt,/General technology questions may use model knowledge/);
+    assert.match(prompt,/Only discuss LunaBiner and its verified/);
+    assert.doesNotMatch(prompt,/General technology questions may use model knowledge/);
     assert.ok(prompt.includes("Respond in "+lang));
   }
 });
@@ -67,6 +75,7 @@ test("company claims are grounded; unknown facts and injection have explicit gua
 test("runtime schema rejects unknown secret fields and invalid ranges", () => {
   assert.equal(settingsSchema.safeParse({ apiKey:"secret" }).success,false);
   assert.equal(settingsSchema.safeParse({ maxOutputTokens:999999 }).success,false);
+  assert.equal(settingsSchema.safeParse({allowGeneralTechQuestions:true}).success,false);
 });
 test("create lead requires real consent and supplied contact", () => {
   const input = {name:"Test",email:"test@example.test",challenge:"A business challenge",conversationId:randomUUID()};
@@ -105,8 +114,9 @@ test("browser modules cannot expose API credential or import server modules",()=
 });
 test("database runtime, UUID persistence, ownership and lead consent", async()=>{
   const owner=randomUUID();
-  const config=await db.aiConfiguration.create({data:{activeModel:"test-runtime",settings:{...defaultSettings,activeModel:"test-runtime",contextMessageLimit:6},contextMessageLimit:6}});
+  const config=await db.aiConfiguration.create({data:{activeModel:"test-runtime",settings:{...defaultSettings,allowGeneralTechQuestions:true,activeModel:"test-runtime",contextMessageLimit:6},contextMessageLimit:6}});
   const loaded=await getAssistantRuntimeConfig(); assert.equal(loaded.activeModel,"test-runtime"); assert.equal(loaded.contextMessageLimit,6);
+  assert.equal(loaded.allowGeneralTechQuestions,false);
   const conversation=await acquireConversation(owner,undefined,"id",loaded);
   assert.match(conversation.id,/^[0-9a-f-]{36}$/);
   await db.aiMessage.create({data:{conversationId:conversation.id,role:"USER",content:"Test business challenge"}});
@@ -124,10 +134,10 @@ test("embedding failure falls back to grounded lexical sources", async()=>{
 });
 test("orchestrator invokes only registry tools then answers", async()=>{
   let calls=0;
-  global.fetch=async()=> {
+  global.fetch=withScopeChecks(async()=> {
     calls++;
     return Response.json({choices:[{message:calls===1?{content:null,tool_calls:[{id:"call",type:"function",function:{name:"search_services",arguments:'{"query":"automation"}'}}]}:{content:"Workflow automation can help.",tool_calls:[]}}]});
-  };
+  });
   const result=await respondToAssistant([{role:"user",content:"What is workflow automation?"}],defaultSettings,"en",null);
   assert.equal(calls,2); assert.ok(result.answer.includes("automation")); global.fetch=fetchOriginal;
 });
@@ -148,7 +158,7 @@ test("embedding ingestion stores vectors and cosine retrieval returns sources", 
   global.fetch = fetchOriginal;
 });
 test("recommendation cards disclose illustrative portfolio and product concepts", async () => {
-  global.fetch = async () => Response.json({ choices: [{ message: { content: "Verified context only.", tool_calls: [] } }] });
+  global.fetch = withScopeChecks(async () => Response.json({ choices: [{ message: { content: "Verified context only.", tool_calls: [] } }] }));
   try {
     const portfolio = await respondToAssistant([{ role: "user", content: "energy" }], defaultSettings, "id", null);
     assert.ok(portfolio.recommendations.some(item => item.title.startsWith("Contoh ilustratif:")));
@@ -158,12 +168,12 @@ test("recommendation cards disclose illustrative portfolio and product concepts"
 });
 test("recommendation disable flag is respected after exhausting tool rounds", async () => {
   let calls = 0;
-  global.fetch = async () => {
+  global.fetch = withScopeChecks(async () => {
     calls++;
     return Response.json({ choices: [{ message: calls <= 3
       ? { content: null, tool_calls: [{ id: "call-" + calls, type: "function", function: { name: "search_services", arguments: '{"query":"automation"}' } }] }
       : { content: "Final response.", tool_calls: [] } }] });
-  };
+  });
   try {
     const result = await respondToAssistant([{ role: "user", content: "automation" }], { ...defaultSettings, recommendationsEnabled: false }, "en", null);
     assert.equal(calls, 4);

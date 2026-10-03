@@ -7,5 +7,7 @@ export async function getAssistantRuntimeConfig() {
   return settingsSchema.parse({ ...defaultSettings, ...(config.settings as object ?? {}),
     activeModel: config.activeModel, temperature: config.temperature,
     maxOutputTokens: config.maxOutputTokens, contextMessageLimit: config.contextMessageLimit,
-    ragEnabled: config.ragEnabled, systemPrompt: config.systemPrompt ?? "" });
+    ragEnabled: config.ragEnabled, systemPrompt: config.systemPrompt ?? "",
+    // Older persisted settings must not reopen the application scope.
+    allowGeneralTechQuestions: false });
 }

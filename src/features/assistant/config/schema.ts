@@ -18,7 +18,7 @@ export const settingsSchema = z.object({
   defaultLanguage: z.enum(["id", "en"]).default("id"),
   supportedLanguages: z.array(z.enum(["id", "en"])).min(1).default(["id", "en"]),
   autoDetectLanguage: z.boolean().default(true),
-  allowGeneralTechQuestions: z.boolean().default(true),
+  allowGeneralTechQuestions: z.literal(false).default(false),
   requireGroundingForCompanyClaims: z.literal(true).default(true),
   recommendationsEnabled: z.boolean().default(true),
   leadCaptureEnabled: z.boolean().default(true),

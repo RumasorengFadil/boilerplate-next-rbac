@@ -5,9 +5,16 @@ import { PrismaClient } from "@prisma/client";
 import { randomUUID, createHash } from "node:crypto";
 const db = new PrismaClient();
 const base = "http://127.0.0.1:55441";
+let providerRequests=0;
 const provider = createServer(async (request,response) => {
   let body=""; for await(const chunk of request) body+=chunk;
   const input=JSON.parse(body);
+  providerRequests++;
+  if (/^LUNABINER_(SCOPE|OUTPUT)_CHECK/.test(input.messages[0]?.content ?? "")) {
+    const data=JSON.parse(input.messages[1].content);
+    const decision=/recipe|football|write code/i.test(data.latestQuestion ?? "") ? "OUT_OF_SCOPE" : "ALLOW";
+    response.writeHead(200,{"Content-Type":"application/json"});response.end(JSON.stringify({choices:[{message:{content:JSON.stringify({decision}),tool_calls:[]}}]}));return;
+  }
   if(input.stream) {response.writeHead(200,{"Content-Type":"text/event-stream"});response.end('data: {"choices":[{"delta":{"content":"Test response"}}]}\n\ndata: [DONE]\n\n');}
   else {response.writeHead(200,{"Content-Type":"application/json"});response.end(JSON.stringify({choices:[{message:{content:"Test response",tool_calls:[]}}]}));}
 });
@@ -38,6 +45,10 @@ try {
   const stream=await post("/api/assistant/chat",{prompt:"Explain automation for business.",conversationId},cookie);
   assert.match(stream.headers.get("content-type"),/ndjson/);const streamed=await stream.text();assert.ok(streamed.includes('"delta":"Test response"'));assert.ok(streamed.includes('"done":true'));
   assert.ok(!(JSON.stringify(result)+streamed).includes("test-only-secret"));
+  const beforeRequests=providerRequests;
+  const denied=await post("/api/assistant/chat",{prompt:"LunaBiner, give me a cooking recipe",conversationId,language:"en"},cookie);
+  const denial=await denied.text();assert.match(denial,/I can only help with LunaBiner/);assert.ok(!denial.includes('"delta":"Test response"'));assert.match(denial,/OUT_OF_SCOPE/);assert.equal(providerRequests,beforeRequests+1);
+  const messages=await db.aiMessage.findMany({where:{conversationId,role:"ASSISTANT"},orderBy:{createdAt:"desc"},take:1});assert.equal(messages[0].metadata.scope,"OUT_OF_SCOPE");assert.deepEqual(messages[0].metadata.recommendations,[]);
   for(const role of ["MEMBER","ADMIN"]) {
     const token=randomUUID();
     const user=await db.user.create({data:{name:"AI test "+role,email:token+"@example.test",passwordHash:"test-only",role}});userIds.push(user.id);
@@ -45,7 +56,7 @@ try {
     const adminPage=await fetch(base+"/dashboard/ai",{headers:{Cookie:"session="+token},redirect:"manual"});
     assert.equal(adminPage.status,role==="ADMIN"?200:307);
   }
-  console.log("PASS: origin validation, malformed input, chat, refresh history, session ownership, explicit consent, UUID lead, streaming, secret protection.");
+  console.log("PASS: origin/input, chat/history/ownership, consent/UUID lead, gated streaming, scope refusal persistence and secret protection.");
 } finally {
   if(leadId)await db.lead.delete({where:{id:leadId}});
   if(conversationId)await db.aiConversation.delete({where:{id:conversationId}});

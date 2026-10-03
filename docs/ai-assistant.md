@@ -4,7 +4,19 @@
 
 The assistant runs inside the existing Next.js modular monolith. PostgreSQL/Prisma persists UUID conversations, messages, leads, runtime configuration, rate buckets, knowledge vectors and audit events. Existing auth sessions and `requirePermission("ai:manage")` protect administration.
 
-Request flow: same-origin validation → Zod input → DB rate limit → anonymous HttpOnly session → conversation ownership/lease → recent messages and older-message summary → retrieval → bounded provider tool loop → grounded answer → persistence. Assistant text renders as plain React text; no provider HTML is executed.
+Request flow: same-origin validation → Zod input → DB rate limit → anonymous HttpOnly session → conversation ownership/lease → recent messages and older-message summary → input scope check → retrieval → bounded provider tool loop → output scope/grounding check → reviewed answer → persistence. Assistant text renders as plain React text; no provider HTML is executed.
+
+## LunaBiner-only policy
+
+The server permits questions about verified LunaBiner company information, services, products, portfolio, insights, FAQ, contact/consultation and business needs related to those offerings. A visitor does not need to mention the brand when describing a relevant business need. General technology tutorials/code generation, unrelated knowledge, news, politics, sports, recipes, homework and personal advice are outside scope. Adding the brand name, roleplay or an unrelated part to an otherwise relevant request does not bypass this policy.
+
+`allowGeneralTechQuestions` accepts only `false`; legacy stored `true` values are overridden when loading configuration. Editorial prompts cannot broaden the fixed system policy. No database migration or stored-configuration rewrite is required.
+
+Input classification receives the latest question and up to two preceding user questions, not old assistant answers or summaries. A second check validates the proposed answer against retrieved facts/read-only tool results before any answer text reaches the browser. Both use the configured active provider/model with temperature zero, a 64-output-token budget and strict Zod-validated JSON decisions. Malformed responses, tool calls or classifier failures become `CLARIFY`. Missing evidence also prevents releasing a generated answer.
+
+Decisions are `ALLOW`, `OUT_OF_SCOPE` or `CLARIFY`. Rejected/ambiguous requests receive a fixed Indonesian/English response, no recommendation cards and no lead offer. These are completed responses, not HTTP failures. The chat JSON response and NDJSON `done` event include `scope`; assistant message metadata stores the same value. Existing ownership, rate limiting and authorization remain unchanged.
+
+An allowed answer normally adds two bounded classification calls; a rejected input skips retrieval and answer generation. Existing older-message summarization can still run before classification. This adds latency and token cost. Semantic checks remain model-dependent, not an absolute guarantee against every adversarial prompt. Existing transcripts are not rewritten; old off-topic replies can remain visible in saved history.
 
 ## Configuration responsibilities
 
@@ -18,13 +30,13 @@ Database: `AiConfiguration` core columns plus validated `settings` JSON. Admin `
 
 OpenAI/OpenAI-compatible chat completions are implemented with response validation, bounded retries/timeouts and SSE parsing. Ollama can use its OpenAI-compatible endpoint. Anthropic/Gemini are explicit extension slots, not implemented native adapters. Add a `LlmProvider` adapter implementing `complete`/`stream`, register it in the provider factory and add its tests.
 
-Tool gathering precedes streaming generation when streaming is enabled. The API returns newline-delimited JSON events (`conversationId`, `delta`, `done`, recommendations/error) or a normal JSON answer when disabled. Errors are user-safe and do not expose provider payloads.
+When streaming is enabled, the API retains newline-delimited JSON events (`conversationId`, `delta`, `done`, recommendations/error), but buffers the generated answer until scope/grounding verification completes. It emits the reviewed answer as one `delta`, not unchecked incremental provider tokens. When disabled it returns a normal JSON answer. Errors are user-safe and do not expose provider payloads.
 
 The floating panel preserves the existing LunaBiner colors and responsive layout. Transcript updates scroll to the latest reply; failed empty reply placeholders are removed while partial streamed answers remain available. The prompt requests plain text and forbids invented domains. New recommendation cards label portfolio examples as illustrative and product previews as concepts; the recommendation flag is enforced on every tool-loop exit. Previously saved message metadata is not rewritten.
 
 ## Knowledge and RAG
 
-Current content source is the existing static website feature; there is no CMS yet. Services, illustrative case studies, insights, product previews, company description and contact FAQ are normalized and chunked. Products are concepts; example case studies are explicitly not completed client work.
+Current retrieval content source is the existing static website feature. The CMS exists separately but is not yet integrated into this RAG source. Services, illustrative case studies, insights, product previews, company description and contact FAQ are normalized and chunked. Products are concepts; example case studies are explicitly not completed client work.
 
 The index uses PostgreSQL JSON vectors and application cosine similarity, avoiding new infrastructure/extensions for the small corpus. Admin reindex replaces the index transactionally only after embeddings succeed. It supports up to 2,000 chunks; migrate retrieval to pgvector/ANN before exceeding this documented scale.
 
@@ -32,7 +44,7 @@ Pipeline: published static content → chunking → embedding endpoint → `AiKn
 
 ## Tools and consent
 
-Only the named registry can execute validated tools: search_services, search_case_studies, search_products, search_insights and create_lead. Search is read-only. create_lead offers a human consent form; model arguments cannot create database leads. The form validates name/email/challenge, explicit checkbox consent, UUID conversation ownership and the runtime capture flag. The API writes source AI_ASSISTANT, consent timestamp and conservative scoring from provided fields. Contact information is never inferred. Scheduling remains a future tool contract; use the contact CTA meanwhile.
+Only the named registry can execute validated tools: search_services, search_case_studies, search_products, search_insights and create_lead. Search is read-only. create_lead offers a human consent form; model arguments cannot create database leads. The form validates name/email/challenge, explicit checkbox consent, UUID conversation ownership and the runtime capture flag. The API writes source AI_ASSISTANT, consent timestamp and shared configurable lead scoring from provided fields. Contact information is never inferred. Internal appointment scheduling is implemented separately; an AI booking tool is not implemented.
 
 ## Persistence and privacy
 
@@ -61,5 +73,7 @@ Repository code has been tested against isolated PostgreSQL and a local mock pro
 ## Tests
 
 Node 22.15+ is required for the test loader's registerHooks API. Against an **isolated test database**, deploy migrations then run:
-`node --test tests/assistant.test.mjs` and `node tests/assistant-http.mjs`.
+`node --test tests/assistant.test.mjs tests/assistant-scope.test.mjs` and `node tests/assistant-http.mjs`.
 The suites intentionally modify/test data and must never target production. HTTP suite uses ports 55440/55441 and a local provider mock; no paid API calls.
+
+Scope tests cover strict decisions/fail-closed behavior, legacy configuration, rejected-input short circuit, output checks and reviewed-only delivery. HTTP tests exercise refusal in an existing conversation and persisted scope metadata. Mock verdicts test enforcement wiring, not the semantic accuracy of the live model. The layered narrow-scope/input-output approach follows [OpenAI safety best practices](https://developers.openai.com/api/docs/guides/safety-best-practices).

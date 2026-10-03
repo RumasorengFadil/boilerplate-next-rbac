@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       const result = await respondToAssistant(context.history, config, language, context.summary, onDelta);
       await db.$transaction([
         db.aiMessage.create({ data: { conversationId: id!, role: "ASSISTANT", content: result.answer,
-          metadata: { recommendations: result.recommendations, ...(config.metricsEnabled ? { degradedRetrieval: result.degraded, durationMs: Date.now()-startedAt, responseType: /not enough|cannot confirm|tidak dapat|belum tersedia|tidak.*terverifikasi/i.test(result.answer) ? "UNVERIFIED" : "ANSWERED" } : {}) } } }),
+          metadata: { recommendations: result.recommendations, scope: result.scope, ...(config.metricsEnabled ? { degradedRetrieval: result.degraded, durationMs: Date.now()-startedAt, responseType: /not enough|cannot confirm|tidak dapat|belum tersedia|tidak.*terverifikasi/i.test(result.answer) ? "UNVERIFIED" : "ANSWERED" } : {}) } } }),
         db.aiMessage.update({ where: { id: userMessage.id }, data: { metadata: { status: "COMPLETED" } } }),
         db.aiConversation.update({ where: { id }, data: { busyUntil: null, language } }),
       ]);
