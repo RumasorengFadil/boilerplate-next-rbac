@@ -34,14 +34,14 @@ export function ContentEditor({ initial, canPublish, portfolio = false, readOnly
       {portfolio ? <RichTextEditor name={`${locale}.richBody`} label={`Konten detail (${locale.toUpperCase()})`} initial={initial?.translations[locale].richBody} body={initial?.translations[locale].body} disabled={pending || readOnly} /> : field(`${locale}.body`, "Konten (teks biasa; paragraf dipisahkan baris kosong)", initial?.translations[locale].body, true)}
       {field(`${locale}.seoTitle`, "SEO title", initial?.translations[locale].seoTitle)}{field(`${locale}.seoDescription`, "SEO description", initial?.translations[locale].seoDescription)}
     </fieldset>)}</section>
-    <details className="card" open={kind !== "ARTICLE"}><summary className="min-h-11 cursor-pointer font-semibold">Detail {kind === "CASE_STUDY" ? "studi kasus" : "produk dan relasi"}</summary><div className="mt-4 grid gap-4 sm:grid-cols-2">
+    {!portfolio && <details className="card" open={kind !== "ARTICLE"}><summary className="min-h-11 cursor-pointer font-semibold">Detail {kind === "CASE_STUDY" ? "studi kasus" : "produk dan relasi"}</summary><div className="mt-4 grid gap-4 sm:grid-cols-2">
       {field("client", "Klien (hanya jika izin publikasi tersedia)", details.client)}
       <label className="flex items-center gap-3 text-sm"><input type="checkbox" name="verifiedProject" defaultChecked={details.verifiedProject} />Proyek nyata terverifikasi, bukan ilustrasi</label>
       {(["industry", "challenge", "approach", "solution", "impact", "before", "after", "architecture", "ctaLabel"] as const).flatMap(name => (["id", "en"] as const).map(locale => field(`${name}.${locale}`, `${name} (${locale.toUpperCase()})`, details[name][locale], name !== "industry" && name !== "ctaLabel")))}
       {(["features", "capabilities", "technology", "gallery", "relatedServices", "relatedCaseStudies"] as const).map(name => field(name, `${name} — satu item per baris${name === "relatedServices" ? " (software, automation, ai, data)" : ""}`, details[name].join("\n"), true))}
       {!portfolio && <label className="grid gap-2 text-sm">Status produk<select className="input" name="productStatus" defaultValue={details.productStatus}>{["COMING_SOON", "BETA", "LIVE"].map(value => <option key={value}>{value}</option>)}</select></label>}
       {field("ctaPath", "CTA path internal /id/… atau /en/…", details.ctaPath)}
-    </div></details>
+    </div></details>}
     </fieldset>
     <p className="text-sm text-slate-600">Simpan DRAFT → kirim REVIEW → publisher memilih PUBLISHED atau SCHEDULED. Publikasi memerlukan konten lengkap ID/EN. Gambar memakai asset yang sudah tersedia; upload media belum tersedia.</p>
     {state.message && <p role="status" className={state.success ? "text-teal-700" : "text-red-700"}>{state.message}</p>}

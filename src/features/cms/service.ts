@@ -17,7 +17,7 @@ export function presentContent(entry: Awaited<ReturnType<typeof db.contentEntry.
 export const publishedContent = cache(async (kind?: ContentKind) => {
   return (await db.contentEntry.findMany({ where: publicContentWhere(kind), orderBy: [{ publishedAt: "desc" }, { id: "asc" }], take: 200 })).map(presentContent);
 });
-export async function saveContent(raw: unknown) {
+export async function saveContent(raw: unknown, options: { preservePortfolioDetails?: boolean } = {}) {
   const user = await requirePermission("content:write");
   const input = contentInputSchema.parse(raw);
   const publisher = hasPermission(user.role, "content:publish");
@@ -33,9 +33,15 @@ export async function saveContent(raw: unknown) {
     }
     if (!canTransition(previous?.status ?? "DRAFT", input.status)) throw new Error("Invalid publication transition; submit for review first.");
     if (!publisher && (["PUBLISHED", "SCHEDULED", "ARCHIVED"].includes(input.status) || previous && ["PUBLISHED", "SCHEDULED"].includes(previous.status))) throw new Error("Publishing permission required.");
+    // The portfolio form only owns basic metadata. Read omitted legacy fields
+    // inside this transaction; never round-trip them through hidden inputs.
+    const details = options.preservePortfolioDetails && input.kind === "CASE_STUDY"
+      ? { ...detailsSchema.parse(previous?.details ?? {}), category: input.details.category,
+        tags: input.details.tags, authorName: input.details.authorName, image: input.details.image }
+      : input.details;
     const data = {
       kind: input.kind, slug: input.slug, status: input.status,
-      translations: input.translations, details: input.details,
+      translations: input.translations, details,
       publishedAt: input.status === "PUBLISHED" ? previous?.status === "PUBLISHED" ? previous.publishedAt ?? new Date() : new Date() : input.status === "SCHEDULED" ? new Date(input.publishedAt!) : null,
     };
     if (input.status === "SCHEDULED" && data.publishedAt! <= new Date()) throw new Error("Schedule must be in the future.");

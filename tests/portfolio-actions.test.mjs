@@ -48,9 +48,30 @@ test("portfolio actions validate untrusted forms, preserve rich data and enforce
     assert.ok((await savePortfolioAction({ message: "" }, unsafe)).fields.includes("slug"));
     const invalidRich = form(); invalidRich.set("en.richBody", JSON.stringify({ type: "doc", content: [{ type: "image", attrs: { src: "https://tracker.test" } }] }));
     assert.equal((await savePortfolioAction({ message: "" }, invalidRich)).success, undefined);
-    let saved = await savePortfolioAction({ message: "" }, form()); assert.equal(saved.success, true); ids.push(saved.id);
+    const createForm = form(); createForm.set("verifiedProject", "on"); createForm.set("client", "Untrusted client");
+    let saved = await savePortfolioAction({ message: "" }, createForm); assert.equal(saved.success, true); ids.push(saved.id);
+    const createdDetails = (await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).details;
+    assert.equal(createdDetails.verifiedProject, false); assert.equal(createdDetails.client, "");
     assert.deepEqual((await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).translations.id.richBody, richBody);
     const slug = (await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).slug;
+    const legacyDetails = { client: "Legacy client", verifiedProject: true, industry: { id: "Operasional", en: "Operations" },
+      challenge: { id: "Tantangan lama", en: "Legacy challenge" }, technology: ["Next.js"], capabilities: ["software"],
+      relatedServices: ["software"], ctaPath: "/en/contact" };
+    const previousDetails = (await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).details;
+    await db.contentEntry.update({ where: { id: saved.id }, data: { details: { ...previousDetails, ...legacyDetails } } });
+    const editorial = form({ id: saved.id, version: saved.version, slug });
+    editorial.set("category", "Editorial category"); editorial.set("tags", "operations, automation");
+    editorial.set("authorName", "Editorial author"); editorial.set("image", "/images/test-cover.png");
+    editorial.set("client", "Untrusted overwrite"); editorial.set("verifiedProject", "on"); editorial.set("industry.id", "Overwrite");
+    assert.equal(parseContentForm(editorial, true).details.client, undefined);
+    assert.equal(parseContentForm(editorial).details.client, "Untrusted overwrite");
+    saved = await savePortfolioAction({ message: "" }, editorial); assert.equal(saved.success, true);
+    const retained = (await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).details;
+    assert.deepEqual(retained, { ...previousDetails, ...legacyDetails, category: "Editorial category",
+      tags: ["operations", "automation"], authorName: "Editorial author", image: "/images/test-cover.png" });
+    for (const [key, value] of Object.entries(legacyDetails)) assert.deepEqual(retained[key], value);
+    assert.equal(retained.category, "Editorial category"); assert.deepEqual(retained.tags, ["operations", "automation"]);
+    assert.equal(retained.authorName, "Editorial author"); assert.equal(retained.image, "/images/test-cover.png");
     saved = await savePortfolioAction({ message: "" }, form({ id: saved.id, version: saved.version, slug, status: "REVIEW" })); assert.equal(saved.success, true);
     assert.equal((await savePortfolioAction({ message: "" }, form({ id: saved.id, version: saved.version, slug, status: "PUBLISHED" }))).success, undefined);
     await assert.rejects(() => portfolioLifecycleAction({ message: "" }, lifecycle(saved.id, saved.version, "archive")), /Unauthorized/);

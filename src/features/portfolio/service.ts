@@ -5,9 +5,9 @@ import { recordAudit } from "@/server/audit";
 import { presentContent, publicContentWhere, saveContent } from "@/features/cms/service";
 import { portfolioInputSchema, portfolioLifecycleSchema, portfolioRouteSchema } from "./schema";
 
-export async function savePortfolio(raw: unknown) {
+export async function savePortfolio(raw: unknown, options: { preservePortfolioDetails?: boolean } = {}) {
   await requirePermission("content:write");
-  return saveContent(portfolioInputSchema.parse(raw));
+  return saveContent(portfolioInputSchema.parse(raw), options);
 }
 
 // No shared cache yet: Task 5 owns rendering/cache adoption and invalidation.

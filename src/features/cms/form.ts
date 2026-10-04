@@ -18,12 +18,13 @@ export function parseContentForm(form: FormData, portfolio = false) {
     kind: portfolio ? "CASE_STUDY" : text("kind"), slug: text("slug"), status: text("status"), publishedAt: scheduled ? utc : null,
     translations: { id: translations("id"), en: translations("en") },
     details: { category: text("category"), tags: list("tags"), authorName: text("authorName"), image: text("image"),
-      client: text("client"), verifiedProject: form.get("verifiedProject") === "on",
+      ...(!portfolio ? { client: text("client"), verifiedProject: form.get("verifiedProject") === "on",
       industry: localized("industry"), challenge: localized("challenge"), approach: localized("approach"),
       solution: localized("solution"), impact: localized("impact"), before: localized("before"), after: localized("after"), architecture: localized("architecture"),
       features: list("features"), capabilities: list("capabilities"), technology: list("technology"), gallery: list("gallery"),
       relatedServices: list("relatedServices"), relatedCaseStudies: list("relatedCaseStudies"), productStatus: text("productStatus") || "COMING_SOON",
       ctaLabel: localized("ctaLabel"), ctaPath: text("ctaPath") || "/id/contact",
+      } : {}),
     },
   };
 }

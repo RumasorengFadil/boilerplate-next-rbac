@@ -29,6 +29,10 @@ try {
   const guest = await browser.newPage(); await guest.goto(origin + "/dashboard/portfolio"); assert.match(guest.url(), /\/login/); await guest.close();
   const admin = await contextFor("ADMIN"); await admin.goto(origin + "/dashboard/portfolio/new");
   await admin.getByRole("textbox", { name: "Konten detail (ID)", exact: true }).waitFor();
+  assert.equal(await admin.getByText("Detail studi kasus", { exact: true }).count(), 0);
+  assert.equal(await admin.locator('[name="client"], [name="industry.id"], [name="technology"], [name="verifiedProject"]').count(), 0);
+  const generic = await admin.context().newPage(); await generic.goto(origin + "/dashboard/content/new");
+  assert.equal(await generic.getByText("Detail produk dan relasi", { exact: true }).count(), 1); await generic.close();
   const slug = "browser-" + randomUUID(), title = "Portfolio browser illustration";
   for (const locale of ["id", "en"]) {
     await admin.locator(`[name="${locale}.title"]`).fill(title);

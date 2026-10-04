@@ -24,7 +24,7 @@ export async function savePortfolioAction(_: ContentState, form: FormData): Prom
     return { message: `Periksa kolom: ${fields.join(", ")}. Publikasi membutuhkan isi dan ringkasan lengkap ID/EN.`, fields };
   }
   try {
-    const saved = await savePortfolio(parsed.data);
+    const saved = await savePortfolio(parsed.data, { preservePortfolioDetails: true });
     invalidatePortfolio(saved.id);
     return { success: true, id: saved.id, version: saved.version, message: "Portfolio tersimpan." };
   } catch {
