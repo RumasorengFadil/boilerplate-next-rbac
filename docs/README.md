@@ -25,6 +25,9 @@
 | [AI LunaBiner-only scope — Task 2](reports/2026/10/03/ai_assistant_lunabiner_scope_task2.md) | Penjelasan scope UI bilingual, contoh pertanyaan dan verifikasi desktop/mobile. |
 | [PRD 001 — Company Profile LunaBiner](products/PRD/PRD_001_company-profile-lunabiner.md) | Arsip PRD awal company profile dan scope MVP dari dokumen sumber pengguna. |
 | [PRD 002 — LunaBiner Phase 2](products/PRD/PRD_002_lunabiner-phase-2.md) | Arsip PRD Phase 2 untuk business acquisition platform dari dokumen sumber pengguna. |
+| [PRD 003 — Portfolio CMS](products/PRD/PRD_003_portfolio-cms.md) | Requirement UUID, slug, Tiptap, database-only portfolio, soft delete dan prioritas PPR yang dikunci. |
+| [Portfolio architecture](features/portfolio.md) | Kondisi aktual, keputusan target dan audit kompatibilitas PPR sebelum implementasi. |
+| [Portfolio — Task 1](reports/2026/10/04/portfolio_task1.md) | Tracking PRD/arsitektur, baseline verification dan pekerjaan berikutnya. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |
 
 Dokumen di `docs/products/PRD/` menyimpan kebutuhan produk sesuai sumber asli, bukan pernyataan bahwa seluruh fiturnya telah diimplementasikan. Status implementasi dicatat terpisah pada laporan yang relevan.
