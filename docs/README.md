@@ -26,7 +26,7 @@
 | [PRD 001 — Company Profile LunaBiner](products/PRD/PRD_001_company-profile-lunabiner.md) | Arsip PRD awal company profile dan scope MVP dari dokumen sumber pengguna. |
 | [PRD 002 — LunaBiner Phase 2](products/PRD/PRD_002_lunabiner-phase-2.md) | Arsip PRD Phase 2 untuk business acquisition platform dari dokumen sumber pengguna. |
 | [PRD 003 — Portfolio CMS](products/PRD/PRD_003_portfolio-cms.md) | Requirement UUID, slug, Tiptap, database-only portfolio, soft delete dan prioritas PPR yang dikunci. |
-| [Portfolio architecture](features/portfolio.md) | Kondisi aktual, keputusan target dan audit kompatibilitas PPR sebelum implementasi. |
+| [Portfolio architecture](features/portfolio.md) | Kondisi aktual, audit PPR, fallback rendering/cache dan production regression. |
 | [Portfolio — Task 1](reports/2026/10/04/portfolio_task1.md) | Tracking PRD/arsitektur, baseline verification dan pekerjaan berikutnya. |
 | [Portfolio — Task 2](reports/2026/10/04/portfolio_task2.md) | Database/route reservations, lifecycle, rich contracts, seed idempotent dan hasil verifikasi. |
 | [Portfolio — Task 3](reports/2026/10/04/portfolio_task3.md) | Menu admin, Tiptap ID/EN, server actions, workflow dan QA desktop/mobile. |
@@ -44,6 +44,7 @@
 | [Portfolio direct status](reports/2026/10/04/portfolio_direct_status.md) | Guard CASE_STUDY, publish/schedule langsung, regression public/sitemap/RBAC dan arsip. |
 | [Portfolio PPR feasibility — Task 5B.1](reports/2026/10/04/portfolio_ppr_feasibility.md) | Bukti build terisolasi, hambatan route configs/root locale dan rekomendasi fallback; belum mengubah rendering production. |
 | [Portfolio rendering/cache — Task 5B.2](reports/2026/10/04/portfolio_rendering_cache.md) | Streaming Work, revision-keyed payload cache dengan live publication guards dan action invalidation. |
+| [Portfolio production cache — Task 5B.3](reports/2026/10/04/portfolio_cache_production.md) | Bukti SQL cold/warm, Server Action tag expiry, HTTP streaming dan warm-cache lifecycle/privacy. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |
 
 Dokumen di `docs/products/PRD/` menyimpan kebutuhan produk sesuai sumber asli, bukan pernyataan bahwa seluruh fiturnya telah diimplementasikan. Status implementasi dicatat terpisah pada laporan yang relevan.

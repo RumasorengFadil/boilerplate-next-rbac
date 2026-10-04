@@ -1,7 +1,7 @@
 # Portfolio — kondisi aktual dan keputusan target
 
 Tanggal audit: 2026-10-04. Requirement: [PRD 003](../products/PRD/PRD_003_portfolio-cms.md).
-Dokumen ini membedakan implementasi saat ini dengan keputusan target. PRD 003 Task 2 menyediakan fondasi database/service dan Task 3 admin editor; PRD 004 Task 2 menghubungkan rich renderer. PRD 003 Task 4 mengaktifkan canonical slug routing, redirect URL lama dan DB-only public portfolio. Cache/PPR dan final QA masih Task 5–6.
+Dokumen ini membedakan implementasi saat ini dengan keputusan target. PRD 003 Task 2 menyediakan fondasi database/service dan Task 3 admin editor; PRD 004 Task 2 menghubungkan rich renderer. PRD 003 Task 4 mengaktifkan canonical slug routing, redirect URL lama dan DB-only public portfolio. Task 5 cover dan fallback streaming/cache berikut production regression selesai; final QA masih Task 6.
 
 ## Refinement Tiptap single source — PRD 004
 
@@ -92,9 +92,9 @@ File baru yang gagal terpasang dibersihkan setelah DB memastikan tidak ada refer
 
 Public detail dan thumbnail work/home memakai current gambar yang sama, alt localized title. Layout/teal gradient fallback/CTA/logo tetap konsisten LunaBiner. Upload dirender `unoptimized` dan image optimizer hanya mengizinkan `/images/**`; `/media/**` tidak boleh melewati cache optimizer sehingga penarikan publikasi tetap diperiksa setiap request gambar. Ini tidak dapat menarik kembali salinan yang telah diunduh. OG branded contextual endpoints tetap terpisah/tidak berubah.
 
-Task 5A tidak mengaktifkan Cache Components/PPR/ISR. Task 5B cache/PPR PRD 003 serta Task 6 final QA masih tersisa. Deployment storage/backup: [Installation](../deployment/installation.md).
+Task 5A tidak mengaktifkan Cache Components/PPR/ISR. Task 5B telah selesai menggunakan fallback streaming/cache yang disetujui; Task 6 final QA masih tersisa. Deployment storage/backup: [Installation](../deployment/installation.md).
 
-## Keputusan target tersisa (belum diimplementasikan)
+## Data, boundary dan public routing aktual
 
 ### Data dan boundary
 
@@ -102,7 +102,7 @@ Pertahankan CMS sebagai pemilik `ContentEntry(CASE_STUDY)`. Portfolio menggunaka
 
 Migration `20261004010000_portfolio_foundation` menambah deletedAt dan PortfolioRoute; [database constraints](../database/schema.md) mencatat detail. Semua record portfolio/route memakai UUID; alias nomor hanyalah compatibility URL, bukan ID record.
 
-Rich body ID/EN, editor Tiptap, public server renderer dan bulk cleanup lokal tersedia. Generic CMS sudah mengarahkan case study ke editor khusus. Canonical slug/DB-only public routing PRD 003 Task 4 tersedia; target tersisa cache/PPR/final QA Task 5–6.
+Rich body ID/EN, editor Tiptap, public server renderer dan bulk cleanup lokal tersedia. Generic CMS sudah mengarahkan case study ke editor khusus. Canonical slug/DB-only public routing PRD 003 Task 4 dan fallback rendering/cache Task 5 tersedia; target tersisa final QA Task 6.
 
 ### Public URL dan publication
 
@@ -148,7 +148,7 @@ Production build terisolasi memakai Next.js 16.3.8 membuktikan bahwa mengaktifka
 
 Tidak ada perubahan production config, root layout, rendering, cache maupun database pada Task 5B.1. Baseline aplikasi utama tetap lulus typecheck, lint dan build; work masih dynamic SSR dengan request-scoped memoization. Belum ada runtime PPR yang berhasil diuji.
 
-Rekomendasi Task 5B.2 adalah fallback streaming SSR + public data cache yang telah diperbolehkan dalam PRD 003. Ini tetap bukan PPR/ISR. Intro work perlu dipisahkan dari query list/schema yang tidak perlu; detail harus menjaga eligibility/404/308 sebelum response dikirim. Cache tidak boleh melewatkan withdrawal, arsip, future schedule atau batas authorization. Implementasi dan production regression belum dilakukan, menunggu konfirmasi task berikutnya. [Laporan feasibility](../reports/2026/10/04/portfolio_ppr_feasibility.md).
+Hasil feasibility merekomendasikan fallback streaming SSR + public data cache yang diperbolehkan PRD 003 dan kemudian disetujui pengguna. Rekomendasi tersebut telah diterapkan pada Task 5B.2 dan diuji pada Task 5B.3. Ini tetap bukan PPR/ISR; detail menjaga eligibility/404/308 sebelum response dikirim dan cache tidak menjadi sumber kelayakan publik. [Laporan feasibility](../reports/2026/10/04/portfolio_ppr_feasibility.md).
 
 ## Rendering/cache aktual — Task 5B.2
 
@@ -162,7 +162,21 @@ Fallback yang disetujui kini diterapkan: streaming SSR + persistent public paylo
 - updateTag segera expire tag setelah Server Action commit; revalidatePath existing tetap dipertahankan. Pemeriksaan eligibility berlaku pada snapshot query request, bukan transaksi yang mengunci record selama response dikirim. Cached payload dari versi yang pernah public dapat tersimpan sampai expiry/invalidation, tetapi tidak menjadi sumber eligibility atau dapat diakses anonymous tanpa guard.
 - Sitemap dan delivery cover tetap live/no-store existing, tidak memakai cache payload/inventory. Database error tetap error, tidak diubah menjadi missing atau stale-success.
 
-Pengujian Task 5B.2 meliputi unit policy/cache adapter, delayed-query React streaming dan baseline production routing. Pembuktian hit/miss/invalidation Next cache di runtime production, timing HTTP shell, lifecycle lengkap dan responsive masih Task 5B.3/6.
+Pengujian Task 5B.2 meliputi unit policy/cache adapter, delayed-query React streaming dan baseline production routing. Task 5B.3 kini membuktikan runtime production sebagaimana dijelaskan di bawah. Final QA menyeluruh tetap Task 6.
+
+### Bukti production — Task 5B.3
+
+`tests/portfolio-cache-production.mjs` berjalan terhadap hasil next build/next start tanpa mock Next cache. SQL duration log database disposable menghitung hanya execute SELECT, bukan parse/bind:
+
+- Detail dan list cold masing-masing 1 query payload; warm masing-masing 0. Guard eligibility tetap query live pada keduanya. Ini bukti skenario fixture, bukan hit ratio/latency seluruh traffic production.
+- Sesudah browser admin melakukan save, detail canary yang UUID/version/updatedAt-nya tidak berubah melakukan 1 payload query lagi; request berikutnya 0. Ini membuktikan updateTag sesungguhnya, bukan hanya key revisi baru.
+- Dengan ContentEntry disposable dikunci pada bounded transaction, HTTP mengirim intro/loading Work sebelum unlock; cards dan JSON-LD menyusul setelah unlock. Tidak mengubah detail guard untuk memaksakan shell lebih awal atau mengubah status 404/308.
+- Save title/body bilingual dan slug langsung diperbarui pada public/home/detail/SEO; old slug tetap redirect. Warm cache tidak membocorkan draft/review/future schedule/arsip/restored DRAFT di public, OG atau sitemap. Cookie admin juga tidak membuat public route menyajikan draft.
+- Schedule diuji lewat clock nyata dengan tanggal UTC menit, tanpa SQL status update dan tanpa job. Setelah due, detail/list/sitemap visible sementara enum tetap SCHEDULED. Arsip/pulihkan diuji melalui browser Server Actions existing.
+
+Jalankan serial pada DB kosong lunabiner_portfolio_test, role portfolio_test, loopback port 55441; script menolak target lain. PostgreSQL disposable harus memakai log_min_duration_statement=0 dan log_parameter_max_length=0. Set PORTFOLIO_QUERY_LOG ke `/private/tmp/lunabiner-portfolio-db.<id>/server.log`, PLAYWRIGHT_MODULE/PLAYWRIGHT_EXECUTABLE bila memakai runtime/browser existing di luar project. Port 3008 harus bebas; fresh build wajib. Script membuat/membersihkan fixture dan session; log hanya dipakai observer, tidak dicetak mentah/committed. Transaction lock dibatasi 15 detik; clock test dapat menunggu hingga sekitar 80 detik. Jangan mengaktifkan logging ini pada DB produksi untuk menjalankan suite.
+
+[Laporan Task 5B.3](../reports/2026/10/04/portfolio_cache_production.md). Cache expiry setelah TTL 300 detik, multi-instance deployment, kapasitas maksimum dan load benchmark tidak dibuktikan suite ini. Batas live eligibility/request snapshot dan aturan external SQL revision tetap berlaku.
 
 ## Rencana verifikasi
 
@@ -174,6 +188,6 @@ Task 6: end-to-end lifecycle, desktop/mobile, typecheck/build dan dokumentasi ak
 
 ## Tracking
 
-PRD 003 Task 1 dokumentasi, Task 2 fondasi dan Task 3 admin editor tersedia. Task 4 public slug/redirect/DB-only tersedia (rich renderer melalui PRD 004). Task 5–6 masih tersisa. [Laporan Task 1](../reports/2026/10/04/portfolio_task1.md), [Laporan Task 2](../reports/2026/10/04/portfolio_task2.md), [Laporan Task 3](../reports/2026/10/04/portfolio_task3.md), [Laporan Task 4](../reports/2026/10/04/portfolio_task4.md). PRD 004 Task 1–3 selesai dan cleanup lokal sudah diterapkan. [Laporan Tiptap Task 2](../reports/2026/10/04/portfolio_tiptap_task2.md), [Laporan Tiptap Task 3](../reports/2026/10/04/portfolio_tiptap_task3.md).
+PRD 003 Task 1 dokumentasi, Task 2 fondasi dan Task 3 admin editor tersedia. Task 4 public slug/redirect/DB-only tersedia (rich renderer melalui PRD 004). Task 5 selesai; Task 6 masih tersisa. [Laporan Task 1](../reports/2026/10/04/portfolio_task1.md), [Laporan Task 2](../reports/2026/10/04/portfolio_task2.md), [Laporan Task 3](../reports/2026/10/04/portfolio_task3.md), [Laporan Task 4](../reports/2026/10/04/portfolio_task4.md). PRD 004 Task 1–3 selesai dan cleanup lokal sudah diterapkan. [Laporan Tiptap Task 2](../reports/2026/10/04/portfolio_tiptap_task2.md), [Laporan Tiptap Task 3](../reports/2026/10/04/portfolio_tiptap_task3.md).
 
-Task 5A cover upload selesai. Task 5B.1 feasibility PPR dan 5B.2 implementasi fallback selesai; Task 5B secara keseluruhan masih PARTIAL. Urutan tersisa: 5B.3 regression production cache/publication/SEO/privacy → Task 6 final QA. Status langsung PRD 006 sudah tersedia dan tetap dipertahankan.
+Task 5A cover upload dan Task 5B.1–5B.3 selesai: feasibility PPR, implementasi fallback dan production regression. Task 5 selesai menggunakan fallback yang disetujui, bukan PPR. Tersisa Task 6 final QA. Status langsung PRD 006 sudah tersedia dan tetap dipertahankan.
