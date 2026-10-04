@@ -43,8 +43,12 @@ export const contentInputSchema = z.object({
   if (input.kind !== "CASE_STUDY" && (input.translations.id.richBody || input.translations.en.richBody))
     context.addIssue({ code: "custom", path: ["translations"], message: "Rich body is currently limited to case studies." });
   if (input.status === "PUBLISHED" || input.status === "SCHEDULED") {
-    for (const locale of ["id", "en"] as const) if (input.translations[locale].body.length < 30 || input.translations[locale].excerpt.length < 10)
-      context.addIssue({ code: "custom", path: ["translations", locale], message: "Published content needs complete ID/EN body and excerpt." });
+    for (const locale of ["id", "en"] as const) {
+      if (input.translations[locale].body.length < 30)
+        context.addIssue({ code: "custom", path: ["translations", locale, "body"], params: { publicationMinimum: 30 }, message: "Published content needs at least 30 text characters." });
+      if (input.translations[locale].excerpt.length < 10)
+        context.addIssue({ code: "custom", path: ["translations", locale, "excerpt"], params: { publicationMinimum: 10 }, message: "Published content needs at least 10 excerpt characters." });
+    }
   }
   if (input.status === "SCHEDULED" && !input.publishedAt) context.addIssue({ code: "custom", path: ["publishedAt"], message: "Scheduled publication needs a date." });
 });

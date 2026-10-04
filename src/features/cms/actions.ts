@@ -5,7 +5,7 @@ import { saveContent } from "./service";
 import { contentInputSchema } from "./schema";
 import { parseContentForm } from "./form";
 
-export type ContentState = { message: string; id?: string; success?: boolean; version?: number; fields?: string[] };
+export type ContentState = { message: string; id?: string; success?: boolean; version?: number; fields?: string[]; fieldErrors?: Record<string, string> };
 export async function saveContentAction(_: ContentState, form: FormData): Promise<ContentState> {
   await requirePermission("content:write");
   const parsed = contentInputSchema.safeParse(parseContentForm(form));

@@ -34,6 +34,22 @@ try {
   assert.equal(await admin.locator('[name="image"]').count(), 0); assert.equal(await admin.locator('[name="coverFile"]').getAttribute("type"), "file");
   const slug = "cover-browser-" + randomUUID();
   await admin.locator('[name="slug"]').fill(slug);
+  for (const locale of ["id", "en"]) await admin.locator(`[name="${locale}.title"]`).fill("Cover workflow illustration");
+  await admin.locator('[name="status"]').selectOption("PUBLISHED");
+  await admin.getByRole("button", { name: "Simpan portfolio", exact: true }).click();
+  await admin.getByRole("status").filter({ hasText: "Portfolio belum tersimpan" }).waitFor();
+  for (const locale of ["id", "en"]) {
+    const language = locale === "id" ? "Bahasa Indonesia" : "Bahasa Inggris";
+    assert.equal(await admin.locator(`[name="${locale}.excerpt"]`).getAttribute("aria-invalid"), "true");
+    assert.equal(await admin.getByRole("textbox", { name: `Konten detail (${locale.toUpperCase()})`, exact: true }).getAttribute("aria-describedby"), `error-${locale}.richBody`);
+    assert.equal(await admin.locator(`[id="error-${locale}.excerpt"]`).textContent(), `Ringkasan ${language} minimal 10 karakter untuk publikasi.`);
+    assert.equal(await admin.locator(`[id="error-${locale}.richBody"]`).textContent(), `Konten detail ${language} minimal 30 karakter teks untuk publikasi.`);
+    assert.equal(await admin.locator(`[name="${locale}.title"]`).inputValue(), "Cover workflow illustration");
+  }
+  assert.doesNotMatch(await admin.getByRole("status").filter({ hasText: "Portfolio belum tersimpan" }).textContent(), /translations\./);
+  await admin.locator("section").filter({ has: admin.locator('[name="id.excerpt"]') }).last().screenshot({ path: screenshots + "/publication-field-errors.png" });
+  assert.equal(await db.contentEntry.count({ where: { kind: "CASE_STUDY", slug } }), 0);
+  await admin.locator('[name="status"]').selectOption("DRAFT");
   for (const locale of ["id", "en"]) {
     await admin.locator(`[name="${locale}.title"]`).fill("Cover workflow illustration");
     await admin.locator(`[name="${locale}.excerpt"]`).fill("An illustrative business workflow with an uploaded cover.");
@@ -53,6 +69,7 @@ try {
   let row;
   await poll(async () => { row = await db.contentEntry.findUnique({ where: { kind_slug: { kind: "CASE_STUDY", slug } } }); return Boolean(row); }); ids.push(row.id);
   await admin.waitForURL(`**/dashboard/portfolio/${row.id}`); await admin.reload();
+  assert.equal(await admin.locator('[aria-invalid="true"]').count(), 0);
   const original = row.details.image;
   assert.match(original, new RegExp("^/media/portfolio/" + row.id + "/[a-f0-9-]{36}$"));
   assert.equal((await fetch(origin + original, { redirect: "manual" })).status, 404);
@@ -95,7 +112,7 @@ try {
   await poll(async () => (await db.contentEntry.findUnique({ where: { id: row.id } })).details.image === "");
   assert.equal((await fetch(origin + current)).status, 404); assert.equal((await readdir(storage + "/" + row.id)).length, 2);
   assert.deepEqual(errors, []); await publicPage.close();
-  console.log("PASS: real multipart >1MB create upload, byte validation/error recovery, preview/keep/cancel/replace/remove, UUID ownership, draft/private and published media, optimizer deny, public thumbnail/detail, publisher guard and desktop/mobile.");
+  console.log("PASS: friendly publication feedback per language/field, accessible inline errors, retained text and no write on invalid publication; real multipart >1MB create upload, byte validation/error recovery, preview/keep/cancel/replace/remove, UUID ownership, draft/private and published media, optimizer deny, public thumbnail/detail, publisher guard and desktop/mobile.");
   console.log("Cover visual QA artifacts: " + screenshots);
 } finally {
   for (const ctx of contexts) await ctx.close(); await browser?.close();

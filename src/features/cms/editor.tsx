@@ -2,7 +2,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { contentKinds, contentStatuses, detailsSchema, type ContentInput } from "./schema";
-import { saveContentAction } from "./actions";
+import { saveContentAction, type ContentState } from "./actions";
 import { savePortfolioAction } from "@/features/portfolio/actions";
 import { RichTextEditor } from "./rich-text-editor";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import { CoverInput } from "@/features/portfolio/cover-input";
 
 export function ContentEditor({ initial, canPublish, portfolio = false, readOnly = false }: { initial?: ContentInput; canPublish: boolean; portfolio?: boolean; readOnly?: boolean }) {
   const router = useRouter();
-  const [state, action, pending] = useActionState(portfolio ? savePortfolioAction : saveContentAction, { message: "" });
+  const [state, action, pending] = useActionState(portfolio ? savePortfolioAction : saveContentAction, { message: "" } as ContentState);
   const [kind, setKind] = useState(initial?.kind ?? (portfolio ? "CASE_STUDY" : "ARTICLE"));
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [portfolioValues, setPortfolioValues] = useState<Record<string, string>>({});
@@ -20,7 +20,11 @@ export function ContentEditor({ initial, canPublish, portfolio = false, readOnly
   const valueProps = (name: string, initialValue: string) => portfolio
     ? { value: portfolioValues[name] ?? initialValue, onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setPortfolioValues(previous => ({ ...previous, [name]: event.target.value })) }
     : { defaultValue: initialValue };
-  const field = (name: string, label: string, value = "", multiline = false, required = false) => <label className="grid gap-2 text-sm" key={name}>{label}{multiline ? <textarea className="input min-h-24" name={name} {...valueProps(name, value)} required={required} maxLength={30000} /> : <input className="input" name={name} {...valueProps(name, value)} required={required} maxLength={500} />}</label>;
+  const field = (name: string, label: string, value = "", multiline = false, required = false) => {
+    const error = state.fieldErrors?.[name];
+    const props = { "aria-invalid": Boolean(error), "aria-describedby": error ? `error-${name}` : undefined };
+    return <label className="grid gap-2 text-sm" key={name}>{label}{multiline ? <textarea className={`input min-h-24 ${error ? "border-red-500" : ""}`} name={name} {...valueProps(name, value)} {...props} required={required} maxLength={30000} /> : <input className={`input ${error ? "border-red-500" : ""}`} name={name} {...valueProps(name, value)} {...props} required={required} maxLength={500} />}{error && <span id={`error-${name}`} className="text-xs text-red-700">{error}</span>}</label>;
+  };
   return <form action={form => { if (portfolio && coverFile) form.set("coverFile", coverFile); action(form); }} className="mt-6 space-y-6">
     {readOnly && <p className="rounded-lg border bg-amber-50 p-4 text-sm">Konten sudah dipublikasikan/dijadwalkan. Hubungi publisher untuk perubahan; akun ini hanya dapat mengedit draft/review.</p>}
     {!portfolio && !initial && <p className="text-sm">Untuk studi kasus, gunakan <Link href="/dashboard/portfolio/new" className="font-semibold text-[#08747A] underline">Tambah portfolio</Link>.</p>}
@@ -38,7 +42,8 @@ export function ContentEditor({ initial, canPublish, portfolio = false, readOnly
     <section className="grid gap-5 lg:grid-cols-2">{(["id", "en"] as const).map(locale => <fieldset key={locale} className="card space-y-4"><legend className="font-semibold">{locale === "id" ? "Bahasa Indonesia" : "English"}</legend>
       {field(`${locale}.title`, "Judul / Title", initial?.translations[locale].title, false, true)}
       {field(`${locale}.excerpt`, "Ringkasan / Excerpt", initial?.translations[locale].excerpt, true)}
-      {portfolio ? <RichTextEditor name={`${locale}.richBody`} label={`Konten detail (${locale.toUpperCase()})`} initial={initial?.translations[locale].richBody} body={initial?.translations[locale].body} disabled={pending || readOnly} /> : field(`${locale}.body`, "Konten (teks biasa; paragraf dipisahkan baris kosong)", initial?.translations[locale].body, true)}
+      {portfolio && <p className="text-xs text-slate-500">Untuk publikasi: ringkasan minimal 10 karakter dan konten detail minimal 30 karakter teks pada masing-masing bahasa.</p>}
+      {portfolio ? <RichTextEditor name={`${locale}.richBody`} label={`Konten detail (${locale.toUpperCase()})`} initial={initial?.translations[locale].richBody} body={initial?.translations[locale].body} disabled={pending || readOnly} error={state.fieldErrors?.[`${locale}.richBody`]} /> : field(`${locale}.body`, "Konten (teks biasa; paragraf dipisahkan baris kosong)", initial?.translations[locale].body, true)}
       {field(`${locale}.seoTitle`, "SEO title", initial?.translations[locale].seoTitle)}{field(`${locale}.seoDescription`, "SEO description", initial?.translations[locale].seoDescription)}
     </fieldset>)}</section>
     {!portfolio && <details className="card" open={kind !== "ARTICLE"}><summary className="min-h-11 cursor-pointer font-semibold">Detail {kind === "CASE_STUDY" ? "studi kasus" : "produk dan relasi"}</summary><div className="mt-4 grid gap-4 sm:grid-cols-2">

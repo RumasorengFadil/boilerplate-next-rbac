@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/server/authorization";
 import { parseContentForm } from "@/features/cms/form";
 import type { ContentState } from "@/features/cms/actions";
-import { portfolioInputSchema, portfolioLifecycleSchema } from "./schema";
+import { portfolioInputSchema, portfolioLifecycleSchema, portfolioValidationErrors } from "./schema";
 import { savePortfolio, changePortfolioLifecycle } from "./service";
 import { randomUUID } from "node:crypto";
 import { coverOperationSchema } from "./cover-schema";
@@ -23,8 +23,8 @@ export async function savePortfolioAction(_: ContentState, form: FormData): Prom
   catch { return { message: "Konten editor tidak valid atau terlalu panjang. Periksa kedua bahasa." }; }
   const parsed = portfolioInputSchema.safeParse(raw);
   if (!parsed.success) {
-    const fields = [...new Set(parsed.error.issues.map(issue => issue.path.join(".")))].slice(0, 6);
-    return { message: `Periksa kolom: ${fields.join(", ")}. Publikasi membutuhkan isi dan ringkasan lengkap ID/EN.`, fields };
+    const fieldErrors = portfolioValidationErrors(parsed.error.issues);
+    return { message: `Portfolio belum tersimpan. ${Object.values(fieldErrors).join(" ")}`, fields: Object.keys(fieldErrors), fieldErrors };
   }
   const operation = coverOperationSchema.safeParse(form.get("coverOperation") ?? "keep");
   if (!operation.success) return { message: "Pilihan cover tidak valid." };
