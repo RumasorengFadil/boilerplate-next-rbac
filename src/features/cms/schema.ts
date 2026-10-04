@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { richDocumentSchema, richTextToPlainText } from "./rich-text";
 
 export const contentKinds = ["ARTICLE", "CASE_STUDY", "PRODUCT"] as const;
 export const contentStatuses = ["DRAFT", "REVIEW", "SCHEDULED", "PUBLISHED", "ARCHIVED"] as const;
@@ -7,7 +8,11 @@ export const translationSchema = z.object({
   title: z.string().trim().min(2).max(180), excerpt: z.string().trim().max(400).default(""),
   body: z.string().trim().max(30000).default(""), seoTitle: z.string().trim().max(70).default(""),
   seoDescription: z.string().trim().max(180).default(""),
-}).strict();
+  richBody: richDocumentSchema.optional(),
+}).strict().transform(input => input.richBody ? { ...input, body: richTextToPlainText(input.richBody) } : input)
+  .superRefine((input, context) => {
+    if (input.body.length > 30000) context.addIssue({ code: "custom", path: ["body"], message: "Plain-text representation is too long." });
+  });
 const internalImage = z.string().trim().max(500).refine(value => !value || /^\/images\/[\w./-]+$/.test(value) && !value.includes(".."), "Use an existing /images/ asset.");
 const lines = z.array(z.string().trim().min(1).max(200)).max(30).default([]);
 export const detailsSchema = z.object({
@@ -30,6 +35,10 @@ export const contentInputSchema = z.object({
   status: z.enum(contentStatuses), publishedAt: z.iso.datetime().nullable().default(null),
   translations: z.object({ id: translationSchema, en: translationSchema }).strict(), details: detailsSchema,
 }).strict().superRefine((input, context) => {
+  if (input.kind === "CASE_STUDY" && (/^\d+$/.test(input.slug) || z.uuid().safeParse(input.slug).success))
+    context.addIssue({ code: "custom", path: ["slug"], message: "Use a descriptive case-study slug." });
+  if (input.kind !== "CASE_STUDY" && (input.translations.id.richBody || input.translations.en.richBody))
+    context.addIssue({ code: "custom", path: ["translations"], message: "Rich body is currently limited to case studies." });
   if (input.status === "PUBLISHED" || input.status === "SCHEDULED") {
     for (const locale of ["id", "en"] as const) if (input.translations[locale].body.length < 30 || input.translations[locale].excerpt.length < 10)
       context.addIssue({ code: "custom", path: ["translations", locale], message: "Published content needs complete ID/EN body and excerpt." });

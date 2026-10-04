@@ -8,7 +8,7 @@ import { recordAudit } from "@/server/audit";
 import { canTransition, contentInputSchema, detailsSchema, translationSchema } from "./schema";
 
 export const publicContentWhere = (kind?: ContentKind): Prisma.ContentEntryWhereInput => ({
-  ...(kind ? { kind } : {}), status: { in: ["PUBLISHED", "SCHEDULED"] }, publishedAt: { lte: new Date() },
+  ...(kind ? { kind } : {}), deletedAt: null, status: { in: ["PUBLISHED", "SCHEDULED"] }, publishedAt: { lte: new Date() },
 });
 export function presentContent(entry: Awaited<ReturnType<typeof db.contentEntry.findMany>>[number]) {
   const translations = entry.translations as { id: unknown; en: unknown };
@@ -24,7 +24,13 @@ export async function saveContent(raw: unknown) {
   return db.$transaction(async tx => {
     const previous = input.id ? await tx.contentEntry.findUnique({ where: { id: input.id } }) : null;
     if (input.id && !previous) throw new Error("Content no longer exists.");
+    if (previous?.deletedAt) throw new Error("Restore archived portfolio before editing.");
     if (previous && previous.kind !== input.kind) throw new Error("Content kind cannot change.");
+    if (previous?.kind === "CASE_STUDY") {
+      const stored = presentContent(previous).translations;
+      for (const locale of ["id", "en"] as const) if (stored[locale].richBody && !input.translations[locale].richBody)
+        throw new Error("Use the portfolio editor to preserve rich content.");
+    }
     if (!canTransition(previous?.status ?? "DRAFT", input.status)) throw new Error("Invalid publication transition; submit for review first.");
     if (!publisher && (["PUBLISHED", "SCHEDULED", "ARCHIVED"].includes(input.status) || previous && ["PUBLISHED", "SCHEDULED"].includes(previous.status))) throw new Error("Publishing permission required.");
     const data = {

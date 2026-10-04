@@ -1,5 +1,19 @@
 # Database
 
+## Portfolio foundation
+
+Migration `20261004010000_portfolio_foundation` bersifat additive dan dibungkus transaction PostgreSQL; tidak mengganti UUID ContentEntry atau menghapus konten existing.
+
+- `ContentEntry.deletedAt`: nullable TIMESTAMP(3), default null. Index baru `(kind,deletedAt,status,publishedAt)`; existing unique `(kind,slug)` dan publication index dipertahankan.
+- `PortfolioRoute`: UUID PK (Prisma default uuid; insert dari SQL reservation memakai gen_random_uuid), value TEXT unique, contentId UUID NOT NULL FK ContentEntry.id ON DELETE RESTRICT/ON UPDATE CASCADE, createdAt TIMESTAMP(3) default current timestamp. Index contentId. CHECK value 1–120 karakter lowercase alphanumeric/hyphen; nomor lama hanya alias.
+- `PortfolioRoute_validate` memastikan pemilik CASE_STUDY dan menolak reassignment value/contentId. `ContentEntry_reserve_portfolio_routes` AFTER INSERT/UPDATE slug/kind memanggil `reserve_portfolio_route` untuk slug dan UUID. Slug lama tetap disimpan ketika slug berubah; perubahan kind dari CASE_STUDY ditolak. Conflict ownership menghasilkan SQLSTATE 23505 dan rollback write, termasuk concurrent generic CMS writes.
+- Backfill mencadangkan slug/UUID semua CASE_STUDY existing. Konflik alias atau invalid existing slug menghentikan migration secara atomik; perbaiki data secara terarah, jangan reset.
+- Canonical dan alias ada dalam tabel yang sama: tidak ada race cross-table slug-vs-alias. Foreign key mencegah physical delete ketika route masih tercatat. Tidak ada aplikasi yang menghapus reservation saat archive/restore; slug tidak dapat direbut record lain.
+- `deletedAt` terpisah dari ARCHIVED workflow. Service archive/restore memeriksa content:publish dan version; restore selalu DRAFT dengan publishedAt null. Shared public query mewajibkan deletedAt null dan status/tanggal layak terbit.
+- JSON translations kini mendukung richBody opsional per locale untuk CASE_STUDY; plain body diturunkan dari rich JSON, bukan field SQL baru. Existing JSON plain content tetap valid. Seed tidak overwrite row existing.
+
+Prisma schema tidak mengekspresikan trigger/CHECK; migration SQL merupakan sumber constraint tersebut. Implementasi service/seed: [Portfolio](../features/portfolio.md).
+
 Migration `20261003060000_phase2_analytics` adds UUID AnalyticsEvent with pseudonymous visitor/session UUID, kind enum, public path/target/language/createdAt; indexes `(createdAt,kind)`, `(visitorId,createdAt)`, `(path,kind,createdAt)`. Lead gains optional visitorId UUID attribution field without FK; existing rows stay null. No raw IP or form/chat payload in event storage.
 
 Migration `20261003050000_phase2_leads` extends Lead with budget/timeline/sourcePage, optional ownerId FK User (SET NULL), optimistic version and `(ownerId,status)` index. `LeadNote`: UUID PK, leadId FK cascade, optional authorId User FK SET NULL, body/createdAt; `LeadActivity`: UUID PK, leadId cascade, optional actorId SET NULL, action/details JSONB/createdAt. Both index `(leadId,createdAt)`. Existing leads remain without fabricated activities. AiRateBucket is reused by shared infrastructure with hashed per-scope/session/IP/minute keys; no duplicate limiter table.

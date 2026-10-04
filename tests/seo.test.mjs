@@ -46,7 +46,10 @@ test("sitemap shares canonical/hreflang, real CMS dates and publication visibili
     await db.contentEntry.createMany({ data: batch });
     const complete = await buildPublicSitemap();
     for (const entry of batch) assert.ok(complete.some(item => item.url === pageUrl("id", "/insights/" + entry.slug)));
-  } finally { await db.contentEntry.deleteMany({ where: { id: { in: ids } } }); }
+  } finally {
+    await db.portfolioRoute.deleteMany({ where: { contentId: { in: ids } } });
+    await db.contentEntry.deleteMany({ where: { id: { in: ids } } });
+  }
 });
 
 test("public route SEO validates locales and describes the published listing instead of fallback examples", async () => {
@@ -69,7 +72,10 @@ test("public route SEO validates locales and describes the published listing ins
         assert.ok(!JSON.stringify(seo.schema).includes('"offers"'));
       }
     }
-  } finally { await db.contentEntry.deleteMany({ where: { id: { in: ids } } }); }
+  } finally {
+    await db.portfolioRoute.deleteMany({ where: { contentId: { in: ids } } });
+    await db.contentEntry.deleteMany({ where: { id: { in: ids } } });
+  }
 });
 
 test("all fixed public pages have distinct localized titles, descriptions, canonicals and OG URLs", () => {
@@ -184,7 +190,10 @@ test("published CMS SEO overrides use real author/dates and strip markup, missin
     assert.equal(project.seo.path,"/work/"+projectRow.id);
     assert.ok(project.seo.keywords.length > 0); // Complete metadata even without optional CMS tags/category.
     assert.equal(project.seo.entityType,"CreativeWork");assert.equal(project.seo.illustrative,true);
-  } finally { await db.contentEntry.deleteMany({where:{id:{in:ids}}}); }
+  } finally {
+    await db.portfolioRoute.deleteMany({ where: { contentId: { in: ids } } });
+    await db.contentEntry.deleteMany({where:{id:{in:ids}}});
+  }
 });
 
 test("detail resolvers validate IDs, preserve static links and do not invent dates or client claims", async () => {

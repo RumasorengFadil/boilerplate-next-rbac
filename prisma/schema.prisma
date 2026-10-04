@@ -81,8 +81,20 @@ model ContentEntry {
   version     Int @default(1)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  portfolioRoutes PortfolioRoute[]
   @@unique([kind, slug])
   @@index([kind, status, publishedAt])
+  @@index([kind, deletedAt, status, publishedAt])
+}
+
+model PortfolioRoute {
+  id String @id @default(uuid()) @db.Uuid
+  value String @unique
+  contentId String @db.Uuid
+  content ContentEntry @relation(fields: [contentId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  @@index([contentId])
 }
 
 model AuditEvent {

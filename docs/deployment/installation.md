@@ -16,6 +16,22 @@ node -e 'require("@next/env").loadEnvConfig(process.cwd());require("child_proces
 
 Untuk membuat migration baru saat development, gunakan loader environment yang sama dengan argumen `migrate dev`. Jangan menjalankan reset pada database berisi data yang ingin dipertahankan.
 
+## Upgrade portfolio foundation
+
+Terapkan migration `20261004010000_portfolio_foundation` dengan loader environment pada contoh di atas, kemudian generate client/restart dev server. Migration additive: jangan reset database atau menghapus route reservations untuk mengatasi conflict. Jika migration gagal karena namespace slug/UUID bertabrakan, audit record konflik dan koreksi secara terarah sebelum retry sesuai workflow Prisma.
+
+Opsional untuk memasukkan tiga contoh ilustratif yang sudah disetujui:
+
+```sh
+npm run db:seed:portfolio
+```
+
+Runner memerlukan Node.js dengan `module.registerHooks` (>=22.15; diuji 25.9) dan TypeScript dev dependency terpasang. Jalankan dari root repository dengan full install, bukan standalone artifact yang hanya berisi production dependencies. Runner membaca konfigurasi Next `.env.local` sebelum mengimpor Prisma agar target sama dengan aplikasi; tidak mencetak credential. Pada server produksi, set DATABASE_URL secara eksplisit melalui secret manager sebelum menjalankan.
+
+Seed memakai UUID tetap, create-if-missing dan satu transaction. Tidak memperbarui tulisan/status/slug existing, tidak restore/publish ulang record deleted, dan tidak membuat akun. Konflik slug/alias menghentikan seluruh seed tanpa hasil parsial. Label verifiedProject=false tetap ilustratif; jangan menampilkan sebagai klaim klien nyata. Seed ulang aman dan melaporkan created/preserved. Lihat [Portfolio](../features/portfolio.md).
+
+UI Portfolio/Tiptap dan routing public slug belum tersedia pada Task 2. Halaman generic CMS tidak dapat menyimpan seed rich content melalui textarea lama (safety guard); tunggu editor Task 3. PPR juga belum aktif. Selama transisi, public masih memakai route existing; jangan menganggap slug redirect telah terpasang hanya karena lookup table tersedia.
+
 ## Public SEO dan standalone assets
 
 Set `NEXT_PUBLIC_APP_URL` ke origin HTTPS production yang benar sebelum `npm run build` (tanpa subpath, query atau fragment), agar canonical, hreflang, schema dan OG URL tidak menunjuk localhost/preview. Variabel ini publik dan bukan tempat menyimpan credential.
