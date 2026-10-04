@@ -138,9 +138,17 @@ Temuan dokumentasi dan kode:
 4. Panduan versi terpasang membahas `partialPrefetching` untuk ISR/App Shell dynamic params. Empty database, unknown/new slug, metadata dan notFound harus diuji, tidak boleh dibuat fake published param untuk meloloskan build.
 5. Cached data dan mutation invalidation harus konsisten di cards/detail/SEO/sitemap. Shared cache tidak memuat authorization/admin/private data. Scheduled publishing membutuhkan expiry yang tidak menunda visibilitas tanpa batas.
 
-Kesimpulan: versi framework menyediakan jalur PPR, tetapi aplikasi saat ini belum kompatibel tanpa penyesuaian. Belum ada proof build/runtime PPR; audit ini bukan hasil eksperimen bahwa PPR gagal atau berhasil.
+### Hasil feasibility Task 5B.1 (2026-10-04)
 
-Task 5 akan membuktikan feasibility melalui perubahan minimum yang diperlukan, build production dan inspeksi response/rendering, termasuk regression private routes, locale dan OG handlers. Jika perlu perluasan material, laporkan sebelum perubahan. Fallback yang telah disetujui adalah streaming SSR + public data cache; tetap bukan PPR dan tidak boleh dilaporkan sebagai PPR. Intro harus tidak menunggu query list/schema yang tidak perlu.
+Production build terisolasi memakai Next.js 16.3.8 membuktikan bahwa mengaktifkan `cacheComponents: true` saja belum kompatibel:
+
+- Salinan aplikasi lengkap gagal compile karena explicit `runtime`/`dynamic` route configs tidak kompatibel. Inventory source menemukan 17 file dengan explicit route configs; compiler melaporkan sebagian di antaranya sebelum berhenti, bukan verifikasi bahwa seluruh 17 file gagal.
+- Reproducer minimal root layout yang membaca `headers()` untuk `<html lang>` berhasil build dengan Cache Components nonaktif (route dynamic SSR). Dengan flag aktif, build gagal saat prerender karena runtime data berada di luar Suspense. Reproducer tidak memakai database, session atau provider eksternal.
+- Ini membuktikan dua hambatan existing, bukan bahwa PPR mustahil. Perbaikan membutuhkan penyesuaian lintas route dan root locale layout, lalu regression metadata/OG, auth/private routes dan publication guards. Mengganti bahasa HTML dengan nilai tetap atau opt-out prerender tidak dianggap penyelesaian requirement PPR.
+
+Tidak ada perubahan production config, root layout, rendering, cache maupun database pada Task 5B.1. Baseline aplikasi utama tetap lulus typecheck, lint dan build; work masih dynamic SSR dengan request-scoped memoization. Belum ada runtime PPR yang berhasil diuji.
+
+Rekomendasi Task 5B.2 adalah fallback streaming SSR + public data cache yang telah diperbolehkan dalam PRD 003. Ini tetap bukan PPR/ISR. Intro work perlu dipisahkan dari query list/schema yang tidak perlu; detail harus menjaga eligibility/404/308 sebelum response dikirim. Cache tidak boleh melewatkan withdrawal, arsip, future schedule atau batas authorization. Implementasi dan production regression belum dilakukan, menunggu konfirmasi task berikutnya. [Laporan feasibility](../reports/2026/10/04/portfolio_ppr_feasibility.md).
 
 ## Rencana verifikasi
 
@@ -153,3 +161,5 @@ Task 6: end-to-end lifecycle, desktop/mobile, typecheck/build dan dokumentasi ak
 ## Tracking
 
 PRD 003 Task 1 dokumentasi, Task 2 fondasi dan Task 3 admin editor tersedia. Task 4 public slug/redirect/DB-only tersedia (rich renderer melalui PRD 004). Task 5–6 masih tersisa. [Laporan Task 1](../reports/2026/10/04/portfolio_task1.md), [Laporan Task 2](../reports/2026/10/04/portfolio_task2.md), [Laporan Task 3](../reports/2026/10/04/portfolio_task3.md), [Laporan Task 4](../reports/2026/10/04/portfolio_task4.md). PRD 004 Task 1–3 selesai dan cleanup lokal sudah diterapkan. [Laporan Tiptap Task 2](../reports/2026/10/04/portfolio_tiptap_task2.md), [Laporan Tiptap Task 3](../reports/2026/10/04/portfolio_tiptap_task3.md).
+
+Task 5A cover upload selesai. Task 5B.1 feasibility PPR selesai; Task 5B secara keseluruhan masih PARTIAL. Urutan tersisa: 5B.2 implementasi rendering/cache yang dipilih → 5B.3 regression production cache/publication/SEO/privacy → Task 6 final QA. Status langsung PRD 006 sudah tersedia dan tetap dipertahankan.
