@@ -1,7 +1,7 @@
 # Portfolio — kondisi aktual dan keputusan target
 
 Tanggal audit: 2026-10-04. Requirement: [PRD 003](../products/PRD/PRD_003_portfolio-cms.md).
-Dokumen ini membedakan implementasi saat ini dengan keputusan target. PRD 003 Task 2 menyediakan fondasi database/service dan Task 3 admin editor; PRD 004 Task 2 menghubungkan rich renderer. PRD 003 Task 4 mengaktifkan canonical slug routing, redirect URL lama dan DB-only public portfolio. Task 5 cover dan fallback streaming/cache berikut production regression selesai; final QA masih Task 6.
+Dokumen ini membedakan implementasi saat ini dengan keputusan target. PRD 003 Task 2 menyediakan fondasi database/service dan Task 3 admin editor; PRD 004 Task 2 menghubungkan rich renderer. PRD 003 Task 4 mengaktifkan canonical slug routing, redirect URL lama dan DB-only public portfolio. Task 5 cover/fallback streaming/cache serta Task 6 final QA telah selesai. Hasil lokal tidak menggantikan verifikasi deployment production.
 
 ## Refinement Tiptap single source — PRD 004
 
@@ -44,7 +44,7 @@ Pada database lokal `lunabiner`, batch `f5223b97-3cc5-475b-bcbb-ffeb2ec920b1` te
 - Rich JSON allowlist: doc, paragraph, heading H2–H4, text, lists/listItem, blockquote, hardBreak, horizontalRule dan codeBlock; marks bold/italic/strike/code/link. Batas 12 depth, 2.000 nodes, 30.000 plain-text characters. Link hanya relative internal, anchor, HTTP(S), mailto/tel; tidak menerima script, embedded media atau arbitrary HTML/attributes.
 - `saveContent` menolak edit record soft-deleted dan plain-editor save yang menghilangkan richBody existing. Existing plain case studies tetap kompatibel dan editor mengonversi plain body ke JSON ketika disimpan. Tidak ada data existing yang dikonversi/dihapus secara massal.
 - `npm run db:seed:portfolio` membuat contoh dengan UUID seed tetap, rich ID/EN, label verifiedProject=false dan numeric alias 1–3. Satu transaction; konflik route menggagalkan seluruh seed. Record dengan UUID seed existing tidak di-overwrite walaupun telah diubah slug/tulisan/diarsipkan. Seeder tidak membuat user atau memanggil LLM/embedding.
-- Tidak ada endpoint/API public baru. Task 3 Server Actions menghubungkan save/lifecycle dengan UI dan revalidatePath existing. Shared cache adoption masih Task 5.
+- Tidak ada endpoint/API public baru pada foundation. Task 3 Server Actions menghubungkan save/lifecycle dengan UI; Task 5 menambahkan guarded payload cache/updateTag. Endpoint media cover terpisah didokumentasikan pada bagian PRD 005.
 
 ## Admin Task 3
 
@@ -92,7 +92,7 @@ File baru yang gagal terpasang dibersihkan setelah DB memastikan tidak ada refer
 
 Public detail dan thumbnail work/home memakai current gambar yang sama, alt localized title. Layout/teal gradient fallback/CTA/logo tetap konsisten LunaBiner. Upload dirender `unoptimized` dan image optimizer hanya mengizinkan `/images/**`; `/media/**` tidak boleh melewati cache optimizer sehingga penarikan publikasi tetap diperiksa setiap request gambar. Ini tidak dapat menarik kembali salinan yang telah diunduh. OG branded contextual endpoints tetap terpisah/tidak berubah.
 
-Task 5A tidak mengaktifkan Cache Components/PPR/ISR. Task 5B telah selesai menggunakan fallback streaming/cache yang disetujui; Task 6 final QA masih tersisa. Deployment storage/backup: [Installation](../deployment/installation.md).
+Task 5A tidak mengaktifkan Cache Components/PPR/ISR. Task 5B telah selesai menggunakan fallback streaming/cache yang disetujui; Task 6 final QA lokal juga selesai. Deployment storage/backup: [Installation](../deployment/installation.md).
 
 ## Data, boundary dan public routing aktual
 
@@ -102,7 +102,7 @@ Pertahankan CMS sebagai pemilik `ContentEntry(CASE_STUDY)`. Portfolio menggunaka
 
 Migration `20261004010000_portfolio_foundation` menambah deletedAt dan PortfolioRoute; [database constraints](../database/schema.md) mencatat detail. Semua record portfolio/route memakai UUID; alias nomor hanyalah compatibility URL, bukan ID record.
 
-Rich body ID/EN, editor Tiptap, public server renderer dan bulk cleanup lokal tersedia. Generic CMS sudah mengarahkan case study ke editor khusus. Canonical slug/DB-only public routing PRD 003 Task 4 dan fallback rendering/cache Task 5 tersedia; target tersisa final QA Task 6.
+Rich body ID/EN, editor Tiptap, public server renderer dan bulk cleanup lokal tersedia. Generic CMS sudah mengarahkan case study ke editor khusus. Canonical slug/DB-only public routing PRD 003 Task 4 dan fallback rendering/cache Task 5 tersedia; final QA Task 6 selesai sesuai refinement PRD 004–006.
 
 ### Public URL dan publication
 
@@ -162,7 +162,7 @@ Fallback yang disetujui kini diterapkan: streaming SSR + persistent public paylo
 - updateTag segera expire tag setelah Server Action commit; revalidatePath existing tetap dipertahankan. Pemeriksaan eligibility berlaku pada snapshot query request, bukan transaksi yang mengunci record selama response dikirim. Cached payload dari versi yang pernah public dapat tersimpan sampai expiry/invalidation, tetapi tidak menjadi sumber eligibility atau dapat diakses anonymous tanpa guard.
 - Sitemap dan delivery cover tetap live/no-store existing, tidak memakai cache payload/inventory. Database error tetap error, tidak diubah menjadi missing atau stale-success.
 
-Pengujian Task 5B.2 meliputi unit policy/cache adapter, delayed-query React streaming dan baseline production routing. Task 5B.3 kini membuktikan runtime production sebagaimana dijelaskan di bawah. Final QA menyeluruh tetap Task 6.
+Pengujian Task 5B.2 meliputi unit policy/cache adapter, delayed-query React streaming dan baseline production routing. Task 5B.3 membuktikan runtime production sebagaimana dijelaskan di bawah, kemudian Task 6 menjalankan regression/visual QA gabungan.
 
 ### Bukti production — Task 5B.3
 
@@ -188,6 +188,6 @@ Task 6: end-to-end lifecycle, desktop/mobile, typecheck/build dan dokumentasi ak
 
 ## Tracking
 
-PRD 003 Task 1 dokumentasi, Task 2 fondasi dan Task 3 admin editor tersedia. Task 4 public slug/redirect/DB-only tersedia (rich renderer melalui PRD 004). Task 5 selesai; Task 6 masih tersisa. [Laporan Task 1](../reports/2026/10/04/portfolio_task1.md), [Laporan Task 2](../reports/2026/10/04/portfolio_task2.md), [Laporan Task 3](../reports/2026/10/04/portfolio_task3.md), [Laporan Task 4](../reports/2026/10/04/portfolio_task4.md). PRD 004 Task 1–3 selesai dan cleanup lokal sudah diterapkan. [Laporan Tiptap Task 2](../reports/2026/10/04/portfolio_tiptap_task2.md), [Laporan Tiptap Task 3](../reports/2026/10/04/portfolio_tiptap_task3.md).
+PRD 003 Task 1–6 selesai sesuai refinement PRD 004–006 dan fallback rendering yang disetujui. [Laporan Task 1](../reports/2026/10/04/portfolio_task1.md), [Laporan Task 2](../reports/2026/10/04/portfolio_task2.md), [Laporan Task 3](../reports/2026/10/04/portfolio_task3.md), [Laporan Task 4](../reports/2026/10/04/portfolio_task4.md). PRD 004 Task 1–3 selesai dan cleanup lokal sudah diterapkan. [Laporan Tiptap Task 2](../reports/2026/10/04/portfolio_tiptap_task2.md), [Laporan Tiptap Task 3](../reports/2026/10/04/portfolio_tiptap_task3.md).
 
-Task 5A cover upload dan Task 5B.1–5B.3 selesai: feasibility PPR, implementasi fallback dan production regression. Task 5 selesai menggunakan fallback yang disetujui, bukan PPR. Tersisa Task 6 final QA. Status langsung PRD 006 sudah tersedia dan tetap dipertahankan.
+Task 5A cover upload dan Task 5B.1–5B.3 selesai: feasibility PPR, implementasi fallback dan production regression. Task 6 selesai dengan 50 scoped Node tests, SEO HTTP 22 public routes, admin/cover browser, routing/cache production rerun dan inspeksi screenshot desktop/mobile. [Laporan final QA](../reports/2026/10/04/portfolio_final_qa.md) mencatat acceptance, perbaikan assertion metadata Work dan batas deployment. Tidak ada task implementasi portfolio tersisa pada scope yang disetujui; PPR, multi-instance coordination dan fitur luar scope tidak diklaim tersedia. Status langsung PRD 006 tetap dipertahankan.
