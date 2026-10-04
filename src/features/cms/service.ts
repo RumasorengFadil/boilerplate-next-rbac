@@ -19,6 +19,7 @@ export function presentContent(entry: Awaited<ReturnType<typeof db.contentEntry.
   return { ...entry, translations: { id: translationSchema.parse(translations.id), en: translationSchema.parse(translations.en) }, details: detailsSchema.parse(normalized.details) };
 }
 export const publishedContent = cache(async (kind?: ContentKind) => {
+  if (kind === "CASE_STUDY") return (await import("@/features/portfolio/public-data")).publishedPortfolioContent();
   return (await db.contentEntry.findMany({ where: publicContentWhere(kind), orderBy: [{ publishedAt: "desc" }, { id: "asc" }], take: 200 })).map(presentContent);
 });
 export type ContentSaveOptions = {

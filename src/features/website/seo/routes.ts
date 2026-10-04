@@ -25,8 +25,10 @@ export const getPublicPageSeo = cache(async (key: SeoPageKey, rawLocale: string)
     const entries = await publishedContent(kind);
     if (entries.length) {
       // Do not advertise static fallback examples when the UI displays CMS content instead.
-      document.description = `${document.title}. ${entries[0].translations[locale].excerpt}`.slice(0, 500);
-      document.keywords = [...new Set(["LunaBiner", ...entries.flatMap(entry => [entry.details.category, ...entry.details.tags]).filter(Boolean)])].slice(0, 30);
+      if (key !== "work") {
+        document.description = `${document.title}. ${entries[0].translations[locale].excerpt}`.slice(0, 500);
+        document.keywords = [...new Set(["LunaBiner", ...entries.flatMap(entry => [entry.details.category, ...entry.details.tags]).filter(Boolean)])].slice(0, 30);
+      }
       items = entries.map(entry => {
         const illustrative = entry.kind === "CASE_STUDY" && !entry.details.verifiedProject;
         const qualifier = illustrative ? (locale === "id" ? "Contoh ilustratif: " : "Illustrative example: ") : "";

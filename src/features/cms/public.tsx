@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import Image from "next/image";
 import { ArticleGrid } from "@/features/website/components";
 import { publishedRelatedPortfolios } from "@/features/portfolio/service";
@@ -25,7 +26,7 @@ export function PublishedDetail({ entry, locale }: { entry: ReturnType<typeof pr
         {details.features.length > 0 && <section><h2 className="text-xl font-semibold">{t(locale, "Fitur", "Features")}</h2><ul className="mt-4 list-disc pl-6">{details.features.map(item => <li key={item}>{item}</li>)}</ul></section>}
         {details.gallery.length > 0 && <div className="grid gap-4 sm:grid-cols-2">{details.gallery.map(image => <Image key={image} src={image} alt={text.title} width={800} height={500} className="rounded-xl" />)}</div>}
         {details.relatedServices.length > 0 && <Link href={`/${locale}/solutions`} className="block min-h-11 font-semibold text-[#08747A]">{t(locale, "Layanan terkait", "Related services")} →</Link>}
-        {details.relatedCaseStudies.length > 0 && <RelatedPortfolios ids={details.relatedCaseStudies} currentId={entry.id} locale={locale} />}
+        {details.relatedCaseStudies.length > 0 && <Suspense fallback={null}><RelatedPortfolios ids={details.relatedCaseStudies} currentId={entry.id} locale={locale} /></Suspense>}
         <Link href={details.ctaPath.replace(/^\/(id|en)\//, `/${locale}/`)} className="inline-flex min-h-11 items-center rounded-full bg-[#F5A033] px-6 py-3 font-semibold">{details.ctaLabel[locale] || t(locale, "Diskusikan kebutuhan Anda", "Discuss your needs")} →</Link>
       </div>
     </div></article>

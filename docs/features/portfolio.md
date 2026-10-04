@@ -74,7 +74,7 @@ Response state: `{message, success?, id?, version?, fields?, fieldErrors?}` tanp
 
 Aturan PUBLISHED/SCHEDULED tidak berubah: excerpt minimal 10 karakter dan body teks turunan Tiptap minimal 30 karakter per bahasa. DRAFT/REVIEW tidak dikenai minimum publikasi. Batas judul/ringkasan/SEO, rich allowlist dan publisher/version guards tidak dilonggarkan. Invalid input/JSON, slug reserved, transition/permission/version/schedule failures ditampilkan sebagai pesan aman. Auth redirects tetap berada di luar catch mutation. Next Server Action origin/body-limit protections dipertahankan. Generic article/product action tetap memakai response existing; perubahan UX ini khusus portfolio.
 
-Setelah berhasil, revalidatePath dashboard portfolio/list/detail, generic content list, sitemap, dan kedua locale layouts. Ini invalidation pola existing, bukan implementasi tagged shared cache/PPR Task 5. Scheduled publication tetap query-time due predicate.
+Setelah berhasil, revalidatePath dashboard portfolio/list/detail, generic content list, sitemap, dan kedua locale layouts. Task 5B.2 menambahkan updateTag portfolio-public setelah commit save/archive/restore, termasuk ordinary CASE_STUDY save melalui action CMS generic. Scheduled publication tetap query-time due predicate.
 
 ## Cover upload Task 5A — PRD 005 (tersedia)
 
@@ -150,6 +150,20 @@ Tidak ada perubahan production config, root layout, rendering, cache maupun data
 
 Rekomendasi Task 5B.2 adalah fallback streaming SSR + public data cache yang telah diperbolehkan dalam PRD 003. Ini tetap bukan PPR/ISR. Intro work perlu dipisahkan dari query list/schema yang tidak perlu; detail harus menjaga eligibility/404/308 sebelum response dikirim. Cache tidak boleh melewatkan withdrawal, arsip, future schedule atau batas authorization. Implementasi dan production regression belum dilakukan, menunggu konfirmasi task berikutnya. [Laporan feasibility](../reports/2026/10/04/portfolio_ppr_feasibility.md).
 
+## Rendering/cache aktual — Task 5B.2
+
+Fallback yang disetujui kini diterapkan: streaming SSR + persistent public payload cache, bukan PPR/ISR atau static HTML. Cache Components tetap nonaktif dan root HTML language ID/EN tidak berubah.
+
+- Work page mengirim intro tanpa await query portfolio. Suspense memakai loading state ID/EN dengan gaya existing, kemudian menggantinya dengan cards dan collection JSON-LD. `generateMetadata` memakai bundle editorial registry work yang lengkap dan stabil (Metadata/OG/Twitter/canonical), tanpa dependensi query daftar. Collection schema memakai deskripsi editorial yang sama dan ItemList live, bukan contoh statis. Artikel/produk mempertahankan metadata existing.
+- Detail tetap menunggu live route ownership/public eligibility dan payload sebelum metadata, 404 atau permanent redirect. Judul/overview tidak diganti placeholder fiktif. Related portfolio memiliki boundary terpisah agar query relasi tidak menahan rich body/CTA. Ini sengaja bukan janji bahwa header detail yang membutuhkan DB dapat muncul sebelum lookup.
+- `portfolio/public-data.ts` menggunakan unstable_cache karena aplikasi tidak opt-in Cache Components. Next 16 merekomendasikan use cache untuk aplikasi Cache Components; API existing ini dipilih khusus fallback yang telah diaudit. Cache menyimpan batch payload eligible dalam wire format dengan tanggal ISO dan menghidrasinya kembali ke Date sebelum presentContent.
+- Sebelum SETIAP lookup payload, query database live membaca UUID, version dan updatedAt record layak publik. Daftar/home/related memakai inventory live; detail/OG memakai route ownership live. Key cache memuat revisi lengkap batch dan hash konfigurasi database (tanpa raw credentials). Tidak menyimpan cookies/session/authorization decision. Empty/failed live query tidak menggunakan cache lama sebagai fallback.
+- TTL payload 300 detik dan tag portfolio-public. TTL bukan delay publish: future schedules tidak masuk inventory, due schedules langsung menghasilkan key inventory baru, dan draft/arsip tidak lolos guard meskipun payload lama masih berada di storage. Mutasi normal increment version/updatedAt; old/new slug juga diselesaikan live. Perubahan SQL eksternal harus menjaga version/updatedAt; edits tanpa keduanya tidak didukung.
+- updateTag segera expire tag setelah Server Action commit; revalidatePath existing tetap dipertahankan. Pemeriksaan eligibility berlaku pada snapshot query request, bukan transaksi yang mengunci record selama response dikirim. Cached payload dari versi yang pernah public dapat tersimpan sampai expiry/invalidation, tetapi tidak menjadi sumber eligibility atau dapat diakses anonymous tanpa guard.
+- Sitemap dan delivery cover tetap live/no-store existing, tidak memakai cache payload/inventory. Database error tetap error, tidak diubah menjadi missing atau stale-success.
+
+Pengujian Task 5B.2 meliputi unit policy/cache adapter, delayed-query React streaming dan baseline production routing. Pembuktian hit/miss/invalidation Next cache di runtime production, timing HTTP shell, lifecycle lengkap dan responsive masih Task 5B.3/6.
+
 ## Rencana verifikasi
 
 Task 2: migration/seed ulang, UUID, uniqueness, alias conflicts, soft-delete/restore dan version/RBAC tests.
@@ -162,4 +176,4 @@ Task 6: end-to-end lifecycle, desktop/mobile, typecheck/build dan dokumentasi ak
 
 PRD 003 Task 1 dokumentasi, Task 2 fondasi dan Task 3 admin editor tersedia. Task 4 public slug/redirect/DB-only tersedia (rich renderer melalui PRD 004). Task 5–6 masih tersisa. [Laporan Task 1](../reports/2026/10/04/portfolio_task1.md), [Laporan Task 2](../reports/2026/10/04/portfolio_task2.md), [Laporan Task 3](../reports/2026/10/04/portfolio_task3.md), [Laporan Task 4](../reports/2026/10/04/portfolio_task4.md). PRD 004 Task 1–3 selesai dan cleanup lokal sudah diterapkan. [Laporan Tiptap Task 2](../reports/2026/10/04/portfolio_tiptap_task2.md), [Laporan Tiptap Task 3](../reports/2026/10/04/portfolio_tiptap_task3.md).
 
-Task 5A cover upload selesai. Task 5B.1 feasibility PPR selesai; Task 5B secara keseluruhan masih PARTIAL. Urutan tersisa: 5B.2 implementasi rendering/cache yang dipilih → 5B.3 regression production cache/publication/SEO/privacy → Task 6 final QA. Status langsung PRD 006 sudah tersedia dan tetap dipertahankan.
+Task 5A cover upload selesai. Task 5B.1 feasibility PPR dan 5B.2 implementasi fallback selesai; Task 5B secara keseluruhan masih PARTIAL. Urutan tersisa: 5B.3 regression production cache/publication/SEO/privacy → Task 6 final QA. Status langsung PRD 006 sudah tersedia dan tetap dipertahankan.

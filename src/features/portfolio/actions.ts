@@ -1,5 +1,6 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { PORTFOLIO_PUBLIC_TAG } from "./public-data";
 import { requirePermission } from "@/server/authorization";
 import { parseContentForm } from "@/features/cms/form";
 import type { ContentState } from "@/features/cms/actions";
@@ -10,6 +11,7 @@ import { coverOperationSchema } from "./cover-schema";
 import { normalizeCover, storeCover, discardUncommittedCover, InvalidCoverError } from "./cover-storage";
 
 function invalidatePortfolio(id: string) {
+  updateTag(PORTFOLIO_PUBLIC_TAG);
   revalidatePath("/dashboard/portfolio");
   revalidatePath(`/dashboard/portfolio/${id}`);
   revalidatePath("/dashboard/content");

@@ -43,6 +43,7 @@
 | [PRD 006 — Portfolio direct status](products/PRD/PRD_006_portfolio-direct-status.md) | Status langsung tanpa urutan REVIEW wajib; arsip tetap soft-delete existing. |
 | [Portfolio direct status](reports/2026/10/04/portfolio_direct_status.md) | Guard CASE_STUDY, publish/schedule langsung, regression public/sitemap/RBAC dan arsip. |
 | [Portfolio PPR feasibility — Task 5B.1](reports/2026/10/04/portfolio_ppr_feasibility.md) | Bukti build terisolasi, hambatan route configs/root locale dan rekomendasi fallback; belum mengubah rendering production. |
+| [Portfolio rendering/cache — Task 5B.2](reports/2026/10/04/portfolio_rendering_cache.md) | Streaming Work, revision-keyed payload cache dengan live publication guards dan action invalidation. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |
 
 Dokumen di `docs/products/PRD/` menyimpan kebutuhan produk sesuai sumber asli, bukan pernyataan bahwa seluruh fiturnya telah diimplementasikan. Status implementasi dicatat terpisah pada laporan yang relevan.
