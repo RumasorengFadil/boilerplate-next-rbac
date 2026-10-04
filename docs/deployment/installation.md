@@ -16,6 +16,12 @@ node -e 'require("@next/env").loadEnvConfig(process.cwd());require("child_proces
 
 Untuk membuat migration baru saat development, gunakan loader environment yang sama dengan argumen `migrate dev`. Jangan menjalankan reset pada database berisi data yang ingin dipertahankan.
 
+### Unknown argument setelah schema Prisma berubah
+
+Jika query baru gagal `Unknown argument deletedAt`, tetapi `prisma/schema.prisma` dan generated schema `node_modules/.prisma/client/schema.prisma` sudah mempunyai field tersebut, periksa migration lalu restart **proses Next dev**, bukan hanya refresh browser. Client yang telah di-import oleh worker sebelum `prisma generate` dapat tetap memakai runtime datamodel lama. Fingerprint cache development tidak dapat memperbarui modul generated Prisma yang masih tersimpan pada module cache proses tersebut.
+
+Urutan aman: cek migration pada target database aplikasi memakai loader environment di atas; terapkan hanya migration tertunda yang telah direview; jalankan `npm run db:generate`; hentikan proses Next dev proyek yang benar secara graceful; jalankan `npm run dev` kembali pada host/port semula. Pastikan tidak ada duplikat server pada port lain. Verifikasi halaman melalui HTTP, bukan hanya typecheck. Jangan menghapus filter deletedAt, reset database atau menghapus node_modules untuk mengatasi stale runtime ini. Jika muncul missing column/table setelah restart, itu masalah migration yang berbeda dari validation error client.
+
 ## Upgrade portfolio foundation
 
 Terapkan migration `20261004010000_portfolio_foundation` dengan loader environment pada contoh di atas, kemudian generate client/restart dev server. Migration additive: jangan reset database atau menghapus route reservations untuk mengatasi conflict. Jika migration gagal karena namespace slug/UUID bertabrakan, audit record konflik dan koreksi secara terarah sebelum retry sesuai workflow Prisma.
