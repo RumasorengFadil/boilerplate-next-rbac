@@ -5,6 +5,7 @@ import { publishedRelatedPortfolios } from "@/features/portfolio/service";
 import { t, type Locale } from "@/features/website/content";
 import { publishedContent, type presentContent } from "./service";
 import { RichTextContent } from "./rich-text-renderer";
+import { parseCoverPath } from "@/features/portfolio/cover-schema";
 
 export function PublishedDetail({ entry, locale }: { entry: ReturnType<typeof presentContent>; locale: Locale }) {
   const text = entry.translations[locale];
@@ -19,7 +20,7 @@ export function PublishedDetail({ entry, locale }: { entry: ReturnType<typeof pr
         {details.verifiedProject && details.client && <div><dt className="text-[#64767B]">{t(locale, "Klien", "Client")}</dt><dd className="mt-1">{details.client}</dd></div>}
       </dl></aside>
       <div className="min-w-0 space-y-8">
-        {details.image && <Image src={details.image} alt={text.title} width={1200} height={675} className="w-full rounded-2xl" />}
+        {details.image && <Image src={details.image} unoptimized={Boolean(parseCoverPath(details.image))} alt={text.title} width={1200} height={675} className="w-full rounded-2xl" />}
         <RichTextContent document={text.richBody} />
         {details.features.length > 0 && <section><h2 className="text-xl font-semibold">{t(locale, "Fitur", "Features")}</h2><ul className="mt-4 list-disc pl-6">{details.features.map(item => <li key={item}>{item}</li>)}</ul></section>}
         {details.gallery.length > 0 && <div className="grid gap-4 sm:grid-cols-2">{details.gallery.map(image => <Image key={image} src={image} alt={text.title} width={800} height={500} className="rounded-xl" />)}</div>}
@@ -57,7 +58,7 @@ export async function PublishedArticles({ locale }: { locale: Locale }) {
 export async function PublishedWork({ locale }: { locale: Locale }) {
   const entries = await publishedContent("CASE_STUDY");
   if (!entries.length) return <p className="rounded-2xl border bg-white p-7 text-[#64767B]" role="status">{t(locale, "Belum ada portfolio yang dipublikasikan.", "No portfolio has been published yet.")}</p>;
-  return <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{entries.map(entry => <article key={entry.id} className="overflow-hidden rounded-2xl border bg-white transition hover:-translate-y-1 hover:shadow-xl"><div className="bg-gradient-to-br from-[#08747A] to-[#18B7B3] p-6 text-white"><p className="text-xs uppercase tracking-widest">{entry.details.verifiedProject ? "CASE STUDY" : t(locale,"CONTOH ILUSTRATIF","ILLUSTRATIVE EXAMPLE")}</p><p className="mt-8 text-sm">{entry.details.category}</p><h3 className="mt-2 text-xl font-semibold">{entry.translations[locale].title}</h3></div><div className="p-6"><p className="text-sm leading-6 text-[#64767B]">{entry.translations[locale].excerpt}</p><Link href={`/${locale}/work/${entry.slug}`} className="mt-6 inline-flex min-h-11 items-center font-semibold text-[#08747A]">{t(locale,"Lihat studi kasus","View case study")} →</Link></div></article>)}</div>;
+  return <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{entries.map(entry => <article key={entry.id} className="overflow-hidden rounded-2xl border bg-white transition hover:-translate-y-1 hover:shadow-xl">{entry.details.image && <Image src={entry.details.image} unoptimized={Boolean(parseCoverPath(entry.details.image))} alt={entry.translations[locale].title} width={640} height={360} className="aspect-video w-full object-cover" />}<div className="bg-gradient-to-br from-[#08747A] to-[#18B7B3] p-6 text-white"><p className="text-xs uppercase tracking-widest">{entry.details.verifiedProject ? "CASE STUDY" : t(locale,"CONTOH ILUSTRATIF","ILLUSTRATIVE EXAMPLE")}</p><p className="mt-8 text-sm">{entry.details.category}</p><h3 className="mt-2 text-xl font-semibold">{entry.translations[locale].title}</h3></div><div className="p-6"><p className="text-sm leading-6 text-[#64767B]">{entry.translations[locale].excerpt}</p><Link href={`/${locale}/work/${entry.slug}`} className="mt-6 inline-flex min-h-11 items-center font-semibold text-[#08747A]">{t(locale,"Lihat studi kasus","View case study")} →</Link></div></article>)}</div>;
 }
 
 async function RelatedPortfolios({ ids, currentId, locale }: { ids: string[]; currentId: string; locale: Locale }) {

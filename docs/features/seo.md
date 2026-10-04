@@ -4,6 +4,8 @@
 
 Tasks 1–3 are implemented. The eight public page families (home, solutions, work, products, insights, about, contact and consultation) and article/case-study detail pages expose contextual ID/EN metadata, native JSON-LD and working OG image endpoints. Sitemap, crawl directives and HTML language are synchronized. No migration or CMS form change is required. Local automated checks do not replace production deployment, domain verification or Search Console submission.
 
+PRD 005 Task 5A adds portfolio uploaded covers/thumbnails with localized visible-title alt text. Media URLs `/media/portfolio/{UUID}/{UUID}` are noindex and not added to the sitemap; canonical/schema/social metadata continue to use branded contextual OG endpoints, not private draft cover files. Publication-aware media delivery is no-store and bypasses image optimization; Next optimizer only accepts existing `/images/**` assets. SEO titles, canonicals and structured data remain unchanged by cover upload. Cache/PPR is still pending separately.
+
 ## Architecture and data flow
 
 The feature follows Metadata → OpenGraph → Twitter → Canonical → Schema.org. Public non-secret brand and origin come from `src/config/app-config.ts` (`APP_CONFIG.url` / `NEXT_PUBLIC_APP_URL`, default `https://lunabiner.com`). The origin must be HTTP(S), without credentials, query, fragment or subpath. Production deployment must set the real HTTPS origin, not a preview/localhost address.

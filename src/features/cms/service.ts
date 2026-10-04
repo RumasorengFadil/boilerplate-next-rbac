@@ -7,6 +7,8 @@ import { requirePermission } from "@/server/authorization";
 import { recordAudit } from "@/server/audit";
 import { canTransition, contentInputSchema, detailsSchema, translationSchema } from "./schema";
 import { convertLegacyPortfolioContent } from "@/features/portfolio/legacy-content";
+import { parseCoverPath } from "@/features/portfolio/cover-schema";
+import { z } from "zod";
 
 export const publicContentWhere = (kind?: ContentKind): Prisma.ContentEntryWhereInput => ({
   ...(kind ? { kind } : {}), deletedAt: null, status: { in: ["PUBLISHED", "SCHEDULED"] }, publishedAt: { lte: new Date() },
@@ -19,10 +21,19 @@ export function presentContent(entry: Awaited<ReturnType<typeof db.contentEntry.
 export const publishedContent = cache(async (kind?: ContentKind) => {
   return (await db.contentEntry.findMany({ where: publicContentWhere(kind), orderBy: [{ publishedAt: "desc" }, { id: "asc" }], take: 200 })).map(presentContent);
 });
-export async function saveContent(raw: unknown, options: { preservePortfolioDetails?: boolean } = {}) {
+export type ContentSaveOptions = {
+  preservePortfolioDetails?: boolean;
+  // Trusted server-only options, never parsed from client fields.
+  createPortfolioId?: string;
+  portfolioCover?: { operation: "keep" | "remove" | "replace"; path?: string };
+};
+export async function saveContent(raw: unknown, options: ContentSaveOptions = {}) {
   const user = await requirePermission("content:write");
   const input = contentInputSchema.parse(raw);
   const publisher = hasPermission(user.role, "content:publish");
+  if ((options.createPortfolioId || options.portfolioCover) && input.kind !== "CASE_STUDY") throw new Error("Invalid portfolio options.");
+  if (options.createPortfolioId && input.id) throw new Error("Cannot change portfolio identifier.");
+  const createId = options.createPortfolioId ? z.uuid().parse(options.createPortfolioId) : undefined;
   return db.$transaction(async tx => {
     const previous = input.id ? await tx.contentEntry.findUnique({ where: { id: input.id } }) : null;
     if (input.id && !previous) throw new Error("Content no longer exists.");
@@ -41,6 +52,13 @@ export async function saveContent(raw: unknown, options: { preservePortfolioDeta
       ? { ...detailsSchema.parse(previous ? convertLegacyPortfolioContent(previous).details : {}), category: input.details.category,
         tags: input.details.tags, authorName: input.details.authorName, image: input.details.image }
       : input.details;
+    if (options.portfolioCover) {
+      const cover = options.portfolioCover;
+      details.image = cover.operation === "keep" ? (previous ? presentContent(previous).details.image : "") : cover.operation === "remove" ? "" : cover.path ?? "";
+      if (cover.operation === "replace" && !parseCoverPath(details.image)) throw new Error("Invalid uploaded cover.");
+    }
+    const uploaded = parseCoverPath(details.image);
+    if (uploaded && uploaded.contentId !== (previous?.id ?? createId)) throw new Error("Cover belongs to another portfolio.");
     const normalized = input.kind === "CASE_STUDY" ? convertLegacyPortfolioContent({ translations: input.translations, details }) : { translations: input.translations, details };
     const data = {
       kind: input.kind, slug: input.slug, status: input.status,
@@ -52,9 +70,9 @@ export async function saveContent(raw: unknown, options: { preservePortfolioDeta
       const updated = await tx.contentEntry.updateMany({ where: { id: previous.id, version: input.version }, data: { ...data, version: { increment: 1 } } });
       if (!updated.count) throw new Error("Content changed; reload before saving.");
     }
-    const saved = previous ? await tx.contentEntry.findUniqueOrThrow({ where: { id: previous.id } }) : await tx.contentEntry.create({ data: { ...data, authorId: user.id } });
+    const saved = previous ? await tx.contentEntry.findUniqueOrThrow({ where: { id: previous.id } }) : await tx.contentEntry.create({ data: { ...data, ...(createId ? { id: createId } : {}), authorId: user.id } });
     await recordAudit(tx, { actorId: user.id, module: "cms", action: previous ? "content.update" : "content.create", recordId: saved.id,
-      ...(previous ? { before: { slug: previous.slug, status: previous.status, version: previous.version } } : {}), after: { slug: saved.slug, status: saved.status, version: saved.version } });
+      ...(previous ? { before: { slug: previous.slug, status: previous.status, version: previous.version, ...(input.kind === "CASE_STUDY" ? { image: presentContent(previous).details.image } : {}) } } : {}), after: { slug: saved.slug, status: saved.status, version: saved.version, ...(input.kind === "CASE_STUDY" ? { image: details.image } : {}) } });
     return saved;
   });
 }

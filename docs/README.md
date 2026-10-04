@@ -37,6 +37,8 @@
 | [Portfolio Tiptap — Task 1](reports/2026/10/04/portfolio_tiptap_task1.md) | Konverter nonmutating, deduplikasi teks dan preview database read-only; apply belum dilakukan. |
 | [Portfolio Tiptap — Task 2](reports/2026/10/04/portfolio_tiptap_task2.md) | Default legacy di editor, rich renderer public dan save/seed tanpa key narasi legacy; bulk cleanup tersisa. |
 | [Portfolio Tiptap — Task 3](reports/2026/10/04/portfolio_tiptap_task3.md) | Backup privat, atomic cleanup tiga portfolio lokal, guarded restore, idempotency dan hasil QA. |
+| [PRD 005 — Portfolio cover upload](products/PRD/PRD_005_portfolio-cover-upload.md) | Refinement upload perangkat, UUID assets, private persistent storage dan batas scope. |
+| [Portfolio cover — Task 5A](reports/2026/10/04/portfolio_cover_task5a.md) | File picker/preview, validasi gambar, media authorization dan hasil QA upload. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |
 
 Dokumen di `docs/products/PRD/` menyimpan kebutuhan produk sesuai sumber asli, bukan pernyataan bahwa seluruh fiturnya telah diimplementasikan. Status implementasi dicatat terpisah pada laporan yang relevan.

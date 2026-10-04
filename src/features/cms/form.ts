@@ -17,7 +17,7 @@ export function parseContentForm(form: FormData, portfolio = false) {
     ...(text("id") ? { id: text("id") } : {}), version: text("version") || 1,
     kind: portfolio ? "CASE_STUDY" : text("kind"), slug: text("slug"), status: text("status"), publishedAt: scheduled ? utc : null,
     translations: { id: translations("id"), en: translations("en") },
-    details: { category: text("category"), tags: list("tags"), authorName: text("authorName"), image: text("image"),
+    details: { category: text("category"), tags: list("tags"), authorName: text("authorName"), image: portfolio ? "" : text("image"),
       ...(!portfolio ? { client: text("client"), verifiedProject: form.get("verifiedProject") === "on",
       industry: localized("industry"), challenge: localized("challenge"), approach: localized("approach"),
       solution: localized("solution"), impact: localized("impact"), before: localized("before"), after: localized("after"), architecture: localized("architecture"),

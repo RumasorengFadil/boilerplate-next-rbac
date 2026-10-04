@@ -66,6 +66,18 @@ Database lokal `lunabiner`: batch `f5223b97-3cc5-475b-bcbb-ffeb2ec920b1` memigra
 
 QA admin memakai `tests/portfolio-actions.test.mjs` dan `tests/portfolio-browser.mjs` pada database disposable bernama `lunabiner_portfolio_test`, bukan database aplikasi. Browser script menerima PORTFOLIO_TEST_ORIGIN loopback, PLAYWRIGHT_MODULE jika package di luar repository, serta PLAYWRIGHT_EXECUTABLE opsional untuk Chrome terpasang. Jalankan preview dengan DATABASE_URL test yang sama; fixtures/session/browser context dibersihkan setelah tes. Jangan menjalankan destructive cleanup tests menggunakan database produksi.
 
+## Portfolio cover storage — PRD 005 Task 5A
+
+Install lockfile dependencies, rebuild dan restart; Sharp kini dependency langsung server untuk decode/re-encode. Tidak ada SQL migration/seed/upload otomatis. `PORTFOLIO_UPLOAD_DIR` opsional **server-only**, harus path absolut persistent di luar `public/` dan artifact build. Default `storage/portfolio-covers` relatif cwd development diabaikan Git. Untuk production/standalone set path absolut agar restart/redeploy/perubahan cwd tidak kehilangan akses file. Sediakan writable persistent volume VPS/Node; ephemeral/serverless filesystem atau beberapa instance dengan disk terpisah belum didukung.
+
+Root dan subdirektori UUID harus private 0700, file WebP 0600, dimiliki user proses. Symlink atau permissions yang terlalu terbuka ditolak. Jangan memetakan folder ini sebagai static directory di reverse proxy: akses melalui `/media/portfolio/{content UUID}/{asset UUID}` memeriksa referensi current dan publication/permission tiap request. Jangan cache route media atau melewatkan auth cookies untuk preview admin. App mengirim private/no-store/noindex/nosniff; optimizer Next hanya menerima `/images/**`, upload langsung unoptimized. Salinan yang telah diunduh tidak dapat ditarik kembali.
+
+Server Action body limit 6 MiB termasuk multipart/field editor; reverse proxy perlu mengizinkan setidaknya 6 MiB request. File maksimal 5 MiB, JPG/PNG/WebP statis hingga 16 juta pixel/per sisi 8.000; output WebP maksimal 1.600 per sisi. Kombinasi file mendekati limit dengan rich JSON besar masih bisa melewati envelope 6 MiB dan harus dikurangi, bukan menaikkan limit file diam-diam.
+
+Backup database **dan** upload volume secara konsisten. Replace/remove hanya mengubah referensi; file lama tetap privat tetapi tidak disajikan. Archive/restore menjaga current cover. Belum ada auto garbage collection; sediakan retention/quota disk dan proses recovery manual yang ditinjau operator. File baru dari failed mutation dihapus hanya jika database memastikan belum terpasang; private orphan bisa dipertahankan saat commit/cleanup ambigu. Jangan menghapus seluruh storage untuk menyelesaikan error. Jangan commit asset uploads/backups atau log filename asli/content.
+
+QA: `tests/portfolio-cover.test.mjs`, `portfolio-cover-integration.test.mjs`, `portfolio-cover-browser.mjs`. Integration/browser hanya database disposable `lunabiner_portfolio_test`; browser membatasi role/port loopback 55441 dan menjalankan production server sendiri 3008. Jalankan serial setelah build/Prisma generate selesai, karena generate saat Prisma test aktif dapat merusak shared native engine load. Browser memerlukan bundled Playwright/Chrome dan menguji multipart nyata >1 MiB. Fixtures/temp upload directories dibersihkan; database utama tidak disentuh.
+
 ## Public SEO dan standalone assets
 
 Set `NEXT_PUBLIC_APP_URL` ke origin HTTPS production yang benar sebelum `npm run build` (tanpa subpath, query atau fragment), agar canonical, hreflang, schema dan OG URL tidak menunjuk localhost/preview. Variabel ini publik dan bukan tempat menyimpan credential.

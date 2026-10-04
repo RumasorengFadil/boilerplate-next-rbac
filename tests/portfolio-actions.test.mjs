@@ -56,7 +56,7 @@ test("portfolio actions validate untrusted forms, preserve rich data and enforce
     assert.equal(createdDetails.verifiedProject, false); assert.equal(createdDetails.client, "");
     assert.deepEqual((await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).translations.id.richBody, richBody);
     const slug = (await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).slug;
-    const legacyDetails = { client: "Legacy client", verifiedProject: true, industry: { id: "Operasional", en: "Operations" },
+    const legacyDetails = { image: "/images/test-cover.png", client: "Legacy client", verifiedProject: true, industry: { id: "Operasional", en: "Operations" },
       challenge: { id: "Tantangan lama", en: "Legacy challenge" }, technology: ["Next.js"], capabilities: ["software"],
       relatedServices: ["software"], ctaPath: "/en/contact" };
     const previousDetails = (await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).details;
@@ -65,7 +65,7 @@ test("portfolio actions validate untrusted forms, preserve rich data and enforce
     const editorDefaults = presentContent(await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } }));
     for (const locale of ["id", "en"]) editorial.set(`${locale}.richBody`, JSON.stringify(editorDefaults.translations[locale].richBody));
     editorial.set("category", "Editorial category"); editorial.set("tags", "operations, automation");
-    editorial.set("authorName", "Editorial author"); editorial.set("image", "/images/test-cover.png");
+    editorial.set("authorName", "Editorial author"); editorial.set("image", "/images/untrusted-replacement.png");
     editorial.set("client", "Untrusted overwrite"); editorial.set("verifiedProject", "on"); editorial.set("industry.id", "Overwrite");
     assert.equal(parseContentForm(editorial, true).details.client, undefined);
     assert.equal(parseContentForm(editorial).details.client, "Untrusted overwrite");

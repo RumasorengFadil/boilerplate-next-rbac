@@ -60,13 +60,31 @@ Pada database lokal `lunabiner`, batch `f5223b97-3cc5-475b-bcbb-ffeb2ec920b1` te
 
 ### Server Actions
 
-`savePortfolioAction(previousState, FormData)` memerlukan content:write sebelum parse. Fields: optional UUID id, version, slug, status, publishedAt datetime-local UTC, `id|en.title/excerpt/seoTitle/seoDescription/richBody`, category, tags, authorName dan image. Kind ditetapkan server CASE_STUDY. richBody JSON wajib untuk form portfolio, maksimal 200.000 serialized characters per locale; Zod memvalidasi node/mark/limits dan publication completeness. Action mengaktifkan opsi server-only `preservePortfolioDetails` pada service CMS; opsi bukan input client dan hanya mempertahankan metadata non-narasi. Direct service save tanpa opsi menerima kontrak legacy untuk kompatibilitas tetapi mengonversinya sebelum persistence, bukan menyimpan key narasi tersebut kembali.
+`savePortfolioAction(previousState, FormData)` memerlukan content:write sebelum parse. Fields: optional UUID id, version, slug, status, publishedAt datetime-local UTC, `id|en.title/excerpt/seoTitle/seoDescription/richBody`, category, tags, authorName, `coverOperation` (keep|replace|remove) dan `coverFile` (File saat replace). Client image path diabaikan. Kind ditetapkan server CASE_STUDY. richBody JSON wajib untuk form portfolio, maksimal 200.000 serialized characters per locale; Zod memvalidasi node/mark/limits dan publication completeness. Action mengaktifkan opsi server-only `preservePortfolioDetails` pada service CMS; opsi bukan input client dan hanya mempertahankan metadata non-narasi. Direct service save tanpa opsi menerima kontrak legacy untuk kompatibilitas tetapi mengonversinya sebelum persistence, bukan menyimpan key narasi tersebut kembali.
 
 `portfolioLifecycleAction(previousState, FormData)` memerlukan content:publish sebelum parse; payload id UUID, version integer, operation archive|restore. Author/status/version existing dibaca dari database, bukan dipercaya dari client.
 
 Response state: `{message, success?, id?, version?, fields?}` tanpa raw record/DB error. Invalid input/JSON, slug reserved, transition/permission/version/schedule failures ditampilkan sebagai pesan aman. Auth redirects tetap berada di luar catch mutation. Next Server Action origin/body-limit protections dipertahankan.
 
 Setelah berhasil, revalidatePath dashboard portfolio/list/detail, generic content list, sitemap, dan kedua locale layouts. Ini invalidation pola existing, bukan implementasi tagged shared cache/PPR Task 5. Scheduled publication tetap query-time due predicate.
+
+## Cover upload Task 5A — PRD 005 (tersedia)
+
+[PRD 005](../products/PRD/PRD_005_portfolio-cover-upload.md) memperluas scope dengan upload cover dari perangkat. Create/edit portfolio memakai native file picker, preview, ganti/hapus referensi dan batal perubahan. Pilihan kosong mempertahankan gambar. Teks form dan File disimpan di state client agar kegagalan validasi/version tidak mereset pekerjaan. Simpan sukses memuat ulang versi persisted. Artikel/produk tetap memakai path asset existing; tidak ada upload gallery/inline Tiptap/crop/library.
+
+Kontrak file: JPG/JPEG, PNG atau WebP statis maksimal 5 MiB. Client memeriksa MIME/size; server memeriksa signature, hasil decoder, kesesuaian MIME, maksimum 16 juta pixel, dimensi per sisi maksimal 8.000 dan satu frame. Sharp me-rotate sesuai orientation, resize inside 1.600×1.600 tanpa enlargement, re-encode WebP quality 82 dan membuang metadata. Nama original diabaikan. Server Actions limit 6 MiB menampung multipart/field lain; limit gambar tetap 5 MiB. Upload tidak memanggil AI atau layanan luar.
+
+Penyimpanan server-only: `PORTFOLIO_UPLOAD_DIR` absolut opsional, default `storage/portfolio-covers` relatif cwd. Di luar public/build, ignored Git, direktori 0700, file 0600, tanpa symlink. File `{content UUID}/{asset UUID}.webp` exclusive-create dan fsync sebelum DB save. UUID record baru ditentukan server sebelum upload. `ContentEntry.details.image` menyimpan `/media/portfolio/{content UUID}/{asset UUID}`; tidak ada tabel/kolom/index/migration SQL baru. Opsi service cover server-only menjaga keep/remove/replace, binding pemilik, authorization/publisher/optimistic version dan transactional audit. Input path palsu/cross-record ditolak atau diabaikan. Audit CASE_STUDY before/after menyimpan image path, bukan bytes/nama asli.
+
+File baru yang gagal terpasang dibersihkan setelah DB memastikan tidak ada referensi; commit ambigu/DB tak tersedia mempertahankan private orphan untuk menghindari menghapus cover committed. Revalidation dilakukan sesudah commit. Gambar lama yang diganti atau detached dipertahankan di disk untuk backup/recovery operasional, tetapi bukan image library dan tidak disajikan. Belum ada garbage collector; operator perlu kebijakan retention. Restore arsip mempertahankan current cover, bukan otomatis mengembalikan cover yang sebelumnya diganti/dihapus.
+
+### Media endpoint
+
+`GET /media/portfolio/{contentId}/{assetId}` menerima dua UUID melalui path, tanpa body/query contract. Zod invalid path menghasilkan 404. Lookup harus CASE_STUDY dengan exact current `details.image`; missing/detached asset menghasilkan 404 bahkan untuk admin. Anonymous menerima gambar hanya jika nondeleted dan PUBLISHED/due SCHEDULED. Selain itu memerlukan `content:read`; tidak berizin menghasilkan 404 tanpa login redirect/disclosure. Authorized preview tersedia untuk draft/arsip. Kesalahan DB/storage menghasilkan 503 kosong. Sukses 200 binary `image/webp`, Content-Length; semua response `Cache-Control: private, no-store`, `X-Content-Type-Options: nosniff`, `X-Robots-Tag: noindex`.
+
+Public detail dan thumbnail work/home memakai current gambar yang sama, alt localized title. Layout/teal gradient fallback/CTA/logo tetap konsisten LunaBiner. Upload dirender `unoptimized` dan image optimizer hanya mengizinkan `/images/**`; `/media/**` tidak boleh melewati cache optimizer sehingga penarikan publikasi tetap diperiksa setiap request gambar. Ini tidak dapat menarik kembali salinan yang telah diunduh. OG branded contextual endpoints tetap terpisah/tidak berubah.
+
+Task 5A tidak mengaktifkan Cache Components/PPR/ISR. Task 5B cache/PPR PRD 003 serta Task 6 final QA masih tersisa. Deployment storage/backup: [Installation](../deployment/installation.md).
 
 ## Keputusan target tersisa (belum diimplementasikan)
 

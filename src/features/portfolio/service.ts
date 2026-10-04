@@ -3,10 +3,10 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/server/authorization";
 import { recordAudit } from "@/server/audit";
-import { presentContent, publicContentWhere, saveContent } from "@/features/cms/service";
+import { presentContent, publicContentWhere, saveContent, type ContentSaveOptions } from "@/features/cms/service";
 import { portfolioInputSchema, portfolioLifecycleSchema, portfolioRouteSchema } from "./schema";
 
-export async function savePortfolio(raw: unknown, options: { preservePortfolioDetails?: boolean } = {}) {
+export async function savePortfolio(raw: unknown, options: ContentSaveOptions = {}) {
   await requirePermission("content:write");
   return saveContent(portfolioInputSchema.parse(raw), options);
 }

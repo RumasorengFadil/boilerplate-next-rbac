@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { richDocumentSchema, richTextToPlainText } from "./rich-text";
+import { parseCoverPath } from "../portfolio/cover-schema";
 
 export const contentKinds = ["ARTICLE", "CASE_STUDY", "PRODUCT"] as const;
 export const contentStatuses = ["DRAFT", "REVIEW", "SCHEDULED", "PUBLISHED", "ARCHIVED"] as const;
@@ -17,7 +18,7 @@ const internalImage = z.string().trim().max(500).refine(value => !value || /^\/i
 const lines = z.array(z.string().trim().min(1).max(200)).max(30).default([]);
 export const detailsSchema = z.object({
   category: z.string().trim().max(100).default(""), tags: lines,
-  authorName: z.string().trim().max(100).default(""), image: internalImage.default(""),
+  authorName: z.string().trim().max(100).default(""), image: z.string().trim().max(500).refine(value => internalImage.safeParse(value).success || Boolean(parseCoverPath(value)), "Use a valid internal cover.").default(""),
   industry: localized.default({ id: "", en: "" }), client: z.string().trim().max(180).default(""),
   verifiedProject: z.boolean().default(false), challenge: localized.default({ id: "", en: "" }),
   approach: localized.default({ id: "", en: "" }), solution: localized.default({ id: "", en: "" }),
@@ -35,6 +36,8 @@ export const contentInputSchema = z.object({
   status: z.enum(contentStatuses), publishedAt: z.iso.datetime().nullable().default(null),
   translations: z.object({ id: translationSchema, en: translationSchema }).strict(), details: detailsSchema,
 }).strict().superRefine((input, context) => {
+  if (input.kind !== "CASE_STUDY" && parseCoverPath(input.details.image))
+    context.addIssue({ code: "custom", path: ["details", "image"], message: "Uploaded covers are portfolio-only." });
   if (input.kind === "CASE_STUDY" && (/^\d+$/.test(input.slug) || z.uuid().safeParse(input.slug).success))
     context.addIssue({ code: "custom", path: ["slug"], message: "Use a descriptive case-study slug." });
   if (input.kind !== "CASE_STUDY" && (input.translations.id.richBody || input.translations.en.richBody))
