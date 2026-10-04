@@ -40,6 +40,7 @@ try {
     await admin.getByRole("textbox", { name: `Konten detail (${locale.toUpperCase()})`, exact: true }).fill("A complete business workflow illustration edited through Tiptap.");
   }
   await admin.locator('[name="slug"]').fill(slug);
+  await admin.locator('[name="category"]').fill("Operations"); await admin.locator('[name="tags"]').fill("Workflow, Automation");
   await admin.getByRole("group", { name: "Format Konten detail (ID)", exact: true }).getByRole("button", { name: "H2", exact: true }).click();
   await admin.getByRole("button", { name: "Simpan portfolio", exact: true }).click();
   let row;
@@ -47,6 +48,10 @@ try {
   await admin.waitForURL(`**/dashboard/portfolio/${row.id}`); await admin.reload();
   assert.equal(row.translations.id.richBody.content[0].type, "heading");
   assert.equal(row.translations.id.richBody.content[0].attrs.level, 2);
+  await db.contentEntry.update({ where: { id: row.id }, data: { details: { ...row.details, industry: { id: "Distribusi QA", en: "Distribution QA" }, capabilities: ["Automation QA"] } } });
+  await admin.reload();
+  assert.match(await admin.getByRole("textbox", { name: "Konten detail (ID)", exact: true }).innerText(), /Distribusi QA/);
+  assert.match(await admin.getByRole("textbox", { name: "Konten detail (EN)", exact: true }).innerText(), /Distribution QA/);
   await admin.getByRole("textbox", { name: "Konten detail (EN)", exact: true }).fill("Updated bilingual content is retained after save and reload through the admin editor.");
   await admin.getByRole("textbox", { name: "Konten detail (EN)", exact: true }).press(process.platform === "darwin" ? "Meta+A" : "Control+A");
   const englishToolbar = admin.getByRole("group", { name: "Format Konten detail (EN)", exact: true });
@@ -64,10 +69,36 @@ try {
   const updatedRow = await db.contentEntry.findUniqueOrThrow({ where: { id: row.id } });
   assert.equal(updatedRow.translations.en.richBody.content[0].type, "orderedList");
   assert.match(JSON.stringify(updatedRow.translations.en.richBody), /\/en\/contact/);
+  assert.equal(Object.hasOwn(updatedRow.details, "industry"), false); assert.equal(Object.hasOwn(updatedRow.details, "capabilities"), false);
+  assert.match(updatedRow.translations.id.body, /Distribusi QA/); assert.ok(!updatedRow.translations.en.body.includes("Distribution QA"));
   for (const status of ["REVIEW", "PUBLISHED"]) {
     await admin.locator('[name="status"]').selectOption(status); await admin.getByRole("button", { name: "Simpan portfolio", exact: true }).click();
     await poll(async () => (await db.contentEntry.findUnique({ where: { id: row.id } })).status === status); await admin.reload();
   }
+  await db.portfolioRoute.create({ data: { value: "999", contentId: row.id } });
+  const publicPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  // This isolated visitor declines analytics so fixed consent UI does not
+  // obscure the rich-content visual QA or generate analytics fixtures.
+  await publicPage.context().addInitScript(() => localStorage.setItem("lunabiner-analytics-consent", "declined"));
+  for (const route of [`/id/work/${row.id}`, "/id/work/999", `/en/work/${row.id}`]) {
+    await publicPage.goto(origin + route); await publicPage.locator("[data-rich-content]").waitFor();
+    assert.equal(await publicPage.getByRole("heading", { name: "industry", exact: true }).count(), 0);
+    assert.equal(await publicPage.getByRole("heading", { name: "capabilities", exact: true }).count(), 0);
+    assert.equal(await publicPage.locator("[data-rich-content]").count(), 1);
+    assert.equal(await publicPage.getByRole("heading", { level: 1 }).count(), 1);
+    assert.equal(await publicPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+  }
+  await publicPage.goto(`${origin}/id/work/${row.id}`);
+  assert.equal(await publicPage.getByRole("heading", { name: "Industri", exact: true }).count(), 1);
+  assert.equal(await publicPage.getByRole("heading", { name: "A complete business workflow illustration edited through Tiptap.", exact: true }).count(), 1);
+  await publicPage.screenshot({ path: directory + "/desktop-public.png", fullPage: true });
+  await publicPage.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await publicPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+  // Capture viewports: installed Chrome's full-page capture can repeat fixed
+  // composited layers after viewport resizing, even with a single DOM H1.
+  await publicPage.screenshot({ path: directory + "/mobile-public.png" });
+  await publicPage.locator("[data-rich-content]").scrollIntoViewIfNeeded();
+  await publicPage.screenshot({ path: directory + "/mobile-public-content.png" }); await publicPage.close();
   await admin.getByRole("textbox", { name: "Konten detail (ID)", exact: true }).scrollIntoViewIfNeeded();
   await admin.screenshot({ path: directory + "/desktop-editor.png" });
   const editor = await contextFor("CONTENT_EDITOR", 390); await editor.goto(`${origin}/dashboard/portfolio/${row.id}`);

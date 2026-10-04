@@ -39,7 +39,9 @@ export function convertLegacyPortfolioContent(raw: { translations: unknown; deta
   };
   const result = {
     translations: { id: converted("id"), en: converted("en") },
-    details: Object.fromEntries(Object.entries(originalDetails).filter(([key]) => !legacyPortfolioKeys.some(legacy => legacy === key))),
+    // detailsSchema validated every stored key above; retain only that known
+    // non-narrative subset without adding default keys to existing records.
+    details: Object.fromEntries(Object.entries(originalDetails).filter(([key]) => !legacyPortfolioKeys.some(legacy => legacy === key))) as Partial<Omit<z.infer<typeof detailsSchema>, typeof legacyPortfolioKeys[number]>>,
   };
   return { ...result, changed: JSON.stringify(result.translations) !== JSON.stringify(raw.translations) || JSON.stringify(result.details) !== JSON.stringify(raw.details) };
 }

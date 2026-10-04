@@ -10,8 +10,12 @@ const { db } = await import("../src/lib/db.ts");
 const { savePortfolio, changePortfolioLifecycle, resolvePublishedPortfolio } = await import("../src/features/portfolio/service.ts");
 const { saveContent, publishedContent } = await import("../src/features/cms/service.ts");
 const { seedPortfolioExamples, portfolioExamples } = await import("../src/features/portfolio/seed.ts");
+const { legacyPortfolioKeys } = await import("../src/features/portfolio/legacy-content.ts");
+const { getCaseStudySeoContent } = await import("../src/features/website/seo/content.ts");
+const { buildPublicSitemap } = await import("../src/features/website/seo/sitemap.ts");
 const translation = { title: "Isolated illustration", excerpt: "A test-only business workflow example.", body: "This is isolated test content, not a real company portfolio." };
-const input = slug => ({ kind: "CASE_STUDY", slug, status: "DRAFT", translations: { id: translation, en: translation }, details: {} });
+const richTranslation = { ...translation, richBody: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: translation.body }] }] } };
+const input = slug => ({ kind: "CASE_STUDY", slug, status: "DRAFT", translations: { id: richTranslation, en: richTranslation }, details: {} });
 
 test("portfolio persistence, route reservations, lifecycle, permissions and seeding", async t => {
   const contentIds = [], userIds = [], tokens = {};
@@ -64,7 +68,7 @@ test("portfolio persistence, route reservations, lifecycle, permissions and seed
       const richBody = { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: translation.body }] }] };
       const rich = await savePortfolio({ ...input("rich-" + randomUUID()), translations: { id: { ...translation, richBody }, en: { ...translation, richBody } } });
       contentIds.push(rich.id);
-      await assert.rejects(() => saveContent({ ...input(rich.slug), id: rich.id, version: rich.version }), /portfolio editor/);
+      await assert.rejects(() => saveContent({ ...input(rich.slug), translations: { id: translation, en: translation }, id: rich.id, version: rich.version }), /portfolio editor/);
       assert.deepEqual((await db.contentEntry.findUniqueOrThrow({ where: { id: rich.id } })).translations.id.richBody, richBody);
     });
     await t.test("scheduled and even manually soft-deleted published rows stay nonpublic", async () => {
@@ -84,8 +88,15 @@ test("portfolio persistence, route reservations, lifecycle, permissions and seed
       assert.equal(await db.contentEntry.count({ where: { id: { in: portfolioExamples.map(item => item.id) } } }), 0);
       await db.portfolioRoute.delete({ where: { id: reserved.id } });
       assert.deepEqual(await seedPortfolioExamples(db), { created: 3, skipped: 0 });
+      assert.equal((await getCaseStudySeoContent("id", "1")).entry.id, portfolioExamples[0].id);
+      assert.ok((await getCaseStudySeoContent("en", "1")).entry.translations.en.richBody);
+      const seededSitemap = await buildPublicSitemap();
+      assert.ok(!seededSitemap.some(item => /\/work\/[123]$/.test(item.url)));
+      assert.ok(seededSitemap.some(item => item.url.endsWith("/work/" + portfolioExamples[0].id)));
       const sample = portfolioExamples[0];
       const seed = await db.contentEntry.findUniqueOrThrow({ where: { id: sample.id } });
+      for (const key of legacyPortfolioKeys) assert.equal(Object.hasOwn(seed.details, key), false);
+      assert.match(seed.translations.id.body, /Industri/); assert.match(seed.translations.en.body, /Capabilities/);
       const edited = await db.contentEntry.update({ where: { id: sample.id }, data: { slug: "admin-renamed-example", version: { increment: 1 },
         translations: { ...seed.translations, id: { ...seed.translations.id, title: "Admin edited title" } } } });
       await changePortfolioLifecycle({ id: sample.id, version: edited.version, operation: "archive" });
@@ -93,6 +104,9 @@ test("portfolio persistence, route reservations, lifecycle, permissions and seed
       assert.deepEqual(await seedPortfolioExamples(db), { created: 0, skipped: 3 });
       assert.deepEqual(await db.contentEntry.findUniqueOrThrow({ where: { id: sample.id } }), before);
       assert.equal(await resolvePublishedPortfolio("1"), null);
+      assert.equal(await getCaseStudySeoContent("id", "1"), null);
+      const archivedSitemap = await buildPublicSitemap();
+      assert.ok(!archivedSitemap.some(item => item.url.endsWith("/work/1") || item.url.endsWith("/work/" + sample.id)));
       const restored = await changePortfolioLifecycle({ id: sample.id, version: before.version, operation: "restore" });
       const review = await savePortfolio({ translations: restored.translations, details: restored.details,
         id: restored.id, version: restored.version, kind: "CASE_STUDY", slug: restored.slug, status: "REVIEW", publishedAt: null });

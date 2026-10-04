@@ -11,6 +11,7 @@ Migration `20261004010000_portfolio_foundation` bersifat additive dan dibungkus 
 - Canonical dan alias ada dalam tabel yang sama: tidak ada race cross-table slug-vs-alias. Foreign key mencegah physical delete ketika route masih tercatat. Tidak ada aplikasi yang menghapus reservation saat archive/restore; slug tidak dapat direbut record lain.
 - `deletedAt` terpisah dari ARCHIVED workflow. Service archive/restore memeriksa content:publish dan version; restore selalu DRAFT dengan publishedAt null. Shared public query mewajibkan deletedAt null dan status/tanggal layak terbit.
 - JSON translations kini mendukung richBody opsional per locale untuk CASE_STUDY; plain body diturunkan dari rich JSON, bukan field SQL baru. Existing JSON plain content tetap valid. Seed tidak overwrite row existing.
+- PRD 004 Task 2: CASE_STUDY save/seed menyimpan richBody dan derived body tanpa key JSON details industry/challenge/approach/solution/impact/before/after/architecture/capabilities/technology. Read adapter mengonversi legacy tanpa writes. Metadata non-narasi dan details ARTICLE/PRODUCT tetap didukung kontrak shared; defaults kosong di parsed objects bukan key database yang diciptakan ulang. Tidak ada migration SQL/tabel/kolom/index/constraint baru. Bulk conversion/cleanup semua record existing dengan backup belum dilakukan (Task 3).
 
 Prisma schema tidak mengekspresikan trigger/CHECK; migration SQL merupakan sumber constraint tersebut. Implementasi service/seed: [Portfolio](../features/portfolio.md).
 

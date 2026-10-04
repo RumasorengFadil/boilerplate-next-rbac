@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import { website } from "../website/content";
 import { portfolioInputSchema } from "./schema";
 import type { RichNode } from "../cms/rich-text";
+import { convertLegacyPortfolioContent } from "./legacy-content";
 
 // Stable UUIDs identify seed ownership even after an administrator renames the slug.
 export const portfolioExamples = [
@@ -38,12 +39,13 @@ export async function seedPortfolioExamples(client: PrismaClient) {
         const input = portfolioInputSchema.parse({
           kind: "CASE_STUDY", slug: sample.slug, status: "PUBLISHED",
           translations: { id: translation("id"), en: translation("en") },
-          details: { industry: project.industry, capabilities: [...project.capabilities],
+          details: { category: ["Software", "Automation", "AI"][index], tags: [...project.capabilities], industry: project.industry, capabilities: [...project.capabilities],
             verifiedProject: false, challenge: project.problem, approach, solution: project.solution, impact: project.impact,
             relatedServices: [index === 0 ? "software" : index === 1 ? "automation" : "ai"] },
         });
+        const normalized = convertLegacyPortfolioContent(input);
         await tx.contentEntry.create({ data: { id: sample.id, kind: input.kind, slug: input.slug, status: input.status,
-          translations: input.translations, details: input.details, publishedAt: new Date("2026-10-04T00:00:00.000Z") } });
+          translations: normalized.translations, details: normalized.details, publishedAt: new Date("2026-10-04T00:00:00.000Z") } });
         created++;
       } else skipped++;
       // SQL reservation refuses conflicting ownership; the entire seed rolls back.

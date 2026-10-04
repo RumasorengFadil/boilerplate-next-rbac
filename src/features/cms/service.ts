@@ -6,13 +6,15 @@ import { hasPermission } from "@/lib/permissions";
 import { requirePermission } from "@/server/authorization";
 import { recordAudit } from "@/server/audit";
 import { canTransition, contentInputSchema, detailsSchema, translationSchema } from "./schema";
+import { convertLegacyPortfolioContent } from "@/features/portfolio/legacy-content";
 
 export const publicContentWhere = (kind?: ContentKind): Prisma.ContentEntryWhereInput => ({
   ...(kind ? { kind } : {}), deletedAt: null, status: { in: ["PUBLISHED", "SCHEDULED"] }, publishedAt: { lte: new Date() },
 });
 export function presentContent(entry: Awaited<ReturnType<typeof db.contentEntry.findMany>>[number]) {
-  const translations = entry.translations as { id: unknown; en: unknown };
-  return { ...entry, translations: { id: translationSchema.parse(translations.id), en: translationSchema.parse(translations.en) }, details: detailsSchema.parse(entry.details) };
+  const normalized = entry.kind === "CASE_STUDY" ? convertLegacyPortfolioContent(entry) : entry;
+  const translations = normalized.translations as { id: unknown; en: unknown };
+  return { ...entry, translations: { id: translationSchema.parse(translations.id), en: translationSchema.parse(translations.en) }, details: detailsSchema.parse(normalized.details) };
 }
 export const publishedContent = cache(async (kind?: ContentKind) => {
   return (await db.contentEntry.findMany({ where: publicContentWhere(kind), orderBy: [{ publishedAt: "desc" }, { id: "asc" }], take: 200 })).map(presentContent);
@@ -33,15 +35,16 @@ export async function saveContent(raw: unknown, options: { preservePortfolioDeta
     }
     if (!canTransition(previous?.status ?? "DRAFT", input.status)) throw new Error("Invalid publication transition; submit for review first.");
     if (!publisher && (["PUBLISHED", "SCHEDULED", "ARCHIVED"].includes(input.status) || previous && ["PUBLISHED", "SCHEDULED"].includes(previous.status))) throw new Error("Publishing permission required.");
-    // The portfolio form only owns basic metadata. Read omitted legacy fields
-    // inside this transaction; never round-trip them through hidden inputs.
+    // The editor already received converted defaults through presentContent.
+    // Preserve non-narrative metadata, but never reappend text the admin removed.
     const details = options.preservePortfolioDetails && input.kind === "CASE_STUDY"
-      ? { ...detailsSchema.parse(previous?.details ?? {}), category: input.details.category,
+      ? { ...detailsSchema.parse(previous ? convertLegacyPortfolioContent(previous).details : {}), category: input.details.category,
         tags: input.details.tags, authorName: input.details.authorName, image: input.details.image }
       : input.details;
+    const normalized = input.kind === "CASE_STUDY" ? convertLegacyPortfolioContent({ translations: input.translations, details }) : { translations: input.translations, details };
     const data = {
       kind: input.kind, slug: input.slug, status: input.status,
-      translations: input.translations, details,
+      translations: normalized.translations, details: normalized.details,
       publishedAt: input.status === "PUBLISHED" ? previous?.status === "PUBLISHED" ? previous.publishedAt ?? new Date() : new Date() : input.status === "SCHEDULED" ? new Date(input.publishedAt!) : null,
     };
     if (input.status === "SCHEDULED" && data.publishedAt! <= new Date()) throw new Error("Schedule must be in the future.");

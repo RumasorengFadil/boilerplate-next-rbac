@@ -10,6 +10,8 @@ const { db } = await import("../src/lib/db.ts");
 const { savePortfolioAction, portfolioLifecycleAction } = await import("../src/features/portfolio/actions.ts");
 const { parseContentForm } = await import("../src/features/cms/form.ts");
 const { richDocumentSchema, safeRichLink } = await import("../src/features/cms/rich-text.ts");
+const { presentContent } = await import("../src/features/cms/service.ts");
+const { legacyPortfolioKeys } = await import("../src/features/portfolio/legacy-content.ts");
 
 test("Tiptap list/link defaults round-trip through the strict server contract", () => {
   const schema = getSchema([StarterKit.configure({ heading: { levels: [2, 3, 4] }, underline: false, trailingNode: false, link: { isAllowedUri: safeRichLink } })]);
@@ -60,6 +62,8 @@ test("portfolio actions validate untrusted forms, preserve rich data and enforce
     const previousDetails = (await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).details;
     await db.contentEntry.update({ where: { id: saved.id }, data: { details: { ...previousDetails, ...legacyDetails } } });
     const editorial = form({ id: saved.id, version: saved.version, slug });
+    const editorDefaults = presentContent(await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } }));
+    for (const locale of ["id", "en"]) editorial.set(`${locale}.richBody`, JSON.stringify(editorDefaults.translations[locale].richBody));
     editorial.set("category", "Editorial category"); editorial.set("tags", "operations, automation");
     editorial.set("authorName", "Editorial author"); editorial.set("image", "/images/test-cover.png");
     editorial.set("client", "Untrusted overwrite"); editorial.set("verifiedProject", "on"); editorial.set("industry.id", "Overwrite");
@@ -67,12 +71,18 @@ test("portfolio actions validate untrusted forms, preserve rich data and enforce
     assert.equal(parseContentForm(editorial).details.client, "Untrusted overwrite");
     saved = await savePortfolioAction({ message: "" }, editorial); assert.equal(saved.success, true);
     const retained = (await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).details;
-    assert.deepEqual(retained, { ...previousDetails, ...legacyDetails, category: "Editorial category",
-      tags: ["operations", "automation"], authorName: "Editorial author", image: "/images/test-cover.png" });
-    for (const [key, value] of Object.entries(legacyDetails)) assert.deepEqual(retained[key], value);
+    const expected = { ...previousDetails, ...legacyDetails, category: "Editorial category",
+      tags: ["operations", "automation"], authorName: "Editorial author", image: "/images/test-cover.png" };
+    for (const key of legacyPortfolioKeys) delete expected[key];
+    assert.deepEqual(retained, expected);
+    for (const key of legacyPortfolioKeys) assert.equal(Object.hasOwn(retained, key), false);
+    const persisted = await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } });
+    assert.match(persisted.translations.id.body, /Tantangan lama/); assert.match(persisted.translations.en.body, /Legacy challenge/);
     assert.equal(retained.category, "Editorial category"); assert.deepEqual(retained.tags, ["operations", "automation"]);
     assert.equal(retained.authorName, "Editorial author"); assert.equal(retained.image, "/images/test-cover.png");
     saved = await savePortfolioAction({ message: "" }, form({ id: saved.id, version: saved.version, slug, status: "REVIEW" })); assert.equal(saved.success, true);
+    assert.ok(!(await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).translations.id.body.includes("Tantangan lama"));
+    assert.ok(!presentContent(await db.contentEntry.findUniqueOrThrow({ where: { id: saved.id } })).translations.en.body.includes("Legacy challenge"));
     assert.equal((await savePortfolioAction({ message: "" }, form({ id: saved.id, version: saved.version, slug, status: "PUBLISHED" }))).success, undefined);
     await assert.rejects(() => portfolioLifecycleAction({ message: "" }, lifecycle(saved.id, saved.version, "archive")), /Unauthorized/);
     globalThis.__phase2TestCookie = tokens.ADMIN;

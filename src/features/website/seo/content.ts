@@ -25,7 +25,6 @@ export function seoFromPublishedEntry(entry: Entry, locale: Locale): SeoDocument
     keywords: [...new Set([
       entry.kind === "ARTICLE" ? "LunaBiner Insights" : (locale === "id" ? "studi kasus LunaBiner" : "LunaBiner case studies"),
       entry.details.category, ...entry.details.tags,
-      ...(entry.kind === "CASE_STUDY" ? [...entry.details.capabilities] : []),
     ].filter(Boolean))].slice(0, 30),
     category: entry.details.category || (entry.kind === "ARTICLE" ? "INSIGHTS" : "PORTFOLIO"),
     pageType: "WebPage", entityType: entry.kind === "ARTICLE" ? "Article" : "CreativeWork",
@@ -64,7 +63,16 @@ export const getCaseStudySeoContent = cache(async (rawLocale: Locale, rawId: str
     const entry = presentContent(row);
     return { seo: seoFromPublishedEntry(entry, locale), entry, project: null };
   }
-  // Preserve existing public static links; do not create numeric database IDs.
+  // Transitional numeric compatibility: mapped examples use the same rich DB
+  // content as UUID links. Canonical slug redirects remain PRD 003 Task 4.
+  const route = await db.portfolioRoute.findUnique({ where: { value: id.data }, select: { contentId: true } });
+  if (route) {
+    const row = await db.contentEntry.findFirst({ where: { ...publicContentWhere("CASE_STUDY"), id: route.contentId } });
+    if (!row) return null;
+    const entry = presentContent(row);
+    return { seo: seoFromPublishedEntry(entry, locale), entry, project: null };
+  }
+  // Unmapped static fallback remains until PRD 003 Task 4.
   const project = website.projects[Number(id.data) - 1];
   if (!project) return null;
   const prefix = locale === "id" ? "Contoh ilustratif: " : "Illustrative example: ";
