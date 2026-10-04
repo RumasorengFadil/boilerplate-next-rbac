@@ -44,7 +44,10 @@ export async function saveContent(raw: unknown, options: ContentSaveOptions = {}
       for (const locale of ["id", "en"] as const) if (stored[locale].richBody && !input.translations[locale].richBody)
         throw new Error("Use the portfolio editor to preserve rich content.");
     }
-    if (!canTransition(previous?.status ?? "DRAFT", input.status)) throw new Error("Invalid publication transition; submit for review first.");
+    // Portfolio status is a direct choice; archive remains a separate soft-delete action.
+    if (input.kind === "CASE_STUDY") {
+      if (input.status === "ARCHIVED") throw new Error("Use the portfolio archive action.");
+    } else if (!canTransition(previous?.status ?? "DRAFT", input.status)) throw new Error("Invalid publication transition; submit for review first.");
     if (!publisher && (["PUBLISHED", "SCHEDULED", "ARCHIVED"].includes(input.status) || previous && ["PUBLISHED", "SCHEDULED"].includes(previous.status))) throw new Error("Publishing permission required.");
     // The editor already received converted defaults through presentContent.
     // Preserve non-narrative metadata, but never reappend text the admin removed.

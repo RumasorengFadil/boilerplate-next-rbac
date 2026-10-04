@@ -40,6 +40,8 @@
 | [PRD 005 — Portfolio cover upload](products/PRD/PRD_005_portfolio-cover-upload.md) | Refinement upload perangkat, UUID assets, private persistent storage dan batas scope. |
 | [Portfolio cover — Task 5A](reports/2026/10/04/portfolio_cover_task5a.md) | File picker/preview, validasi gambar, media authorization dan hasil QA upload. |
 | [Portfolio validation feedback](reports/2026/10/04/portfolio_validation_feedback.md) | Pesan publikasi per kolom/bahasa, inline errors dan aksesibilitas tanpa mengubah aturan konten. |
+| [PRD 006 — Portfolio direct status](products/PRD/PRD_006_portfolio-direct-status.md) | Status langsung tanpa urutan REVIEW wajib; arsip tetap soft-delete existing. |
+| [Portfolio direct status](reports/2026/10/04/portfolio_direct_status.md) | Guard CASE_STUDY, publish/schedule langsung, regression public/sitemap/RBAC dan arsip. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |
 
 Dokumen di `docs/products/PRD/` menyimpan kebutuhan produk sesuai sumber asli, bukan pernyataan bahwa seluruh fiturnya telah diimplementasikan. Status implementasi dicatat terpisah pada laporan yang relevan.

@@ -48,6 +48,12 @@ Pada database lokal `lunabiner`, batch `f5223b97-3cc5-475b-bcbb-ffeb2ec920b1` te
 
 ## Admin Task 3
 
+Refinement [PRD 006](../products/PRD/PRD_006_portfolio-direct-status.md): portfolio menggunakan **status langsung**, bukan urutan review wajib. Create/edit aktif menerima DRAFT, REVIEW, PUBLISHED atau SCHEDULED dari status aktif mana pun. Publisher boleh create PUBLISHED atau mengubah DRAFT→PUBLISHED/SCHEDULED langsung. REVIEW hanya status nonpublic opsional. ARTICLE/PRODUCT masih mengikuti transition rules sebelumnya.
+
+ARCHIVED tidak ada di select status dan ditolak oleh schema portfolio serta service CMS saat CASE_STUDY save, termasuk bypass melalui generic service. Arsipkan tetap lewat lifecycle action existing: deletedAt/ARCHIVED/publishedAt null/version increment → item pindah dari Aktif ke Arsip; pulihkan tetap DRAFT. Enum ARCHIVED database tetap diperlukan dan tidak dihapus. Legacy ARCHIVED dengan deletedAt null tidak diubah massal; form menampilkan pilihan DRAFT untuk save berikutnya, atau operator dapat memakai tombol Arsipkan existing untuk memindahkannya ke Arsip.
+
+PUBLISHED tersimpan dengan waktu terbit sekarang (edit yang tetap PUBLISHED mempertahankan tanggal existing). SCHEDULED memerlukan tanggal/waktu UTC mendatang saat save; public predicate otomatis mengevaluasi due timestamp tanpa job yang mengubah enum. DRAFT/REVIEW mengosongkan publishedAt dan tidak tersedia di work/home/detail/SEO/OG/sitemap/media anonymous. Izin content:write/content:publish, minimum ID/EN, optimistic version, audit, UUID/slug/cover guards tetap berlaku. Tidak ada autopublish data existing, force overwrite atau penambahan cache/PPR.
+
 - `/dashboard/portfolio`: content:read; filter `view=active|archived` tervalidasi (default active), 100 row terbaru dengan UUID links, status/version, slug dan label ilustratif/terverifikasi. Active mengecualikan soft-deleted; tab Arsip hanya deletedAt nonnull. ARCHIVED workflow lama tanpa deletedAt masih aktif administratif, tetapi tidak public.
 - `/dashboard/portfolio/new` dan `/dashboard/portfolio/[UUID]`: content:write; ID bukan UUID atau record bukan CASE_STUDY menghasilkan notFound. Deleted record menampilkan recovery panel, bukan editable form. Publisher dapat restore; nonpublisher tidak melihat kontrol lifecycle.
 - Content Editor dapat membuat/edit draft/review. PUBLISHED/SCHEDULED readonly untuk nonpublisher; server tetap menolak perubahan tanpa content:publish. ADMIN/SUPER_ADMIN/MARKETING dapat publish/schedule/archive/restore sesuai grants existing. Menu bukan authorization boundary.

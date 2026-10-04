@@ -7,6 +7,7 @@ export const portfolioSlugSchema = z.string().trim().min(2).max(120)
 export const portfolioRouteSchema = z.string().min(1).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 export const portfolioInputSchema = contentInputSchema.superRefine((input, context) => {
   if (input.kind !== "CASE_STUDY") context.addIssue({ code: "custom", path: ["kind"], message: "Portfolio requires CASE_STUDY." });
+  if (input.status === "ARCHIVED") context.addIssue({ code: "custom", path: ["status"], message: "Use the separate archive action." });
   if (!portfolioSlugSchema.safeParse(input.slug).success) context.addIssue({ code: "custom", path: ["slug"], message: "Use a descriptive portfolio slug." });
 });
 export const portfolioLifecycleSchema = z.object({ id: z.uuid(), version: z.number().int().min(1), operation: z.enum(["archive", "restore"]) }).strict();
@@ -35,6 +36,8 @@ export function portfolioValidationErrors(issues: z.ZodError["issues"]) {
       errors[field] = `${label} maksimal ${issue.maximum} karakter.`;
     } else if (field === "slug") {
       errors[field] = "Slug harus berupa nama deskriptif dengan huruf kecil, angka, dan tanda hubung; bukan nomor saja atau UUID.";
+    } else if (field === "status") {
+      errors[field] = "Pilih DRAFT, REVIEW, PUBLISHED, atau SCHEDULED. Untuk mengarsipkan portfolio, gunakan tombol Arsipkan.";
     } else if (field === "publishedAt") {
       errors[field] = "Pilih tanggal dan waktu publikasi yang valid (UTC) untuk status SCHEDULED.";
     } else if (field.endsWith(".richBody")) {

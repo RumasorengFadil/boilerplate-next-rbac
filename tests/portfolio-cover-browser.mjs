@@ -32,6 +32,7 @@ try {
   const admin = await context("ADMIN"); await admin.goto(origin + "/dashboard/portfolio/new");
   await admin.getByRole("textbox", { name: "Konten detail (ID)", exact: true }).waitFor();
   assert.equal(await admin.locator('[name="image"]').count(), 0); assert.equal(await admin.locator('[name="coverFile"]').getAttribute("type"), "file");
+  assert.deepEqual(await admin.locator('[name="status"] option').allTextContents(), ["DRAFT", "REVIEW", "SCHEDULED", "PUBLISHED"]);
   const slug = "cover-browser-" + randomUUID();
   await admin.locator('[name="slug"]').fill(slug);
   for (const locale of ["id", "en"]) await admin.locator(`[name="${locale}.title"]`).fill("Cover workflow illustration");
@@ -86,7 +87,7 @@ try {
   await poll(async () => (await db.contentEntry.findUnique({ where: { id: row.id } })).details.image !== original);
   row = await db.contentEntry.findUniqueOrThrow({ where: { id: row.id } }); const current = row.details.image;
   await admin.reload(); assert.equal((await admin.request.get(origin + original)).status(), 404);
-  for (const status of ["REVIEW", "PUBLISHED"]) {
+  for (const status of ["PUBLISHED"]) {
     await admin.getByRole("textbox", { name: "Konten detail (ID)", exact: true }).waitFor();
     await admin.locator('[name="status"]').selectOption(status); await admin.getByRole("button", { name: "Simpan portfolio", exact: true }).click();
     try { await poll(async () => (await db.contentEntry.findUnique({ where: { id: row.id } })).status === status); }
@@ -111,8 +112,32 @@ try {
   await admin.getByRole("button", { name: "Hapus cover", exact: true }).click(); await admin.getByRole("button", { name: "Simpan portfolio", exact: true }).click();
   await poll(async () => (await db.contentEntry.findUnique({ where: { id: row.id } })).details.image === "");
   assert.equal((await fetch(origin + current)).status, 404); assert.equal((await readdir(storage + "/" + row.id)).length, 2);
+  for (const status of ["DRAFT", "SCHEDULED", "PUBLISHED"]) {
+    await admin.reload(); await admin.getByRole("textbox", { name: "Konten detail (ID)", exact: true }).waitFor();
+    await admin.locator('[name="status"]').selectOption(status);
+    if (status === "SCHEDULED") await admin.locator('[name="publishedAt"]').fill(new Date(Date.now() + 600000).toISOString().slice(0, 16));
+    await admin.getByRole("button", { name: "Simpan portfolio", exact: true }).click();
+    await poll(async () => (await db.contentEntry.findUnique({ where: { id: row.id } })).status === status);
+    assert.equal((await fetch(`${origin}/id/work/${slug}`, { headers: { "User-Agent": "Twitterbot" } })).status, status === "PUBLISHED" ? 200 : 404);
+    assert.equal((await (await fetch(origin + "/sitemap.xml")).text()).includes("/work/" + slug), status === "PUBLISHED");
+  }
+  await admin.reload();
+  await admin.getByRole("button", { name: "Arsipkan", exact: true }).click();
+  await admin.getByRole("button", { name: "Ya, arsipkan", exact: true }).click();
+  await poll(async () => Boolean((await db.contentEntry.findUnique({ where: { id: row.id } })).deletedAt));
+  await admin.goto(origin + "/dashboard/portfolio");
+  assert.equal(await admin.getByRole("link", { name: "Cover workflow illustration", exact: true }).count(), 0);
+  await admin.goto(origin + "/dashboard/portfolio?view=archived");
+  await admin.getByRole("link", { name: "Cover workflow illustration", exact: true }).waitFor();
+  await admin.getByRole("button", { name: "Pulihkan", exact: true }).click();
+  await admin.getByRole("button", { name: "Ya, pulihkan", exact: true }).click();
+  await poll(async () => (await db.contentEntry.findUnique({ where: { id: row.id } })).deletedAt === null);
+  assert.equal((await db.contentEntry.findUniqueOrThrow({ where: { id: row.id } })).status, "DRAFT");
+  await admin.goto(origin + "/dashboard/portfolio");
+  await admin.getByRole("link", { name: "Cover workflow illustration", exact: true }).waitFor();
+  assert.equal((await fetch(`${origin}/id/work/${slug}`, { headers: { "User-Agent": "Twitterbot" } })).status, 404);
   assert.deepEqual(errors, []); await publicPage.close();
-  console.log("PASS: friendly publication feedback per language/field, accessible inline errors, retained text and no write on invalid publication; real multipart >1MB create upload, byte validation/error recovery, preview/keep/cancel/replace/remove, UUID ownership, draft/private and published media, optimizer deny, public thumbnail/detail, publisher guard and desktop/mobile.");
+  console.log("PASS: direct portfolio publish/schedule/withdrawal and sitemap; no ARCHIVED option, existing active/archive/restore DRAFT lifecycle; friendly publication feedback, accessible inline errors, retained text; multipart >1MB upload, preview/keep/cancel/replace/remove, UUID ownership/private media, optimizer deny, thumbnails/detail, permissions and desktop/mobile.");
   console.log("Cover visual QA artifacts: " + screenshots);
 } finally {
   for (const ctx of contexts) await ctx.close(); await browser?.close();

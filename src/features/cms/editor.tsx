@@ -15,6 +15,7 @@ export function ContentEditor({ initial, canPublish, portfolio = false, readOnly
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [portfolioValues, setPortfolioValues] = useState<Record<string, string>>({});
   const details = initial?.details ?? detailsSchema.parse({});
+  const initialStatus = portfolio && initial?.status === "ARCHIVED" ? "DRAFT" : initial?.status ?? "DRAFT";
   useEffect(() => { if (state.success && state.id) { router.replace(`/dashboard/${portfolio ? "portfolio" : "content"}/${state.id}`); router.refresh(); } }, [state, router, portfolio]);
   // Controlled portfolio fields survive React's form reset after a rejected upload.
   const valueProps = (name: string, initialValue: string) => portfolio
@@ -34,7 +35,7 @@ export function ContentEditor({ initial, canPublish, portfolio = false, readOnly
       {portfolio ? <><input type="hidden" name="kind" value="CASE_STUDY" /><p className="text-sm font-semibold">Studi kasus / Portfolio</p></> : <label className="grid gap-2 text-sm">Jenis konten<select name="kind" className="input" value={kind} onChange={event => setKind(event.target.value as typeof kind)} disabled={Boolean(initial?.id)}>{contentKinds.filter(value => value !== "CASE_STUDY").map(value => <option key={value}>{value}</option>)}</select></label>}
       {!portfolio && initial?.id && <input type="hidden" name="kind" value={kind} />}
       {field("slug", "Slug (huruf kecil dan tanda hubung)", initial?.slug, false, true)}
-      <label className="grid gap-2 text-sm">Workflow<select name="status" className="input" {...valueProps("status", initial?.status ?? "DRAFT")}>{contentStatuses.filter(value => (!portfolio || value !== "ARCHIVED" || initial?.status === "ARCHIVED") && (canPublish || ["DRAFT", "REVIEW"].includes(value) || readOnly && initial?.status === value)).map(value => <option key={value}>{value}</option>)}</select></label>
+      <label className="grid gap-2 text-sm">{portfolio ? "Status portfolio" : "Workflow"}<select name="status" className="input" {...valueProps("status", initialStatus)}>{contentStatuses.filter(value => (!portfolio || value !== "ARCHIVED") && (canPublish || ["DRAFT", "REVIEW"].includes(value) || readOnly && initial?.status === value)).map(value => <option key={value}>{value}</option>)}</select></label>
       <label className="grid gap-2 text-sm">Jadwal publikasi (UTC)<input className="input" type="datetime-local" name="publishedAt" {...valueProps("publishedAt", initial?.publishedAt?.slice(0,16) ?? "")} /></label>
       {field("category", "Kategori", details.category)}{field("tags", "Tags, pisahkan koma", details.tags.join(", "))}
       {field("authorName", "Nama penulis / kredit publik", details.authorName)}{portfolio ? <CoverInput initial={details.image} onFileChange={setCoverFile} /> : field("image", "Cover: path asset /images/", details.image)}
@@ -55,7 +56,7 @@ export function ContentEditor({ initial, canPublish, portfolio = false, readOnly
       {field("ctaPath", "CTA path internal /id/… atau /en/…", details.ctaPath)}
     </div></details>}
     </fieldset>
-    <p className="text-sm text-slate-600">Simpan DRAFT → kirim REVIEW → publisher memilih PUBLISHED atau SCHEDULED. Publikasi memerlukan konten lengkap ID/EN. {portfolio ? "Cover dapat dipilih dari perangkat dan tetap dipertahankan jika tidak diganti." : "Gambar memakai asset /images/ yang sudah tersedia."}</p>
+    <p className="text-sm text-slate-600">{portfolio ? "Pilih status langsung: DRAFT/REVIEW tidak tampil public, PUBLISHED langsung terbit, dan SCHEDULED terbit sesuai jadwal UTC. Arsipkan melalui tombol Arsipkan, bukan pilihan status." : "Simpan DRAFT → kirim REVIEW → publisher memilih PUBLISHED atau SCHEDULED."} Publikasi memerlukan konten lengkap ID/EN. {portfolio ? "Cover dapat dipilih dari perangkat dan tetap dipertahankan jika tidak diganti." : "Gambar memakai asset /images/ yang sudah tersedia."}</p>
     {state.message && <p role="status" className={state.success ? "text-teal-700" : "text-red-700"}>{state.message}</p>}
     <button disabled={pending || readOnly} className="min-h-11 rounded-lg bg-[#08747A] px-5 py-3 font-semibold text-white disabled:opacity-50">{pending ? "Menyimpan…" : portfolio ? "Simpan portfolio" : "Simpan konten"}</button>
   </form>;

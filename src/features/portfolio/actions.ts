@@ -45,7 +45,7 @@ export async function savePortfolioAction(_: ContentState, form: FormData): Prom
       } catch { /* Retain private orphan if DB/storage state cannot be confirmed. */ }
     }
     if (error instanceof InvalidCoverError) return { message: error.message, fields: ["coverFile"] };
-    return { message: "Belum tersimpan. Periksa izin publikasi, transisi REVIEW, slug yang sudah dicadangkan, jadwal UTC, atau muat ulang versi terbaru. Isi form Anda tetap dipertahankan." };
+    return { message: "Belum tersimpan. Periksa izin publikasi, slug yang sudah dicadangkan, jadwal UTC yang harus mendatang, atau muat ulang versi terbaru. Isi form Anda tetap dipertahankan." };
   }
   // DB commit is complete; cache failures must not remove the committed cover.
   invalidatePortfolio(saved.id);
