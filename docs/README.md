@@ -19,6 +19,7 @@
 | [Public SEO — Task 1 correction](reports/2026/10/03/public_seo_task1_correction.md) | Bundle metadata/schema lengkap, category dan schema Blog mengikuti referensi pengguna. |
 | [Public SEO — Task 2](reports/2026/10/03/public_seo_task2.md) | Integrasi public ID/EN, detail published, JSON-LD dan OG image; verifikasi HTML/PNG aktual. |
 | [Public SEO — Task 3](reports/2026/10/04/public_seo_task3.md) | Sitemap published/canonical, robots/noindex, root lang, H1 dan hasil audit SEO final. |
+| [Public home formatting](reports/2026/10/04/public_home_formatting.md) | Perapian struktur JSX halaman home public tanpa perubahan behavior. |
 | [Scheduling cache fix](reports/2026/10/03/scheduling_prisma_cache_fix.md) | Perbaikan stale Prisma Client pada development dan hasil verifikasi. |
 | [AI LunaBiner-only scope — Task 1](reports/2026/10/03/ai_assistant_lunabiner_scope_task1.md) | Guardrail server, keputusan scope, hasil pengujian dan tautan tracking lanjutan. |
 | [AI LunaBiner-only scope — Task 2](reports/2026/10/03/ai_assistant_lunabiner_scope_task2.md) | Penjelasan scope UI bilingual, contoh pertanyaan dan verifikasi desktop/mobile. |
