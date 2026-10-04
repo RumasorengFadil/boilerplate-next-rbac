@@ -36,7 +36,7 @@ Runner memerlukan Node.js dengan `module.registerHooks` (>=22.15; diuji 25.9) da
 
 Seed memakai UUID tetap, create-if-missing dan satu transaction. Tidak memperbarui tulisan/status/slug existing, tidak restore/publish ulang record deleted, dan tidak membuat akun. Konflik slug/alias menghentikan seluruh seed tanpa hasil parsial. Label verifiedProject=false tetap ilustratif; jangan menampilkan sebagai klaim klien nyata. Seed ulang aman dan melaporkan created/preserved. Lihat [Portfolio](../features/portfolio.md).
 
-Menu Portfolio/Tiptap tersedia pada PRD 003 Task 3; install dependency dari lockfile dan rebuild sebelum restart. `/dashboard/content/[UUID]` case study mengarahkan ke editor khusus. Foundation migration tetap wajib. Public renderer dua kolom aktif lewat PRD 004, tetapi public slug redirects dan PPR belum aktif. Selama transisi, public masih memakai route existing; jangan menganggap slug redirect telah terpasang hanya karena lookup table tersedia.
+Menu Portfolio/Tiptap tersedia pada PRD 003 Task 3; install dependency dari lockfile dan rebuild sebelum restart. `/dashboard/content/[UUID]` case study mengarahkan ke editor khusus. Foundation migration tetap wajib. Public renderer dua kolom aktif lewat PRD 004; PRD 003 Task 4 memakai route /{locale}/work/{slug}. Rebuild/restart setelah upgrade route folder [id] → [slug] agar generated route types/manifests diperbarui. Numeric/UUID/slug historis terpetakan redirect 308 hanya bagi record layak terbit; unknown/nonpublic 404. Tidak ada seed otomatis pada GET atau fallback statis saat DB kosong/gagal. Migration foundation/route reservations tetap wajib; tidak ada SQL migration baru pada Task 4. Cache/PPR belum aktif.
 
 ### Upgrade portfolio Tiptap single source (PRD 004)
 

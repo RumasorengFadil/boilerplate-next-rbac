@@ -4,12 +4,12 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { presentContent, publicContentWhere } from "@/features/cms/service";
 import { isPublicStatus } from "@/features/cms/schema";
+import { resolvePublishedPortfolio } from "@/features/portfolio/service";
 import { website, type Locale } from "../content";
 import { seoDocumentSchema, seoLocaleSchema, type SeoDocument } from "./contracts";
 
 type Entry = ReturnType<typeof presentContent>;
 const slugSchema = z.string().min(2).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-const caseIdSchema = z.union([z.uuid(), z.string().regex(/^[1-9]\d*$/).max(3)]);
 const plainText = (value: string) => value.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 
 export function seoFromPublishedEntry(entry: Entry, locale: Locale): SeoDocument {
@@ -19,7 +19,7 @@ export function seoFromPublishedEntry(entry: Entry, locale: Locale): SeoDocument
   const prefix = illustrative ? (locale === "id" ? "Contoh ilustratif: " : "Illustrative example: ") : "";
   if (entry.kind !== "ARTICLE" && entry.kind !== "CASE_STUDY") throw new Error("No public detail route for this content kind.");
   return seoDocumentSchema.parse({
-    locale, path: entry.kind === "ARTICLE" ? `/insights/${entry.slug}` : `/work/${entry.id}`,
+    locale, path: entry.kind === "ARTICLE" ? `/insights/${entry.slug}` : `/work/${entry.slug}`,
     title: prefix + (plainText(text.seoTitle) || plainText(text.title)), headline: prefix + plainText(text.title),
     description: plainText(text.seoDescription).length >= 10 ? plainText(text.seoDescription) : plainText(text.excerpt),
     keywords: [...new Set([
@@ -53,32 +53,9 @@ export const getArticleSeoContent = cache(async (rawLocale: Locale, rawSlug: str
   return { seo, entry: null, article };
 });
 
-export const getCaseStudySeoContent = cache(async (rawLocale: Locale, rawId: string) => {
+export const getCaseStudySeoContent = cache(async (rawLocale: Locale, rawRoute: string) => {
   const locale = seoLocaleSchema.parse(rawLocale);
-  const id = caseIdSchema.safeParse(rawId);
-  if (!id.success) return null;
-  if (z.uuid().safeParse(id.data).success) {
-    const row = await db.contentEntry.findFirst({ where: { ...publicContentWhere("CASE_STUDY"), id: id.data } });
-    if (!row) return null;
-    const entry = presentContent(row);
-    return { seo: seoFromPublishedEntry(entry, locale), entry, project: null };
-  }
-  // Transitional numeric compatibility: mapped examples use the same rich DB
-  // content as UUID links. Canonical slug redirects remain PRD 003 Task 4.
-  const route = await db.portfolioRoute.findUnique({ where: { value: id.data }, select: { contentId: true } });
-  if (route) {
-    const row = await db.contentEntry.findFirst({ where: { ...publicContentWhere("CASE_STUDY"), id: route.contentId } });
-    if (!row) return null;
-    const entry = presentContent(row);
-    return { seo: seoFromPublishedEntry(entry, locale), entry, project: null };
-  }
-  // Unmapped static fallback remains until PRD 003 Task 4.
-  const project = website.projects[Number(id.data) - 1];
-  if (!project) return null;
-  const prefix = locale === "id" ? "Contoh ilustratif: " : "Illustrative example: ";
-  const seo = seoDocumentSchema.parse({ locale, path: `/work/${id.data}`, title: prefix + project.title[locale],
-    headline: prefix + project.title[locale], description: project.solution[locale],
-    keywords: [project.industry[locale], ...project.capabilities], category: project.industry[locale],
-    pageType: "WebPage", entityType: "CreativeWork", illustrative: true });
-  return { seo, entry: null, project };
+  const resolved = await resolvePublishedPortfolio(rawRoute);
+  if (!resolved) return null;
+  return { ...resolved, seo: seoFromPublishedEntry(resolved.entry, locale) };
 });

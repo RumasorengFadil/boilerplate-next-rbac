@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArticleGrid, WorkGrid } from "@/features/website/components";
+import { ArticleGrid } from "@/features/website/components";
+import { publishedRelatedPortfolios } from "@/features/portfolio/service";
 import { t, type Locale } from "@/features/website/content";
 import { publishedContent, type presentContent } from "./service";
 import { RichTextContent } from "./rich-text-renderer";
@@ -23,6 +24,7 @@ export function PublishedDetail({ entry, locale }: { entry: ReturnType<typeof pr
         {details.features.length > 0 && <section><h2 className="text-xl font-semibold">{t(locale, "Fitur", "Features")}</h2><ul className="mt-4 list-disc pl-6">{details.features.map(item => <li key={item}>{item}</li>)}</ul></section>}
         {details.gallery.length > 0 && <div className="grid gap-4 sm:grid-cols-2">{details.gallery.map(image => <Image key={image} src={image} alt={text.title} width={800} height={500} className="rounded-xl" />)}</div>}
         {details.relatedServices.length > 0 && <Link href={`/${locale}/solutions`} className="block min-h-11 font-semibold text-[#08747A]">{t(locale, "Layanan terkait", "Related services")} →</Link>}
+        {details.relatedCaseStudies.length > 0 && <RelatedPortfolios ids={details.relatedCaseStudies} currentId={entry.id} locale={locale} />}
         <Link href={details.ctaPath.replace(/^\/(id|en)\//, `/${locale}/`)} className="inline-flex min-h-11 items-center rounded-full bg-[#F5A033] px-6 py-3 font-semibold">{details.ctaLabel[locale] || t(locale, "Diskusikan kebutuhan Anda", "Discuss your needs")} →</Link>
       </div>
     </div></article>
@@ -54,6 +56,12 @@ export async function PublishedArticles({ locale }: { locale: Locale }) {
 }
 export async function PublishedWork({ locale }: { locale: Locale }) {
   const entries = await publishedContent("CASE_STUDY");
-  if (!entries.length) return <WorkGrid locale={locale} />;
-  return <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{entries.map(entry => <article key={entry.id} className="overflow-hidden rounded-2xl border bg-white transition hover:-translate-y-1 hover:shadow-xl"><div className="bg-gradient-to-br from-[#08747A] to-[#18B7B3] p-6 text-white"><p className="text-xs uppercase tracking-widest">{entry.details.verifiedProject ? "CASE STUDY" : t(locale,"CONTOH ILUSTRATIF","ILLUSTRATIVE EXAMPLE")}</p><p className="mt-8 text-sm">{entry.details.category}</p><h3 className="mt-2 text-xl font-semibold">{entry.translations[locale].title}</h3></div><div className="p-6"><p className="text-sm leading-6 text-[#64767B]">{entry.translations[locale].excerpt}</p><Link href={`/${locale}/work/${entry.id}`} className="mt-6 inline-flex min-h-11 items-center font-semibold text-[#08747A]">{t(locale,"Lihat studi kasus","View case study")} →</Link></div></article>)}</div>;
+  if (!entries.length) return <p className="rounded-2xl border bg-white p-7 text-[#64767B]" role="status">{t(locale, "Belum ada portfolio yang dipublikasikan.", "No portfolio has been published yet.")}</p>;
+  return <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{entries.map(entry => <article key={entry.id} className="overflow-hidden rounded-2xl border bg-white transition hover:-translate-y-1 hover:shadow-xl"><div className="bg-gradient-to-br from-[#08747A] to-[#18B7B3] p-6 text-white"><p className="text-xs uppercase tracking-widest">{entry.details.verifiedProject ? "CASE STUDY" : t(locale,"CONTOH ILUSTRATIF","ILLUSTRATIVE EXAMPLE")}</p><p className="mt-8 text-sm">{entry.details.category}</p><h3 className="mt-2 text-xl font-semibold">{entry.translations[locale].title}</h3></div><div className="p-6"><p className="text-sm leading-6 text-[#64767B]">{entry.translations[locale].excerpt}</p><Link href={`/${locale}/work/${entry.slug}`} className="mt-6 inline-flex min-h-11 items-center font-semibold text-[#08747A]">{t(locale,"Lihat studi kasus","View case study")} →</Link></div></article>)}</div>;
+}
+
+async function RelatedPortfolios({ ids, currentId, locale }: { ids: string[]; currentId: string; locale: Locale }) {
+  const entries = await publishedRelatedPortfolios(ids, currentId);
+  if (!entries.length) return null;
+  return <section><h2 className="text-xl font-semibold">{t(locale, "Portfolio terkait", "Related work")}</h2><ul className="mt-4 space-y-2">{entries.map(entry => <li key={entry.id}><Link href={`/${locale}/work/${entry.slug}`} className="inline-flex min-h-11 items-center font-semibold text-[#08747A]">{!entry.details.verifiedProject && t(locale, "Contoh ilustratif: ", "Illustrative example: ")}{entry.translations[locale].title} →</Link></li>)}</ul></section>;
 }

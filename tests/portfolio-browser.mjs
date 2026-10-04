@@ -82,6 +82,7 @@ try {
   await publicPage.context().addInitScript(() => localStorage.setItem("lunabiner-analytics-consent", "declined"));
   for (const route of [`/id/work/${row.id}`, "/id/work/999", `/en/work/${row.id}`]) {
     await publicPage.goto(origin + route); await publicPage.locator("[data-rich-content]").waitFor();
+    assert.equal(new URL(publicPage.url()).pathname, `/${route.startsWith("/en/") ? "en" : "id"}/work/${row.slug}`);
     assert.equal(await publicPage.getByRole("heading", { name: "industry", exact: true }).count(), 0);
     assert.equal(await publicPage.getByRole("heading", { name: "capabilities", exact: true }).count(), 0);
     assert.equal(await publicPage.locator("[data-rich-content]").count(), 1);

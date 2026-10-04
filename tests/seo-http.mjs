@@ -6,8 +6,8 @@ import { PrismaClient } from "@prisma/client";
 // This acceptance suite writes fixtures: never point it at the user's database.
 const database = new URL(process.env.DATABASE_URL || "postgresql://invalid");
 assert.equal(database.hostname, "127.0.0.1");
-assert.equal(database.port, "55439");
-assert.equal(database.username, "lunabiner_test");
+assert.ok(database.port === "55439" && database.username === "lunabiner_test" ||
+  database.port === "55441" && database.username === "portfolio_test" && database.pathname === "/lunabiner_portfolio_test");
 const db = new PrismaClient();
 const base = "http://127.0.0.1:55445";
 const ids = [];
@@ -41,7 +41,7 @@ try {
     await new Promise(resolve => setTimeout(resolve, 500));
   }
   assert.ok(ready, "Production test server must start.");
-  const paths = ["", "/solutions", "/work", "/products", "/insights", "/about", "/contact", "/consultation", "/insights/" + slug, "/work/" + project.id, "/insights/ai-untuk-operasi-bisnis", "/work/1"];
+  const paths = ["", "/solutions", "/work", "/products", "/insights", "/about", "/contact", "/consultation", "/insights/" + slug, "/work/" + project.slug, "/insights/ai-untuk-operasi-bisnis"];
   let checked = 0;
   for (const locale of ["id", "en"]) {
     const fixedTitles = [], fixedDescriptions = [], fixedImages = [];
@@ -139,7 +139,7 @@ try {
   }
   const sitemap = await readSitemap();
   assert.ok(sitemap.urls.some(url => new URL(url).pathname === "/id/consultation"));
-  assert.ok(sitemap.urls.some(url => new URL(url).pathname === "/en/work/" + project.id));
+  assert.ok(sitemap.urls.some(url => new URL(url).pathname === "/en/work/" + project.slug));
   assert.ok(!sitemap.xml.includes(draft.slug));
   assert.ok(!sitemap.urls.some(url => /dashboard|api\/|opengraph-image/.test(url)));
   assert.ok(robots.includes("Sitemap: " + new URL(sitemap.urls[0]).origin + "/sitemap.xml"));
@@ -154,12 +154,13 @@ try {
   assert.ok((await readSitemap()).xml.includes(draft.slug));
   await db.contentEntry.update({ where: { id: draft.id }, data: { status: "DRAFT" } });
   assert.ok(!(await readSitemap()).xml.includes(draft.slug));
-  console.log("PASS: " + checked + " public ID/EN pages with complete metadata, canonical, JSON-LD and distinct 1200x630 PNGs; CMS/static detail and private/missing 404s.");
+  console.log("PASS: " + checked + " public ID/EN pages with complete metadata, canonical, JSON-LD and distinct 1200x630 PNGs; CMS slug/article static detail and private/missing 404s.");
   console.log("PASS: sitemap canonical crawl, live publication changes, hreflang, root language, noindex/private robots and social/search/desktop/mobile user agents.");
 } finally {
   if (app && app.exitCode === null) {
     await new Promise(resolve => { app.once("exit", resolve); app.kill("SIGTERM"); });
   }
+  await db.portfolioRoute.deleteMany({ where: { contentId: { in: ids } } });
   await db.contentEntry.deleteMany({ where: { id: { in: ids } } });
   await db.$disconnect();
 }

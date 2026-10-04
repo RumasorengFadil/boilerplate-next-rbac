@@ -30,6 +30,7 @@
 | [Portfolio — Task 1](reports/2026/10/04/portfolio_task1.md) | Tracking PRD/arsitektur, baseline verification dan pekerjaan berikutnya. |
 | [Portfolio — Task 2](reports/2026/10/04/portfolio_task2.md) | Database/route reservations, lifecycle, rich contracts, seed idempotent dan hasil verifikasi. |
 | [Portfolio — Task 3](reports/2026/10/04/portfolio_task3.md) | Menu admin, Tiptap ID/EN, server actions, workflow dan QA desktop/mobile. |
+| [Portfolio — Task 4](reports/2026/10/04/portfolio_task4.md) | Canonical slug, HTTP 308 aliases, database-only public, SEO/OG/sitemap dan QA desktop/mobile. |
 | [Portfolio Prisma runtime fix](reports/2026/10/04/portfolio_prisma_runtime_fix.md) | Pemulihan Unknown argument deletedAt melalui regenerate/restart dev dan verifikasi HTTP. |
 | [Portfolio detail panel removal](reports/2026/10/04/portfolio_detail_panel_removal.md) | Penghapusan panel duplikat, narasi Tiptap ID/EN dan perlindungan data detail legacy. |
 | [PRD 004 — Portfolio Tiptap single source](products/PRD/PRD_004_portfolio-tiptap-single-source.md) | Refinement narasi rich-only dan cleanup key JSON legacy setelah migrasi aman. |

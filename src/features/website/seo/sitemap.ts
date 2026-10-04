@@ -16,13 +16,8 @@ export async function buildPublicSitemap(): Promise<MetadataRoute.Sitemap> {
   const paths = new Map<string, Date | undefined>();
   for (const page of Object.values(seoPages)) paths.set(page.path, undefined);
   for (const article of website.articles) paths.set(`/insights/${article.slug}`, undefined);
-  // Mapped aliases use the CMS canonical UUID and must not become duplicate
-  // sitemap pages (including aliases whose record is currently nonpublic).
-  const mapped = new Set((await db.portfolioRoute.findMany({
-    where: { value: { in: website.projects.map((_, index) => String(index + 1)) } }, select: { value: true },
-  })).map(route => route.value));
-  website.projects.forEach((_, index) => { if (!mapped.has(String(index + 1))) paths.set(`/work/${index + 1}`, undefined); });
-  for (const entry of entries) paths.set(entry.kind === "ARTICLE" ? `/insights/${entry.slug}` : `/work/${entry.id}`, entry.updatedAt);
+  // Portfolio entries have exactly one current slug; never emit aliases or UUIDs.
+  for (const entry of entries) paths.set(entry.kind === "ARTICLE" ? `/insights/${entry.slug}` : `/work/${entry.slug}`, entry.updatedAt);
   return [...paths].flatMap(([path, modified]) => {
     const languages = localizedUrls(path);
     return (["id", "en"] as const).map(locale => ({

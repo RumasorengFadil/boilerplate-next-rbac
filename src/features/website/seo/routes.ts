@@ -32,15 +32,12 @@ export const getPublicPageSeo = cache(async (key: SeoPageKey, rawLocale: string)
         const qualifier = illustrative ? (locale === "id" ? "Contoh ilustratif: " : "Illustrative example: ") : "";
         return { type: entry.kind === "ARTICLE" ? "Article" : "CreativeWork", name: qualifier + entry.translations[locale].title,
           description: qualifier + entry.translations[locale].excerpt,
-          ...(entry.kind === "ARTICLE" ? { path: `/insights/${entry.slug}` } : entry.kind === "CASE_STUDY" ? { path: `/work/${entry.id}` } : {}),
+          ...(entry.kind === "ARTICLE" ? { path: `/insights/${entry.slug}` } : entry.kind === "CASE_STUDY" ? { path: `/work/${entry.slug}` } : {}),
           concept: entry.kind === "PRODUCT" && entry.details.productStatus === "COMING_SOON" };
       });
     } else if (key === "insights") {
       items = website.articles.map(article => ({ type: "Article", name: article.title[locale], description: article.excerpt[locale], path: `/insights/${article.slug}`, concept: false }));
-    } else if (key === "work") {
-      const qualifier = locale === "id" ? "Contoh ilustratif: " : "Illustrative example: ";
-      items = website.projects.map((project, index) => ({ type: "CreativeWork", name: qualifier + project.title[locale], description: qualifier + project.solution[locale], path: `/work/${index + 1}`, concept: false }));
-    } else {
+    } else if (key === "products") {
       items = website.products.map(product => ({ type: "CreativeWork", name: product.name, description: product.text[locale], concept: true }));
     }
   }

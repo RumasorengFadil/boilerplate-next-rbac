@@ -92,7 +92,7 @@ test("portfolio persistence, route reservations, lifecycle, permissions and seed
       assert.ok((await getCaseStudySeoContent("en", "1")).entry.translations.en.richBody);
       const seededSitemap = await buildPublicSitemap();
       assert.ok(!seededSitemap.some(item => /\/work\/[123]$/.test(item.url)));
-      assert.ok(seededSitemap.some(item => item.url.endsWith("/work/" + portfolioExamples[0].id)));
+      assert.ok(seededSitemap.some(item => item.url.endsWith("/work/" + portfolioExamples[0].slug)));
       const sample = portfolioExamples[0];
       const seed = await db.contentEntry.findUniqueOrThrow({ where: { id: sample.id } });
       for (const key of legacyPortfolioKeys) assert.equal(Object.hasOwn(seed.details, key), false);
@@ -106,7 +106,7 @@ test("portfolio persistence, route reservations, lifecycle, permissions and seed
       assert.equal(await resolvePublishedPortfolio("1"), null);
       assert.equal(await getCaseStudySeoContent("id", "1"), null);
       const archivedSitemap = await buildPublicSitemap();
-      assert.ok(!archivedSitemap.some(item => item.url.endsWith("/work/1") || item.url.endsWith("/work/" + sample.id)));
+      assert.ok(!archivedSitemap.some(item => item.url.endsWith("/work/1") || item.url.endsWith("/work/" + sample.slug)));
       const restored = await changePortfolioLifecycle({ id: sample.id, version: before.version, operation: "restore" });
       const review = await savePortfolio({ translations: restored.translations, details: restored.details,
         id: restored.id, version: restored.version, kind: "CASE_STUDY", slug: restored.slug, status: "REVIEW", publishedAt: null });

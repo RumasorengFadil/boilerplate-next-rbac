@@ -67,7 +67,7 @@ test("public route SEO validates locales and describes the published listing ins
         assert.ok(seo.metadata.openGraph.images[0].url.endsWith("/opengraph-image/main"));
         const list = seo.schema["@graph"].find(node => node["@type"] === "ItemList");
         const item = list.itemListElement.find(node => node.item.name.includes(text.title)).item;
-        if (key === "work") assert.ok(item.url.endsWith("/work/" + entry.id));
+        if (key === "work") assert.ok(item.url.endsWith("/work/" + entry.slug));
         if (key === "products") assert.equal(item.creativeWorkStatus, "Concept");
         assert.ok(!JSON.stringify(seo.schema).includes('"offers"'));
       }
@@ -187,7 +187,7 @@ test("published CMS SEO overrides use real author/dates and strip markup, missin
     assert.equal(await getCaseStudySeoContent("id",projectRow.id),null);
     await db.contentEntry.update({where:{id:projectRow.id},data:{status:"PUBLISHED"}});
     const project=await getCaseStudySeoContent("id",projectRow.id);
-    assert.equal(project.seo.path,"/work/"+projectRow.id);
+    assert.equal(project.seo.path,"/work/"+projectRow.slug);
     assert.ok(project.seo.keywords.length > 0); // Complete metadata even without optional CMS tags/category.
     assert.equal(project.seo.entityType,"CreativeWork");assert.equal(project.seo.illustrative,true);
   } finally {
@@ -196,7 +196,7 @@ test("published CMS SEO overrides use real author/dates and strip markup, missin
   }
 });
 
-test("detail resolvers validate IDs, preserve static links and do not invent dates or client claims", async () => {
+test("detail resolvers validate routes, retain article compatibility and never invent portfolio fallback", async () => {
   assert.equal(await getArticleSeoContent("id","bad?slug"),null);
   assert.equal(await getCaseStudySeoContent("id","1e0"),null);
   assert.equal(await getCaseStudySeoContent("id","01"),null);
@@ -204,8 +204,7 @@ test("detail resolvers validate IDs, preserve static links and do not invent dat
   const article=await getArticleSeoContent("id","ai-untuk-operasi-bisnis");
   assert.equal(article.entry,null);assert.equal(article.seo.publishedAt,undefined);
   const project=await getCaseStudySeoContent("en","1");
-  assert.equal(project.entry,null);assert.equal(project.seo.illustrative,true);assert.match(project.seo.title,/Illustrative example/);
-  assert.equal(project.seo.path,"/work/1");
+  assert.equal(project,null); // No DB route reservation, no hardcoded portfolio.
 });
 
 test("OG renderer produces distinct real 1200x630 PNGs using the local brand logo", async () => {

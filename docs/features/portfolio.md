@@ -1,7 +1,7 @@
 # Portfolio — kondisi aktual dan keputusan target
 
 Tanggal audit: 2026-10-04. Requirement: [PRD 003](../products/PRD/PRD_003_portfolio-cms.md).
-Dokumen ini membedakan implementasi saat ini dengan keputusan target. PRD 003 Task 2 menyediakan fondasi database/service dan Task 3 admin editor; PRD 004 Task 2 menghubungkan rich renderer. Canonical slug routing dan DB-only fallback removal PRD 003 masih menunggu Task 4.
+Dokumen ini membedakan implementasi saat ini dengan keputusan target. PRD 003 Task 2 menyediakan fondasi database/service dan Task 3 admin editor; PRD 004 Task 2 menghubungkan rich renderer. PRD 003 Task 4 mengaktifkan canonical slug routing, redirect URL lama dan DB-only public portfolio. Cache/PPR dan final QA masih Task 5–6.
 
 ## Refinement Tiptap single source — PRD 004
 
@@ -13,11 +13,11 @@ Output konverter menghapus hanya key industry/challenge/approach/solution/impact
 
 `npm run db:preview:portfolio-content` hanya menghitung total, record dengan legacy keys, perubahan yang dapat dikonversi dan record invalid. Transaksi PostgreSQL READ ONLY/RepeatableRead; tidak ada mode apply, dump konten, kredensial atau external provider calls. Meliputi draft/arsip/deleted CASE_STUDY juga. Kegagalan koneksi/validasi tidak mengubah data.
 
-Task 2 tersedia: `presentContent` menormalkan CASE_STUDY melalui konverter tanpa writes, sehingga editor ID/EN dan public memakai dokumen yang sama sebelum bulk migration. Save CASE_STUDY dan seed baru menyimpan richBody/derived body serta details tanpa sepuluh key legacy. Existing record hanya berubah saat operator menyimpan; bulk cleanup semua status masih Task 3. Field legacy yang sengaja dihapus admin dari editor tidak ditambahkan ulang dari previous details. Plain-editor write terhadap existing portfolio ditolak agar tidak menghilangkan default rich yang telah dikonversi. Generic ARTICLE/PRODUCT tidak menggunakan adapter ini.
+Task 2 tersedia: `presentContent` menormalkan CASE_STUDY melalui konverter tanpa writes, sehingga editor ID/EN dan public memakai dokumen yang sama sebelum bulk migration. Save CASE_STUDY dan seed baru menyimpan richBody/derived body serta details tanpa sepuluh key legacy. Existing record berubah saat operator menyimpan; bulk cleanup lokal semua status telah selesai melalui Task 3. Field legacy yang sengaja dihapus admin dari editor tidak ditambahkan ulang dari previous details. Plain-editor write terhadap existing portfolio ditolak agar tidak menghilangkan default rich yang telah dikonversi. Generic ARTICLE/PRODUCT tidak menggunakan adapter ini.
 
 `RichTextContent` merender JSON tervalidasi sebagai React server HTML dengan heading H2–H4, paragraf, lists, quotes, code, links, breaks dan rule; text di-escape, link allowlist diperiksa, tanpa dangerouslySetInnerHTML atau bundel Tiptap client pada public. CASE_STUDY memakai overview kiri (category/tags/credit dan verified client jika tersedia) dan rich content kanan; mobile vertikal. Sepuluh field legacy tidak dirender sebagai blok tambahan. Cover, features, gallery, relasi/CTA dan verification metadata existing tetap digunakan, bukan dihapus sebagai data tidak terpakai.
 
-Kartu CMS portfolio menampilkan category, bukan industry legacy. SEO keywords memakai category/tags dan label domain, bukan capabilities legacy. UUID public route tetap existing; numeric alias yang sudah terpetakan ke PortfolioRoute kini membaca eligible DB record yang sama dan metadata canonical UUID. Record nonpublic terpetakan menghasilkan null/404, bukan fallback. Sitemap mengecualikan numeric alias terpetakan dan hanya menyertakan canonical UUID eligible pemiliknya. Numeric URL yang belum terpetakan masih memakai fallback statis sampai PRD 003 Task 4; belum ada permanent redirect/slug adoption. Seed tetap create-if-missing dan tidak overwrite existing edits, dengan category/tags dan narasi industry/capabilities dalam richBody.
+Kartu CMS portfolio menampilkan category, bukan industry legacy. SEO keywords memakai category/tags dan label domain, bukan capabilities legacy. Public route memakai slug canonical; UUID, numeric alias dan slug historis yang terpetakan redirect 308 hanya setelah pemiliknya lolos public predicate. Unknown/nonpublic menghasilkan 404, tanpa fallback. Sitemap hanya menyertakan slug canonical eligible. Seed tetap create-if-missing dan tidak overwrite existing edits, dengan category/tags dan narasi industry/capabilities dalam richBody.
 
 Task 3 tersedia: CLI `db:migrate:portfolio-content` memerlukan tepat satu operasi `--apply` atau `--restore <backup>` dan konfirmasi `--database <nama>`. Hanya target loopback PostgreSQL; database/schema aktual harus sesuai konfigurasi. Apply memvalidasi semua CASE_STUDY (termasuk draft/arsip/deleted), membuat snapshot before/after privat sebelum writes, lalu update JSON/version dan audit dalam transaksi Serializable dengan advisory lock. Invalid content, kegagalan backup, atau race membatalkan seluruh writes; backup yang sudah tertulis tetap tersedia.
 
@@ -29,7 +29,7 @@ Pada database lokal `lunabiner`, batch `f5223b97-3cc5-475b-bcbb-ffeb2ec920b1` te
 
 - `ContentEntry` sudah memakai primary key UUID, unique `(kind, slug)`, index `(kind, status, publishedAt)`, JSON translations/details dan optimistic version.
 - Menu Portfolio dan `/dashboard/portfolio` mengelola CASE_STUDY dengan Tiptap 3.31.4 ID/EN. Generic CMS mengarahkan case study ke editor khusus. Kontrak menerima `richBody` JSON per locale dan menghasilkan plain `body` dari JSON tersebut; artikel/produk tetap plain editor.
-- Public work menggunakan published CMS entries dengan fallback contoh statis. Detail `[id]` menerima nomor contoh/UUID; nomor terpetakan membaca DB rich content, belum public slug-only canonical.
+- Public work, homepage cards dan detail `[slug]` menggunakan eligible database CASE_STUDY saja. Empty DB tidak menampilkan fallback contoh hardcoded. UUID tetap identifier database/admin, bukan URL canonical public.
 - `ContentEntry.deletedAt` membedakan soft delete dari status workflow ARCHIVED. Shared public predicate mengecualikan deleted records.
 - `PortfolioRoute` mencadangkan slug/UUID/alias historis dalam satu namespace. Trigger database melindungi konflik slug, termasuk write melalui generic CMS. Tiga seed ilustratif telah dimasukkan ke database lokal.
 - Cache Components belum diaktifkan. Root layout membaca request `headers()` untuk bahasa HTML; work dan sejumlah public/OG/sitemap routes memakai `force-dynamic`.
@@ -40,7 +40,7 @@ Pada database lokal `lunabiner`, batch `f5223b97-3cc5-475b-bcbb-ffeb2ec920b1` te
 - `src/features/portfolio/schema.ts`: descriptive slug (bukan nomor/UUID), CASE_STUDY contract, lifecycle input UUID/version/operation.
 - `src/features/portfolio/service.ts`: `savePortfolio` (content:write + publisher guard CMS), `changePortfolioLifecycle` (content:publish), dan `resolvePublishedPortfolio` (server-only public lookup).
 - Archive menyetel deletedAt, ARCHIVED, publishedAt=null dan increment version; restore menyetel DRAFT, deletedAt=null, publishedAt=null. Keduanya transactional, optimistic locking dan audit `portfolio.archive`/`portfolio.restore`. Tidak ada permanent-delete endpoint atau UI baru.
-- Resolver mengembalikan `{entry, canonicalSlug, redirect}` atau null; draft/review/future schedule/archived/deleted tetap null, termasuk lookup alias. HTTP redirect belum dihubungkan ke halaman public.
+- Resolver mengembalikan `{entry, canonicalSlug, redirect}` atau null; draft/review/future schedule/archived/deleted tetap null, termasuk lookup alias. HTTP 308 kini dihubungkan ke page dan OG handler melalui PRD 003 Task 4.
 - Rich JSON allowlist: doc, paragraph, heading H2–H4, text, lists/listItem, blockquote, hardBreak, horizontalRule dan codeBlock; marks bold/italic/strike/code/link. Batas 12 depth, 2.000 nodes, 30.000 plain-text characters. Link hanya relative internal, anchor, HTTP(S), mailto/tel; tidak menerima script, embedded media atau arbitrary HTML/attributes.
 - `saveContent` menolak edit record soft-deleted dan plain-editor save yang menghilangkan richBody existing. Existing plain case studies tetap kompatibel dan editor mengonversi plain body ke JSON ketika disimpan. Tidak ada data existing yang dikonversi/dihapus secara massal.
 - `npm run db:seed:portfolio` membuat contoh dengan UUID seed tetap, rich ID/EN, label verifiedProject=false dan numeric alias 1–3. Satu transaction; konflik route menggagalkan seluruh seed. Record dengan UUID seed existing tidak di-overwrite walaupun telah diubah slug/tulisan/diarsipkan. Seeder tidak membuat user atau memanggil LLM/embedding.
@@ -76,7 +76,7 @@ Pertahankan CMS sebagai pemilik `ContentEntry(CASE_STUDY)`. Portfolio menggunaka
 
 Migration `20261004010000_portfolio_foundation` menambah deletedAt dan PortfolioRoute; [database constraints](../database/schema.md) mencatat detail. Semua record portfolio/route memakai UUID; alias nomor hanyalah compatibility URL, bukan ID record.
 
-Rich body ID/EN, editor Tiptap, public server renderer dan bulk cleanup lokal tersedia. Generic CMS sudah mengarahkan case study ke editor khusus. Target tersisa canonical slug/DB-only public routing PRD 003 Task 4 dan cache/PPR/final QA Task 5–6.
+Rich body ID/EN, editor Tiptap, public server renderer dan bulk cleanup lokal tersedia. Generic CMS sudah mengarahkan case study ke editor khusus. Canonical slug/DB-only public routing PRD 003 Task 4 tersedia; target tersisa cache/PPR/final QA Task 5–6.
 
 ### Public URL dan publication
 
@@ -87,6 +87,18 @@ Public queries, metadata, schema, OG dan sitemap menggunakan publication predica
 ### Layout
 
 Reuse shell, spacing, typography, cards, CTA dan responsive patterns LunaBiner existing yang mengadaptasi BisaDev. Detail desktop: overview kiri, rich body kanan. Mobile: urutan baca vertikal, tidak horizontal overflow. Tidak mengubah branding/logo atau menambah sistem media baru.
+
+## Public Task 4 — slug dan database-only
+
+`GET /{locale}/work/{slug}` (ID/EN) memakai resolver PortfolioRoute → eligible ContentEntry, lalu renderer Tiptap dan shared SEO. Canonical slug menghasilkan 200. Alias nomor/UUID/slug historis yang terdaftar menghasilkan permanentRedirect 308 langsung ke slug terkini dalam locale yang sama, tanpa chained slug history. Validasi/existence/publication diperiksa sebelum render/redirect; unknown, invalid, draft/review/future schedule/archived/deleted menghasilkan 404 tanpa mengungkap title/body atau target slug. Tidak ada endpoint mutation baru, query payload atau otorisasi public; admin RBAC tetap unchanged.
+
+`generateMetadata` dan page memakai request-scoped React memoization yang sama; metadata, OpenGraph, Twitter, canonical, hreflang dan CreativeWork JSON-LD menggunakan slug terkini. OG `GET /{locale}/work/{slug}/opengraph-image/main` menghasilkan PNG 1200×630 no-store; alias eligible mendapat 308 ke OG canonical dan alias nonpublic 404. DB error tetap error, bukan missing/fallback data. Page error boundary menampilkan pesan ID/EN aman dan retry tanpa raw DB error.
+
+PublishedWork dipakai oleh work dan homepage: cards memakai slug; inventory kosong menampilkan pesan empty ID/EN. Static WorkGrid dihapus, tetapi website.projects tetap merupakan sumber seed/RAG existing, bukan fallback public. Collection schema work tidak membuat static ItemList ketika DB kosong. Sitemap hanya eligible current slugs, tanpa alias/UUID, tetap tidak dibatasi jumlah cards. Static article/product behavior tidak berubah.
+
+Related case IDs tetap UUID dalam details; publishedRelatedPortfolios memvalidasi maksimal 6 UUID, mengecualikan self/missing/nonpublic dan duplikat, mempertahankan urutan konfigurasi, lalu menampilkan slug links serta label ilustratif. Metadata relasi existing tetap dipertahankan saat save; tidak menambahkan panel admin baru. RAG/knowledge indexing belum diubah; existing numeric source links terpetakan menggunakan compatibility redirect. CMS→RAG masih task Phase 2 terpisah.
+
+Saat Task 4 ini page tetap dynamic SSR/request cache, bukan PPR/ISR/shared cache. Pemeriksaan sebelum streaming diuji menghasilkan HTTP 308/404 untuk Twitterbot, Googlebot dan browser UA production. Task 5 perlu menjaga status/canonical/publication invariants saat mengubah rendering. Tidak ada schema/database mutation pada Task 4.
 
 ## Audit PPR
 
@@ -114,4 +126,4 @@ Task 6: end-to-end lifecycle, desktop/mobile, typecheck/build dan dokumentasi ak
 
 ## Tracking
 
-PRD 003 Task 1 dokumentasi, Task 2 fondasi dan Task 3 admin editor tersedia. Rich renderer subset Task 4 tersedia lewat PRD 004 Task 2; slug/redirect/DB-only fallback removal dan Task 5–6 masih tersisa. [Laporan Task 1](../reports/2026/10/04/portfolio_task1.md), [Laporan Task 2](../reports/2026/10/04/portfolio_task2.md), [Laporan Task 3](../reports/2026/10/04/portfolio_task3.md). PRD 004 Task 1–3 selesai dan cleanup lokal sudah diterapkan. [Laporan Tiptap Task 2](../reports/2026/10/04/portfolio_tiptap_task2.md), [Laporan Tiptap Task 3](../reports/2026/10/04/portfolio_tiptap_task3.md).
+PRD 003 Task 1 dokumentasi, Task 2 fondasi dan Task 3 admin editor tersedia. Task 4 public slug/redirect/DB-only tersedia (rich renderer melalui PRD 004). Task 5–6 masih tersisa. [Laporan Task 1](../reports/2026/10/04/portfolio_task1.md), [Laporan Task 2](../reports/2026/10/04/portfolio_task2.md), [Laporan Task 3](../reports/2026/10/04/portfolio_task3.md), [Laporan Task 4](../reports/2026/10/04/portfolio_task4.md). PRD 004 Task 1–3 selesai dan cleanup lokal sudah diterapkan. [Laporan Tiptap Task 2](../reports/2026/10/04/portfolio_tiptap_task2.md), [Laporan Tiptap Task 3](../reports/2026/10/04/portfolio_tiptap_task3.md).

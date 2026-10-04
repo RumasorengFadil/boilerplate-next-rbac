@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/server/authorization";
 import { recordAudit } from "@/server/audit";
@@ -21,6 +22,18 @@ export async function resolvePublishedPortfolio(raw: unknown) {
   const entry = await db.contentEntry.findFirst({ where: { ...publicContentWhere("CASE_STUDY"), id: route.contentId } });
   if (!entry) return null;
   return { entry: presentContent(entry), canonicalSlug: entry.slug, redirect: parsed.data !== entry.slug };
+}
+
+export async function publishedRelatedPortfolios(rawIds: unknown, rawCurrentId: unknown) {
+  const ids = z.array(z.uuid()).max(6).parse(rawIds);
+  const currentId = z.uuid().parse(rawCurrentId);
+  if (!ids.length) return [];
+  const rows = await db.contentEntry.findMany({
+    where: { ...publicContentWhere("CASE_STUDY"), id: { in: ids, not: currentId } },
+  });
+  // Follow the configured order, excluding duplicates/missing/private entries.
+  const entries = new Map(rows.map(row => [row.id, presentContent(row)]));
+  return [...new Set(ids)].flatMap(id => entries.has(id) ? [entries.get(id)!] : []);
 }
 
 export async function changePortfolioLifecycle(raw: unknown) {
