@@ -13,6 +13,11 @@ const labels = {
 const normalize = (text: string) => text.normalize("NFC").replace(/\s+/gu, " ").trim();
 const contains = (document: RichNode, text: string) => (` ${normalize(richTextToPlainText(document))} `).includes(` ${normalize(text)} `);
 
+// JSONB can reorder object keys on persistence. Arrays remain order-sensitive.
+export const portfolioJsonFingerprint = (value: unknown): string => JSON.stringify(value, (_, item) =>
+  item && typeof item === "object" && !Array.isArray(item)
+    ? Object.fromEntries(Object.entries(item).sort(([left], [right]) => left.localeCompare(right))) : item);
+
 // Pure converter: no reads/writes. Callers must validate all rows before applying.
 export function convertLegacyPortfolioContent(raw: { translations: unknown; details: unknown }) {
   const translations = z.object({ id: translationSchema, en: translationSchema }).strict().parse(raw.translations);
@@ -43,5 +48,5 @@ export function convertLegacyPortfolioContent(raw: { translations: unknown; deta
     // non-narrative subset without adding default keys to existing records.
     details: Object.fromEntries(Object.entries(originalDetails).filter(([key]) => !legacyPortfolioKeys.some(legacy => legacy === key))) as Partial<Omit<z.infer<typeof detailsSchema>, typeof legacyPortfolioKeys[number]>>,
   };
-  return { ...result, changed: JSON.stringify(result.translations) !== JSON.stringify(raw.translations) || JSON.stringify(result.details) !== JSON.stringify(raw.details) };
+  return { ...result, changed: portfolioJsonFingerprint(result.translations) !== portfolioJsonFingerprint(raw.translations) || portfolioJsonFingerprint(result.details) !== portfolioJsonFingerprint(raw.details) };
 }

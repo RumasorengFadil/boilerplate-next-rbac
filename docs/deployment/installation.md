@@ -36,7 +36,33 @@ Runner memerlukan Node.js dengan `module.registerHooks` (>=22.15; diuji 25.9) da
 
 Seed memakai UUID tetap, create-if-missing dan satu transaction. Tidak memperbarui tulisan/status/slug existing, tidak restore/publish ulang record deleted, dan tidak membuat akun. Konflik slug/alias menghentikan seluruh seed tanpa hasil parsial. Label verifiedProject=false tetap ilustratif; jangan menampilkan sebagai klaim klien nyata. Seed ulang aman dan melaporkan created/preserved. Lihat [Portfolio](../features/portfolio.md).
 
-Menu Portfolio/Tiptap tersedia pada Task 3; install dependency dari lockfile dan rebuild sebelum restart. `/dashboard/content/[UUID]` case study mengarahkan ke editor khusus. Tidak ada migration tambahan Task 3; foundation migration tetap wajib. Public slug/renderer dua kolom serta PPR belum aktif. Selama transisi, public masih memakai route existing; jangan menganggap slug redirect telah terpasang hanya karena lookup table tersedia.
+Menu Portfolio/Tiptap tersedia pada PRD 003 Task 3; install dependency dari lockfile dan rebuild sebelum restart. `/dashboard/content/[UUID]` case study mengarahkan ke editor khusus. Foundation migration tetap wajib. Public renderer dua kolom aktif lewat PRD 004, tetapi public slug redirects dan PPR belum aktif. Selama transisi, public masih memakai route existing; jangan menganggap slug redirect telah terpasang hanya karena lookup table tersedia.
+
+### Upgrade portfolio Tiptap single source (PRD 004)
+
+Deploy runtime PRD 004 Task 2 sebelum cleanup agar editor/public/save/seed memakai rich content dan tidak menciptakan ulang key legacy. Gunakan full install Node/TypeScript seperti runner seed, dari root project. Hindari operator/admin editing selama operasi; form lama akan gagal version check setelah migrasi. Tidak ada Prisma SQL migration baru untuk cleanup JSON ini.
+
+```sh
+npm run db:preview:portfolio-content
+npm run db:migrate:portfolio-content -- --apply --database lunabiner
+npm run db:preview:portfolio-content
+```
+
+Ganti `lunabiner` dengan nama database target yang benar; nama harus sama dengan DATABASE_URL dan current_database(). Schema URL (default public) juga diperiksa. Runner ini hanya mengizinkan loopback PostgreSQL localhost/127.0.0.1/[::1], bukan mutation remote diam-diam. Untuk deployment lain jalankan pada host/database local yang sesuai melalui proses operasi yang disetujui; jangan menghapus guard. Environment mengikuti Next precedence, tanpa mencetak credential. Command tanpa explicit operation/database atau unknown arguments gagal tanpa writes.
+
+Apply mencakup seluruh CASE_STUDY termasuk draft/deleted, memvalidasi ID/EN dan rich limits, membuat backup `.local-backups/portfolio-content/<batch-uuid>.json`, lalu update JSON/version/audit atomik. Directory 0700, file 0600 exclusive-create, fsync dan read-back verification. Directory harus privat dan bukan symlink ke lokasi lain. Backup berisi konten sebelum/sesudah, UUID/version dan non-secret target identity; jangan mengunggahnya, memasukkannya ke Git atau melonggarkan permissions. `.local-backups/` diabaikan Git. CLI membatasi backup/restore 10 MB dan 10.000 changed rows; untuk inventory lebih besar rancang batching/backup terpisah sebelum perluasan, bukan truncation. Sediakan storage dan backup retention sesuai kebijakan operator.
+
+Serializable transaction, advisory lock dan version guards melindungi race. Invalid data/backup failure/conflict membatalkan seluruh DB mutation; backup yang sudah tertulis tetap ada meskipun transaksi rollback. Tidak ada auto-retry/forced overwrite. Preview setelah sukses harus menunjukkan 0 legacy keys/changes/invalid rows; repeat apply menghasilkan 0 migrated dan tidak membuat backup/audit/version baru.
+
+Pemulihan eksplisit hanya jika diperlukan:
+
+```sh
+npm run db:migrate:portfolio-content -- --restore ".local-backups/portfolio-content/<batch-uuid>.json" --database lunabiner
+```
+
+Gunakan path UUID backup yang nyata, bukan placeholder literal. Restore hanya menerima file JSON di dalam folder backup lokal, memvalidasi manifest/conversion/target host-port-database-schema dan current JSON/version. Record yang telah diedit, dipublikasikan/diarsipkan melalui workflow versioned, atau dipulihkan sebelumnya membuat restore ditolak secara atomik; tidak ada flag force. Restore menulis JSON before dan menambah version, bukan rewind version/status/routes. Reopen form sesudah apply/restore. Runtime masih kompatibel dengan legacy yang dipulihkan melalui read adapter. Restart runtime/cache hanya sesuai deployment; saat ini public data memakai request-scoped React cache, bukan shared cache yang perlu dipurge oleh CLI.
+
+Database lokal `lunabiner`: batch `f5223b97-3cc5-475b-bcbb-ffeb2ec920b1` memigrasikan 3 record pada 2026-10-04; backup disimpan lokal dan belum dihapus. Restore telah diuji hanya pada database disposable, bukan dijalankan pada data utama.
 
 QA admin memakai `tests/portfolio-actions.test.mjs` dan `tests/portfolio-browser.mjs` pada database disposable bernama `lunabiner_portfolio_test`, bukan database aplikasi. Browser script menerima PORTFOLIO_TEST_ORIGIN loopback, PLAYWRIGHT_MODULE jika package di luar repository, serta PLAYWRIGHT_EXECUTABLE opsional untuk Chrome terpasang. Jalankan preview dengan DATABASE_URL test yang sama; fixtures/session/browser context dibersihkan setelah tes. Jangan menjalankan destructive cleanup tests menggunakan database produksi.
 
