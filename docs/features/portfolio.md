@@ -3,6 +3,18 @@
 Tanggal audit: 2026-10-04. Requirement: [PRD 003](../products/PRD/PRD_003_portfolio-cms.md).
 Dokumen ini membedakan implementasi saat ini dengan keputusan target. Task 2 menyediakan fondasi database/service dan Task 3 admin editor; public routing/renderer masih menunggu Task 4.
 
+## Refinement Tiptap single source — PRD 004
+
+[PRD 004](../products/PRD/PRD_004_portfolio-tiptap-single-source.md) merekam perubahan requirement setelah PRD 003: narasi hanya Tiptap, dan key legacy yang sudah tidak dipakai dibuang dari database setelah konversi. Implementasi refinement terbagi menjadi Task 1 konverter/preview, Task 2 runtime integration dan Task 3 backup/apply/QA; bukan penomoran ulang task PRD 003.
+
+Task 1 tersedia: `convertLegacyPortfolioContent` memvalidasi details/translations existing, mempertahankan rich nodes/marks, mengonversi plain body jika perlu, lalu menambahkan isi legacy yang belum tercakup sebagai H2/paragraf atau bullet list ID/EN. Pembandingan teks memakai normalisasi whitespace/NFC dan batas whitespace, bukan perbandingan heading saja. Existing teks yang telah direvisi admin dan berbeda dengan legacy akan tetap dipertahankan; nilai legacy berbeda ditambahkan untuk mencegah kehilangan informasi dan dapat dirapikan saat review editorial. Tidak memakai LLM untuk menebak kesamaan makna.
+
+Output konverter menghapus hanya key industry/challenge/approach/solution/impact/before/after/architecture/capabilities/technology dan menurunkan plain body dari richBody. Field lain, SEO, format tulisan dan data sumber tidak diubah. Kedua bahasa harus lolos allowlist/batas rich content sebelum output siap. Tidak ada truncation otomatis.
+
+`npm run db:preview:portfolio-content` hanya menghitung total, record dengan legacy keys, perubahan yang dapat dikonversi dan record invalid. Transaksi PostgreSQL READ ONLY/RepeatableRead; tidak ada mode apply, dump konten, kredensial atau external provider calls. Meliputi draft/arsip/deleted CASE_STUDY juga. Kegagalan koneksi/validasi tidak mengubah data.
+
+**Belum diimplementasikan:** penggunaan output konverter di editor/public/save/seed/SEO dan penghapusan key dari database nyata. Runtime masih seperti bagian Admin Task 3 di bawah. Key JSON bukan kolom SQL; ContentEntry.details tetap digunakan metadata dan ARTICLE/PRODUCT. Migrasi apply wajib menunggu runtime integration dan backup; UUID/routes/status/publishedAt tetap dipertahankan.
+
 ## Kondisi aktual
 
 - `ContentEntry` sudah memakai primary key UUID, unique `(kind, slug)`, index `(kind, status, publishedAt)`, JSON translations/details dan optimistic version.

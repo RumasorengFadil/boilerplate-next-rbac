@@ -32,6 +32,8 @@
 | [Portfolio — Task 3](reports/2026/10/04/portfolio_task3.md) | Menu admin, Tiptap ID/EN, server actions, workflow dan QA desktop/mobile. |
 | [Portfolio Prisma runtime fix](reports/2026/10/04/portfolio_prisma_runtime_fix.md) | Pemulihan Unknown argument deletedAt melalui regenerate/restart dev dan verifikasi HTTP. |
 | [Portfolio detail panel removal](reports/2026/10/04/portfolio_detail_panel_removal.md) | Penghapusan panel duplikat, narasi Tiptap ID/EN dan perlindungan data detail legacy. |
+| [PRD 004 — Portfolio Tiptap single source](products/PRD/PRD_004_portfolio-tiptap-single-source.md) | Refinement narasi rich-only dan cleanup key JSON legacy setelah migrasi aman. |
+| [Portfolio Tiptap — Task 1](reports/2026/10/04/portfolio_tiptap_task1.md) | Konverter nonmutating, deduplikasi teks dan preview database read-only; apply belum dilakukan. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |
 
 Dokumen di `docs/products/PRD/` menyimpan kebutuhan produk sesuai sumber asli, bukan pernyataan bahwa seluruh fiturnya telah diimplementasikan. Status implementasi dicatat terpisah pada laporan yang relevan.

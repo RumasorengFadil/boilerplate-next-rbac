@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:seed:portfolio": "node --import ./scripts/typescript-loader.mjs scripts/seed-portfolio.mjs"
+    "db:seed:portfolio": "node --import ./scripts/typescript-loader.mjs scripts/seed-portfolio.mjs",
+    "db:preview:portfolio-content": "node --import ./scripts/typescript-loader.mjs scripts/preview-portfolio-content.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
