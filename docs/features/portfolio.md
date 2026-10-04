@@ -1,12 +1,12 @@
 # Portfolio — kondisi aktual dan keputusan target
 
 Tanggal audit: 2026-10-04. Requirement: [PRD 003](../products/PRD/PRD_003_portfolio-cms.md).
-Dokumen ini membedakan implementasi saat ini dengan keputusan target. Task 2 menyediakan fondasi database/service; UI dan public routing masih menunggu Task 3–4.
+Dokumen ini membedakan implementasi saat ini dengan keputusan target. Task 2 menyediakan fondasi database/service dan Task 3 admin editor; public routing/renderer masih menunggu Task 4.
 
 ## Kondisi aktual
 
 - `ContentEntry` sudah memakai primary key UUID, unique `(kind, slug)`, index `(kind, status, publishedAt)`, JSON translations/details dan optimistic version.
-- Generic CMS mengelola `CASE_STUDY` melalui permission content. Body editor masih plain text; Tiptap belum terpasang. Kontrak sekarang menerima `richBody` JSON opsional pada translations ID/EN khusus CASE_STUDY dan menghasilkan plain `body` dari JSON tersebut.
+- Menu Portfolio dan `/dashboard/portfolio` mengelola CASE_STUDY dengan Tiptap 3.31.4 ID/EN. Generic CMS mengarahkan case study ke editor khusus. Kontrak menerima `richBody` JSON per locale dan menghasilkan plain `body` dari JSON tersebut; artikel/produk tetap plain editor.
 - Public work menggunakan published CMS entries dengan fallback contoh statis. Detail `[id]` menerima nomor contoh/UUID, belum public slug-only canonical.
 - `ContentEntry.deletedAt` membedakan soft delete dari status workflow ARCHIVED. Shared public predicate mengecualikan deleted records.
 - `PortfolioRoute` mencadangkan slug/UUID/alias historis dalam satu namespace. Trigger database melindungi konflik slug, termasuk write melalui generic CMS. Tiga seed ilustratif telah dimasukkan ke database lokal.
@@ -20,9 +20,30 @@ Dokumen ini membedakan implementasi saat ini dengan keputusan target. Task 2 men
 - Archive menyetel deletedAt, ARCHIVED, publishedAt=null dan increment version; restore menyetel DRAFT, deletedAt=null, publishedAt=null. Keduanya transactional, optimistic locking dan audit `portfolio.archive`/`portfolio.restore`. Tidak ada permanent-delete endpoint atau UI baru.
 - Resolver mengembalikan `{entry, canonicalSlug, redirect}` atau null; draft/review/future schedule/archived/deleted tetap null, termasuk lookup alias. HTTP redirect belum dihubungkan ke halaman public.
 - Rich JSON allowlist: doc, paragraph, heading H2–H4, text, lists/listItem, blockquote, hardBreak, horizontalRule dan codeBlock; marks bold/italic/strike/code/link. Batas 12 depth, 2.000 nodes, 30.000 plain-text characters. Link hanya relative internal, anchor, HTTP(S), mailto/tel; tidak menerima script, embedded media atau arbitrary HTML/attributes.
-- `saveContent` menolak edit record soft-deleted dan plain-editor save yang menghilangkan richBody existing. Existing plain case studies tetap kompatibel; editor khusus akan tersedia Task 3. Tidak ada data existing yang dikonversi/dihapus secara massal.
+- `saveContent` menolak edit record soft-deleted dan plain-editor save yang menghilangkan richBody existing. Existing plain case studies tetap kompatibel dan editor mengonversi plain body ke JSON ketika disimpan. Tidak ada data existing yang dikonversi/dihapus secara massal.
 - `npm run db:seed:portfolio` membuat contoh dengan UUID seed tetap, rich ID/EN, label verifiedProject=false dan numeric alias 1–3. Satu transaction; konflik route menggagalkan seluruh seed. Record dengan UUID seed existing tidak di-overwrite walaupun telah diubah slug/tulisan/diarsipkan. Seeder tidak membuat user atau memanggil LLM/embedding.
-- Belum ada endpoint/API public baru. Cache dan mutation-to-public invalidation untuk lifecycle baru belum diaktifkan; service belum terhubung UI/action (Task 3/5).
+- Tidak ada endpoint/API public baru. Task 3 Server Actions menghubungkan save/lifecycle dengan UI dan revalidatePath existing. Shared cache adoption masih Task 5.
+
+## Admin Task 3
+
+- `/dashboard/portfolio`: content:read; filter `view=active|archived` tervalidasi (default active), 100 row terbaru dengan UUID links, status/version, slug dan label ilustratif/terverifikasi. Active mengecualikan soft-deleted; tab Arsip hanya deletedAt nonnull. ARCHIVED workflow lama tanpa deletedAt masih aktif administratif, tetapi tidak public.
+- `/dashboard/portfolio/new` dan `/dashboard/portfolio/[UUID]`: content:write; ID bukan UUID atau record bukan CASE_STUDY menghasilkan notFound. Deleted record menampilkan recovery panel, bukan editable form. Publisher dapat restore; nonpublisher tidak melihat kontrol lifecycle.
+- Content Editor dapat membuat/edit draft/review. PUBLISHED/SCHEDULED readonly untuk nonpublisher; server tetap menolak perubahan tanpa content:publish. ADMIN/SUPER_ADMIN/MARKETING dapat publish/schedule/archive/restore sesuai grants existing. Menu bukan authorization boundary.
+- Toolbar: paragraph, H2/H3/H4, bold/italic/strike, bullet/ordered lists, quote, inline/block code, horizontal rule, link, undo/redo. Underline/media/collaboration tidak aktif. Link input tervalidasi; editor tidak membuka tautan saat diklik. `immediatelyRender:false` mencegah hydration mismatch, mengikuti [Tiptap Next.js](https://tiptap.dev/docs/editor/getting-started/install/nextjs).
+- Ordered-list type hanya null/1/a/A/i/I dan link title maksimal 180 karakter/null diterima untuk kompatibilitas default JSON Tiptap. Arbitrary attributes, script URLs, H1 dan media tetap ditolak di server.
+- ID/EN title/excerpt/SEO dan overview/technology/capabilities/relasi tetap memakai form CMS existing. Detail teks kanan disimpan sebagai richBody; renderer dua kolom public belum diubah pada task ini.
+- Generic `/dashboard/content/[UUID]` CASE_STUDY redirect ke portfolio editor; listing link langsung ke menu khusus. Form generic baru menawarkan ARTICLE/PRODUCT dan tautan create portfolio, bukan textarea case study yang bersaing.
+- Arsip/pulihkan memerlukan konfirmasi eksplisit dan menampilkan pending/error. Restore kembali DRAFT; tidak ada permanent delete. Save remount form berdasarkan persisted version untuk reload JSON terbaru; version stale menghasilkan failure tanpa mengosongkan input.
+
+### Server Actions
+
+`savePortfolioAction(previousState, FormData)` memerlukan content:write sebelum parse. Fields: optional UUID id, version, slug, status, publishedAt datetime-local UTC, `id|en.title/excerpt/seoTitle/seoDescription/richBody`, overview/details existing. Kind ditetapkan server CASE_STUDY. richBody JSON wajib untuk form portfolio, maksimal 200.000 serialized characters per locale; Zod memvalidasi node/mark/limits dan publication completeness.
+
+`portfolioLifecycleAction(previousState, FormData)` memerlukan content:publish sebelum parse; payload id UUID, version integer, operation archive|restore. Author/status/version existing dibaca dari database, bukan dipercaya dari client.
+
+Response state: `{message, success?, id?, version?, fields?}` tanpa raw record/DB error. Invalid input/JSON, slug reserved, transition/permission/version/schedule failures ditampilkan sebagai pesan aman. Auth redirects tetap berada di luar catch mutation. Next Server Action origin/body-limit protections dipertahankan.
+
+Setelah berhasil, revalidatePath dashboard portfolio/list/detail, generic content list, sitemap, dan kedua locale layouts. Ini invalidation pola existing, bukan implementasi tagged shared cache/PPR Task 5. Scheduled publication tetap query-time due predicate.
 
 ## Keputusan target tersisa (belum diimplementasikan)
 
@@ -32,7 +53,7 @@ Pertahankan CMS sebagai pemilik `ContentEntry(CASE_STUDY)`. Portfolio menggunaka
 
 Migration `20261004010000_portfolio_foundation` menambah deletedAt dan PortfolioRoute; [database constraints](../database/schema.md) mencatat detail. Semua record portfolio/route memakai UUID; alias nomor hanyalah compatibility URL, bukan ID record.
 
-Rich body ID/EN sudah dapat menyimpan Tiptap JSON tervalidasi. Editor Tiptap dan public server renderer masih target Task 3–4, bukan fitur yang telah tersedia. Generic CMS perlu mengarahkan case study ke editor khusus; safety guard backend telah diterapkan.
+Rich body ID/EN dan editor Tiptap telah tersedia; public server renderer masih target Task 4. Generic CMS sudah mengarahkan case study ke editor khusus.
 
 ### Public URL dan publication
 
@@ -70,4 +91,4 @@ Task 6: end-to-end lifecycle, desktop/mobile, typecheck/build dan dokumentasi ak
 
 ## Tracking
 
-Task 1 dokumentasi dan Task 2 fondasi selesai. Task 3–6 belum diimplementasikan. [Laporan Task 1](../reports/2026/10/04/portfolio_task1.md), [Laporan Task 2](../reports/2026/10/04/portfolio_task2.md).
+Task 1 dokumentasi, Task 2 fondasi dan Task 3 admin editor tersedia. Task 4–6 belum diimplementasikan. [Laporan Task 1](../reports/2026/10/04/portfolio_task1.md), [Laporan Task 2](../reports/2026/10/04/portfolio_task2.md), [Laporan Task 3](../reports/2026/10/04/portfolio_task3.md).

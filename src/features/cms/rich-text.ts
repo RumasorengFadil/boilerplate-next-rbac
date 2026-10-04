@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-export type RichMark = { type: "bold" | "italic" | "strike" | "code" | "link"; attrs?: { href: string; target?: "_blank" | null; rel?: string | null; class?: null } };
+export type RichMark = { type: "bold" | "italic" | "strike" | "code" | "link"; attrs?: { href: string; target?: "_blank" | null; rel?: string | null; class?: null; title?: string | null } };
 export type RichNode = {
   type: "doc" | "paragraph" | "heading" | "text" | "bulletList" | "orderedList" | "listItem" | "blockquote" | "hardBreak" | "horizontalRule" | "codeBlock";
   text?: string;
-  attrs?: { level?: number; start?: number; language?: string | null };
+  attrs?: { level?: number; start?: number; language?: string | null; type?: "1" | "a" | "A" | "i" | "I" | null };
   marks?: RichMark[];
   content?: RichNode[];
 };
@@ -19,7 +19,7 @@ export function safeRichLink(href: string) {
 }
 const linkAttrs = z.object({
   href: z.string().refine(safeRichLink, "Unsafe link."), target: z.enum(["_blank"]).nullable().optional(),
-  rel: z.string().max(100).nullable().optional(), class: z.null().optional(),
+  rel: z.string().max(100).nullable().optional(), class: z.null().optional(), title: z.string().max(180).nullable().optional(),
 }).strict();
 const markSchema = z.union([
   z.object({ type: z.enum(["bold", "italic", "strike", "code"]) }).strict(),
@@ -28,7 +28,7 @@ const markSchema = z.union([
 const baseNode = z.object({
   type: z.enum(["doc", "paragraph", "heading", "text", "bulletList", "orderedList", "listItem", "blockquote", "hardBreak", "horizontalRule", "codeBlock"]),
   text: z.string().max(30000).optional(), marks: z.array(markSchema).max(5).optional(),
-  attrs: z.object({ level: z.number().int().min(2).max(4).optional(), start: z.number().int().min(1).max(10000).optional(), language: z.string().max(40).nullable().optional() }).strict().optional(),
+  attrs: z.object({ level: z.number().int().min(2).max(4).optional(), start: z.number().int().min(1).max(10000).optional(), language: z.string().max(40).nullable().optional(), type: z.enum(["1", "a", "A", "i", "I"]).nullable().optional() }).strict().optional(),
   content: z.array(z.unknown()).max(1000).optional(),
 }).strict();
 
@@ -55,7 +55,7 @@ export const richDocumentSchema = z.unknown().superRefine((value, context) => {
     };
     const attrs = Object.keys(node.attrs ?? {});
     const validAttrs = node.type === "heading" ? attrs.every(key => key === "level") && node.attrs?.level !== undefined
-      : node.type === "orderedList" ? attrs.every(key => key === "start")
+      : node.type === "orderedList" ? attrs.every(key => key === "start" || key === "type")
       : node.type === "codeBlock" ? attrs.every(key => key === "language") : attrs.length === 0;
     if (!allowed[current.parent]?.includes(node.type) || !validAttrs ||
         (node.type === "text" ? !node.text || children.length > 0 : node.text !== undefined || !!node.marks?.length) ||

@@ -29,6 +29,7 @@
 | [Portfolio architecture](features/portfolio.md) | Kondisi aktual, keputusan target dan audit kompatibilitas PPR sebelum implementasi. |
 | [Portfolio — Task 1](reports/2026/10/04/portfolio_task1.md) | Tracking PRD/arsitektur, baseline verification dan pekerjaan berikutnya. |
 | [Portfolio — Task 2](reports/2026/10/04/portfolio_task2.md) | Database/route reservations, lifecycle, rich contracts, seed idempotent dan hasil verifikasi. |
+| [Portfolio — Task 3](reports/2026/10/04/portfolio_task3.md) | Menu admin, Tiptap ID/EN, server actions, workflow dan QA desktop/mobile. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |
 
 Dokumen di `docs/products/PRD/` menyimpan kebutuhan produk sesuai sumber asli, bukan pernyataan bahwa seluruh fiturnya telah diimplementasikan. Status implementasi dicatat terpisah pada laporan yang relevan.

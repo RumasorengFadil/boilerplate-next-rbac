@@ -30,7 +30,9 @@ Runner memerlukan Node.js dengan `module.registerHooks` (>=22.15; diuji 25.9) da
 
 Seed memakai UUID tetap, create-if-missing dan satu transaction. Tidak memperbarui tulisan/status/slug existing, tidak restore/publish ulang record deleted, dan tidak membuat akun. Konflik slug/alias menghentikan seluruh seed tanpa hasil parsial. Label verifiedProject=false tetap ilustratif; jangan menampilkan sebagai klaim klien nyata. Seed ulang aman dan melaporkan created/preserved. Lihat [Portfolio](../features/portfolio.md).
 
-UI Portfolio/Tiptap dan routing public slug belum tersedia pada Task 2. Halaman generic CMS tidak dapat menyimpan seed rich content melalui textarea lama (safety guard); tunggu editor Task 3. PPR juga belum aktif. Selama transisi, public masih memakai route existing; jangan menganggap slug redirect telah terpasang hanya karena lookup table tersedia.
+Menu Portfolio/Tiptap tersedia pada Task 3; install dependency dari lockfile dan rebuild sebelum restart. `/dashboard/content/[UUID]` case study mengarahkan ke editor khusus. Tidak ada migration tambahan Task 3; foundation migration tetap wajib. Public slug/renderer dua kolom serta PPR belum aktif. Selama transisi, public masih memakai route existing; jangan menganggap slug redirect telah terpasang hanya karena lookup table tersedia.
+
+QA admin memakai `tests/portfolio-actions.test.mjs` dan `tests/portfolio-browser.mjs` pada database disposable bernama `lunabiner_portfolio_test`, bukan database aplikasi. Browser script menerima PORTFOLIO_TEST_ORIGIN loopback, PLAYWRIGHT_MODULE jika package di luar repository, serta PLAYWRIGHT_EXECUTABLE opsional untuk Chrome terpasang. Jalankan preview dengan DATABASE_URL test yang sama; fixtures/session/browser context dibersihkan setelah tes. Jangan menjalankan destructive cleanup tests menggunakan database produksi.
 
 ## Public SEO dan standalone assets
 
