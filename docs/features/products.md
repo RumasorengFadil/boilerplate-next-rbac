@@ -2,6 +2,16 @@
 
 Tanggal: 2026-10-05. Active PRD: [PRD 002](../products/PRD/PRD_002_lunabiner-phase-2.md), confirmed Product CRUD scope, status IN PROGRESS. Task 1–3 selesai; upload/public/cache/final QA tetap Task 4–7.
 
+## Refinement aktif — Task 3a Ringkasan-only dan fitur bilingual
+
+Pengguna menyetujui menghapus field Detail ID/EN karena redundant. Target form memakai Ringkasan/excerpt sebagai satu sumber deskripsi card/detail/fallback SEO, maksimal 150 dan publication minimum 10. Override SEO tetap. Fitur dapat ditambah/hapus per bahasa, maksimal 12 poin/bahasa dan 100 karakter/poin; storage target `details.productFeatures: {id: string[], en: string[]}`. Tidak membuat body/richBody duplikat untuk PRODUCT baru setelah integrasi. Artikel dan portfolio unchanged.
+
+Task 3a menyediakan pure `summary-content.ts`: strict content contract tanpa body/richBody, publication validation hanya Ringkasan, literal legacy feature fallback (bukan otomatis menerjemahkan teks arbitrary), dan migration preflight. Existing localized empty lists tetap kosong, tidak muncul kembali dari fallback. Read compatibility menerima panjang legacy existing dan tidak memotong. Preflight menahan body yang berbeda dari Ringkasan, formatting rich yang bukan plain paragraphs, serta konten melewati batas baru. Tidak menulis DB dan tidak menghapus data. Backup/conflict review wajib sebelum apply pada Task 3c.
+
+**Runtime form/save/public dan seeder masih Task 3 existing**, belum memakai kontrak baru. Penjelasan textarea/detail/rich di bawah adalah implementasi runtime saat ini, bukan target akhir refinement. Tidak ada perubahan SQL/JSON database/RBAC/route pada Task 3a.
+
+Execution refinement: 3a kontrak/adapter/tests COMPLETED → 3b UI/save/public existing integration NOT STARTED → 3c backup/migration/seed/browser QA NOT STARTED → Task 4–7 existing. [Task 3a report](../reports/2026/10/05/products_task3a_summary-contract.md).
+
 ## Pembaruan requirement setelah Task 2 — textarea produk
 
 Pengguna menyetujui detail produk memakai textarea teks biasa ID/EN, bukan Tiptap, karena konten pendek/cenderung statis. Nama/title, ringkasan, readiness, CTA, cover dan SEO tetap field terpisah. Detail `/products/[slug]` tetap dalam scope; tidak turun menjadi daftar card saja. Tidak menambah rich formatting/Markdown/HTML editor produk atau mengubah editor portfolio.

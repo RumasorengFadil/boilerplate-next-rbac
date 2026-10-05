@@ -5,12 +5,18 @@ Pembaruan aktif: 2026-10-05 — Product CRUD/landing management.
 
 ## Scope aktif yang dikonfirmasi — Product CRUD
 
+### Refinement 2026-10-05 — Ringkasan-only dan fitur bilingual
+
+Pengguna menyetujui penghapusan field Detail produk ID/EN yang redundant. Ringkasan/excerpt ID/EN menjadi satu-satunya deskripsi untuk card/detail dan fallback SEO, maksimal 150 karakter (publication minimum 10). Override SEO tetap terpisah. PRODUCT baru setelah integrasi tidak menyimpan body/richBody deskripsi duplikat; ARTICLE/CASE_STUDY tetap unchanged. Fitur produk dapat ditambah/hapus pada form ID/EN, maksimal 12 poin per bahasa dan 100 karakter per poin. Storage baru `details.productFeatures: {id: string[], en: string[]}`; jangan memakai satu array bahasa bersama untuk konten baru.
+
+Task tambahan: 3a kontrak/adapter/tests → 3b UI/save/public existing integration → 3c backup/migration/seed/browser QA. Task 4–7 tetap urutan existing. Adapter tidak menulis pada GET dan mempertahankan teks fitur legacy secara literal pada kedua bahasa sampai diterjemahkan admin; terjemahan contoh known dapat diterapkan seeder/migration secara guarded. Body berbeda dari excerpt tidak dihapus diam-diam: preview migration harus mengidentifikasi konflik dan menahan apply sampai ditinjau. Backup sebelum perubahan data, UUID/status/readiness/CTA/cover/routes tetap. Task 3a belum mengubah runtime form/storage database.
+
 Briefing dikonfirmasi pengguna melalui “oke gas saya setujui”. Gunakan PRD aktif ini karena Product Management dan Product Landing Pages sudah tercakup; tidak membuat PRD duplikat. Requirement berikut memperinci/menggantikan workflow produk pada sumber awal di bawah, bukan mengaktifkan seluruh Phase 2.
 
 - Menu Produk khusus admin; create/list/edit, arsip soft delete dan pulihkan sebagai DRAFT. Record UUID, public detail memakai slug deskriptif. Ikuti pola portfolio tanpa mengubah fitur portfolio/artikel.
 - Publikasi produk hanya DRAFT/PUBLISHED/SCHEDULED, langsung berdasarkan pilihan admin tanpa REVIEW wajib. ARCHIVED bukan opsi editor; arsip terpisah. PUBLISHED langsung eligible, SCHEDULED eligible saat tanggal UTC due. DRAFT, future schedule dan arsip tidak masuk public/detail/SEO/OG/sitemap/media anonymous.
 - Kesiapan terpisah dari publikasi: COMING_SOON/BETA/LIVE, tampil sebagai Segera hadir/Beta/Tersedia dengan label ID/EN. Kesiapan tidak mempublish produk otomatis dan tidak memaksa URL demo. Pulihkan mempertahankan kesiapan, tetapi publikasi kembali DRAFT.
-- Konten title/excerpt/SEO ID/EN dengan field biasa; detail produk memakai textarea teks biasa ID/EN, bukan Tiptap, sesuai pembaruan briefing yang disetujui setelah Task 2. Paragraf dirender aman tanpa HTML/Markdown dari input. Detail `/id/products/[slug]` dan `/en/products/[slug]` tetap dikerjakan; daftar cards berisi cover, nama, ringkasan, kesiapan dan tautan detail.
+- Konten title/excerpt/SEO ID/EN dengan field biasa; setelah refinement Task 3a–3c, hanya Ringkasan sebagai deskripsi, bukan field Detail/Tiptap terpisah. Fitur berupa daftar ID/EN yang dapat ditambah/hapus. Teks dirender aman tanpa HTML/Markdown dari input. Halaman detail `/id/products/[slug]` dan `/en/products/[slug]` tetap dikerjakan; daftar cards berisi cover, nama, ringkasan, kesiapan dan tautan detail.
 - Cover/thumbnail upload dari perangkat, UUID assets, preview/keep/replace/remove/cancel, validation/server authorization dan private persistent storage mengikuti portfolio. Cover yang sama untuk list/detail; tidak menambah inline/gallery uploads.
 - CTA halaman detail: konsultasi internal default atau URL eksternal HTTPS opsional, label ID/EN. Tautan eksternal tidak di-fetch server dan tidak membangun aplikasi/demo/transaksi. Validasi URL/protokol dan rendering link aman.
 - Public product mengambil database saja, tanpa fallback statis ketika inventory kosong/gagal. Seeder memasukkan Enterprise Chat dan AI Cashflow sebagai konsep COMING_SOON memakai UUID, idempotent dan tidak overwrite edit/status produk existing. Tidak mengarang kesiapan, fitur aktif, pelanggan atau pricing.
@@ -25,7 +31,7 @@ Tidak mengerjakan waitlist/newsletter, pricing/payment/subscription, akun penggu
 ### Acceptance dan tracking
 
 - UUID, slug ownership/history, seed idempotent, version/RBAC, archive/restore dan direct status teruji.
-- ID/EN teks detail dari textarea, readiness independen, perangkat upload dan CTA internal/HTTPS teruji tanpa private data leakage. Kompatibilitas richBody Task 2 dijaga; perubahan field lain tidak boleh diam-diam menghilangkan format/konten existing. Tiptap portfolio tetap, tidak dicabut dari dependencies.
+- Ringkasan-only ID/EN dan fitur bilingual, readiness independen, perangkat upload dan CTA internal/HTTPS teruji tanpa private data leakage. Migrasi legacy detail/richBody harus backed-up dan konflik ditinjau; perubahan field lain tidak boleh diam-diam menghilangkan format/konten existing. Tiptap portfolio tetap, tidak dicabut dari dependencies.
 - Public DB-only list/detail, empty/error, metadata/schema/OG/sitemap serta cache/streaming konsisten dengan publication date.
 - Typecheck/build, tests, production HTTP/browser dan desktop/mobile diverifikasi sebelum task selesai.
 - Status IN PROGRESS berlaku untuk PRD Phase 2 keseluruhan. Penyelesaian scope Product CRUD tidak menandai fitur Phase 2 yang deferred sebagai selesai.
@@ -33,6 +39,7 @@ Tidak mengerjakan waitlist/newsletter, pricing/payment/subscription, akun penggu
 - Task 1–3 selesai: arsitektur, fondasi kontrak/service/ProductRoute/seeder, admin CRUD/textarea/readiness/CTA/arsip. Migration dan dua contoh produk database lokal diterapkan pada Task 3 setelah backup; konten non-PRODUCT tetap identik. Task 4–7 belum dikerjakan. PRD keseluruhan tetap IN PROGRESS.
 - Revisi editor setelah Task 2: pengguna menyetujui textarea karena konten pendek/cenderung statis. Task 3 telah menerapkan CRUD/textarea ID/EN beserta adapter save yang aman; task lain tidak dibatalkan/diubah urutannya.
 - Task 3 selesai: ringkasan dan detail textarea ID/EN dibatasi maksimum 150 karakter per field/bahasa, berdasarkan contoh pengguna 109 karakter. Counter, maxLength client dan server validation tersedia; publikasi tetap excerpt minimal 10/body minimal 30. Konten legacy lebih panjang tidak dipotong/migrasikan massal; unchanged text/formatting tetap dipertahankan, teks baru/yang diedit wajib memenuhi batas. Seeder baru memakai deskripsi contoh singkat, tidak menimpa seed existing. Upload cover tetap Task 4.
+- Refinement 3a: kontrak Ringkasan-only, fitur bilingual dan pure read/migration-preflight adapter tersedia; runtime form/save/public belum beralih. Task 3b–3c NOT STARTED. Ketentuan Detail/body minimum pada bullet historis Task 3 digantikan Ringkasan minimum 10 saat integrasi 3b selesai.
 
 ## Sumber PRD awal (dipertahankan)
 
