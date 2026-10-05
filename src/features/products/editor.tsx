@@ -1,14 +1,21 @@
 "use client";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { CoverInput } from "../portfolio/cover-input";
 import { saveProductAction, type ProductState } from "./actions";
 import { PRODUCT_TEXT_MAX, productStatuses, productReadiness, type ProductInput } from "./schema";
 import { PRODUCT_FEATURE_MAX, PRODUCT_FEATURE_COUNT_MAX } from "./summary-content";
 
 export function ProductEditor({ initial, canPublish, readOnly = false }: { initial?: ProductInput; canPublish: boolean; readOnly?: boolean }) {
   const router = useRouter();
-  const [state, action, pending] = useActionState(saveProductAction, { message: "" } as ProductState);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [state, action, pending] = useActionState(async (previous: ProductState, form: FormData) => {
+    // React resets native file inputs after actions; retain the chosen File for retry.
+    if (coverFile) form.set("coverFile", coverFile);
+    const result = await saveProductAction(previous, form);
+    if (result.success) setCoverFile(null);
+    return result;
+  }, { message: "" } as ProductState);
   const [values, setValues] = useState<Record<string, string>>({});
   const [features, setFeatures] = useState(() => Object.fromEntries((["id", "en"] as const).map(locale => [locale,
     (initial?.details.productFeatures?.[locale] ?? initial?.details.features ?? []).map((text, index) => ({ key: `${locale}-existing-${index}`, text })),
@@ -73,8 +80,7 @@ export function ProductEditor({ initial, canPublish, readOnly = false }: { initi
         <div className="grid gap-4 sm:grid-cols-2">{field("ctaLabel.id", "Label CTA (ID)", initial?.details.ctaLabel.id, 120)}{field("ctaLabel.en", "Label CTA (EN)", initial?.details.ctaLabel.en, 120)}</div>
       </section>
       <section className="card space-y-3"><h2 className="font-semibold">Cover produk</h2>
-        {initial?.details.image && <Image src={initial.details.image} alt="Cover produk saat ini" width={400} height={225} unoptimized className="max-h-48 w-auto max-w-full rounded-md object-contain" />}
-        <p className="text-sm text-slate-600">Cover existing dipertahankan saat menyimpan. Upload dari perangkat tersedia pada Task 4; tidak perlu menulis path gambar.</p>
+        <CoverInput key={`${initial?.id ?? "new"}-${state.version ?? initial?.version ?? 1}`} initial={initial?.details.image} domain="produk" onFileChange={setCoverFile} serverError={state.fieldErrors?.coverFile} />
       </section>
     </fieldset>
     <p className="text-sm text-slate-600">DRAFT tidak tampil public; PUBLISHED langsung terbit; SCHEDULED sesuai tanggal UTC. Kesiapan produk tidak mempublish otomatis. Arsip menggunakan tombol terpisah.</p>

@@ -1,6 +1,20 @@
 # Products — active scope, architecture and tracking
 
-Tanggal: 2026-10-05. Active PRD: [PRD 002](../products/PRD/PRD_002_lunabiner-phase-2.md), confirmed Product CRUD scope, status IN PROGRESS. Task 1–3 selesai; upload/public/cache/final QA tetap Task 4–7.
+Tanggal: 2026-10-05. Active PRD: [PRD 002](../products/PRD/PRD_002_lunabiner-phase-2.md), confirmed Product CRUD scope, status IN PROGRESS. Task 1–4 selesai; public detail/cache/final QA tetap Task 5–7. Bagian Task 2–3 di bawah merekam snapshot historis; runtime Task4 dan Ringkasan-only Task3b/3c adalah perilaku sekarang.
+
+## Runtime — Task 4 perangkat cover/private media
+
+Editor create/edit menerima file JPG/PNG/WebP dari perangkat, bukan path teks. Preview blob lokal, keep/replace/remove/cancel; File dipertahankan dalam state untuk retry setelah native form reset. Form menyampaikan `coverOperation` dan `coverFile`; `image` client diabaikan. Pesan error cover inline accessible. Read-only/disabled mengikuti izin/pending existing, bukan menggantikan authorization server.
+
+Action content:write memvalidasi teks/operation, membuat UUID content untuk create dan UUID asset, menormalisasi bytes lewat Sharp, lalu service versioned/transaction/audit menautkan `details.image` dengan trusted options. Replace path harus namespace products dan content UUID yang sama; generic writes tidak dapat menautkan uploaded asset arbitrary. Keep membaca DB, remove hanya melepas referensi. Audit product.create/update kini mencatat image sebelum/sesudah tanpa filename asli/bytes. Gagal mutasi menghapus file baru hanya setelah DB memastikan belum attached; kegagalan ambigu mempertahankan orphan privat. File lama tetap ada dan tidak disajikan setelah replace/remove; archive/restore mempertahankan cover.
+
+Validasi/normalisasi serta private filesystem factory direuse dari module cover portfolio, tanpa berbagi permission/route/namespace/root. Portfolio exports/perilaku tetap kompatibel. Product wrapper memilih PRODUCT_UPLOAD_DIR/default storage/product-covers dan namespace `/media/products/`. Shared CMS read schema menerima kedua path UUID; write boundary menolak cross-kind. Tidak ada SQL migration/seed/auto upload.
+
+Media GET `/media/products/{content UUID}/{asset UUID}` (Node, force-dynamic): validasi UUID; query kind PRODUCT + current details.image; anonymous hanya nondeleted PUBLISHED/due SCHEDULED (readiness tidak mempengaruhi akses). DRAFT/future/arsip memerlukan content:read. Unknown, invalid, obsolete, cross-kind atau unauthorized: 404 tanpa URL/title leak; storage/DB failure: 503. Berhasil: WebP bytes + Content-Length; semua respons private/no-store, nosniff, noindex. Tidak ada endpoint upload terpisah; Server Action multipart berada pada halaman editor. Invalid cover mendapat ProductState.fieldErrors.coverFile; conflicts/permission/status memakai feedback existing.
+
+Thumbnail card publik existing ID/EN memakai cover yang sama, alt nama produk dan unoptimized untuk uploaded media; layout card/grid/teal tetap. Produk belum mempunyai route detail baru/CTA baru/OG per produk hingga Task5. Empty/static fallback existing masih Task5. Optimizer hanya menerima /images/**; jangan cache media privat melalui optimizer/CDN. Aturan storage/backup/limits di [installation](../deployment/installation.md).
+
+Verifikasi:83/83 regresi serial, typecheck/lint/build PASS. Production product browser3010:multipart >1MiB, retry retained File/preview, cancel/replace/remove, thumbnail ID/EN, private schedule/arsip, optimizer400, desktop/mobile tanpa overflow. Existing portfolio cover browser3008 PASS setelah shared helper reuse. DB/upload synthetic disposable saja, fixtures/temp uploads dibersihkan; screenshot lokal `/private/tmp/lunabiner-products-admin-qa-vuqle2`. [Task4 report](../reports/2026/10/05/products_task4_cover-upload.md).
 
 ## Refinement aktif — Task 3a Ringkasan-only dan fitur bilingual
 
@@ -10,7 +24,7 @@ Task 3a menyediakan pure `summary-content.ts`: strict content contract tanpa bod
 
 Task 3a tidak mengubah runtime. **Task 3b memakai form/save Ringkasan-only dan fitur bilingual; Task 3c sudah menyelesaikan seeder/migrasi lokal**. Penjelasan textarea/detail/rich pada bagian Task 3 di bawah adalah snapshot sebelum refinement, bukan UI sekarang. Tidak ada SQL migration/RBAC/route baru.
 
-Execution refinement: 3a kontrak/adapter/tests COMPLETED → 3b UI/save/public existing integration COMPLETED → 3c backup/migration/seed/browser QA COMPLETED → Task 4–7 NOT STARTED. [Task 3a report](../reports/2026/10/05/products_task3a_summary-contract.md).
+Execution refinement: 3a kontrak/adapter/tests COMPLETED → 3b UI/save/public existing integration COMPLETED → 3c backup/migration/seed/browser QA COMPLETED → Task 4 COMPLETED → Task 5–7 NOT STARTED. [Task 3a report](../reports/2026/10/05/products_task3a_summary-contract.md).
 
 ## Runtime/data refinement — Task 3c
 
@@ -80,7 +94,7 @@ Feature `src/features/products/` memiliki kontrak, service/lifecycle, legacy ada
 
 Database foundation Task 2: ProductRoute adalah namespace product sendiri, mengikuti jaminan ownership/history portfolio. UUID primary key, value unik/deskriptif atau UUID compatibility, contentId UUID FK restrict ke ContentEntry, createdAt dan index contentId; validation kind PRODUCT dan reservations immutable/transactional. Current slug dan UUID dicadangkan, slug lama tetap milik record meskipun diarsipkan. Namespace product tidak mengunci slug portfolio. Migration/backfill konflik atomik diuji pada disposable; activation main selesai Task 3. ContentEntry.productRoutes ditambahkan di Prisma; deletedAt/index publication existing direuse, tidak menambah enum publishing.
 
-Shared contracts/service menerima rich PRODUCT dan membedakan direct status product dari ARTICLE workflow. Trusted product upload masih Task 4; generic CMS redirect tersedia. Existing legacy PRODUCT JSON/plain fields dipertahankan/diadaptasi. REVIEW dipetakan ke DRAFT saat explicit save; ARCHIVED hanya explicit restore, tidak dipublish otomatis.
+Shared contracts/service menerima legacy rich PRODUCT dan membedakan direct status product dari ARTICLE workflow. Trusted product upload Task4 tersedia; generic CMS redirect tersedia. Existing legacy PRODUCT JSON/plain fields dipertahankan/diadaptasi. REVIEW dipetakan ke DRAFT saat explicit save; ARCHIVED hanya explicit restore, tidak dipublish otomatis.
 
 ### Publication vs readiness
 
@@ -113,7 +127,7 @@ Enterprise Chat / AI Cashflow perlu slug enterprise-chat / ai-cashflow dan UUID 
 1. Task 1 — audit arsitektur, keputusan data dan baseline: COMPLETED; typecheck, lint dan production build PASS.
 2. Task 2 — schema/contracts/service/route reservations/seeder: COMPLETED; main activation dilakukan pada Task 3.
 3. Task 3 — menu admin dan CRUD/textarea ID/EN/readiness/CTA/archive, adapter save kompatibel existing: COMPLETED; batas 150 dan browser desktop/mobile terverifikasi.
-4. Task 4 — perangkat cover/private media: NOT STARTED.
+4. Task 4 — perangkat cover/private media: COMPLETED.
 5. Task 5 — public list/detail/SEO/OG/sitemap: NOT STARTED.
 6. Task 6 — streaming/cache/invalidation: NOT STARTED.
 7. Task 7 — final regression/browser/visual QA: NOT STARTED.

@@ -1,4 +1,5 @@
 import "server-only";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
 import { requirePermission } from "@/server/authorization";
@@ -9,19 +10,21 @@ import { normalizeProductContent } from "./legacy-content";
 import { detailsSchema } from "../cms/schema";
 import { plainTextToRichDocument } from "../cms/rich-text";
 import { productSummaryInputSchema } from "./summary-input";
+import { coverOperationSchema, parseProductCoverPath } from "./cover-schema";
 
 export class ProductMutationError extends Error {
-  constructor(public readonly code: "NOT_FOUND" | "ARCHIVED" | "KIND" | "RICH_CONTENT" | "PERMISSION" | "SCHEDULE" | "VERSION" | "LIFECYCLE", message: string) { super(message); }
+  constructor(public readonly code: "NOT_FOUND" | "ARCHIVED" | "KIND" | "RICH_CONTENT" | "PERMISSION" | "SCHEDULE" | "VERSION" | "LIFECYCLE" | "COVER", message: string) { super(message); }
 }
 export function presentProduct(entry: Awaited<ReturnType<typeof db.contentEntry.findUniqueOrThrow>>) {
   if (entry.kind !== "PRODUCT") throw new ProductMutationError("KIND", "Data ini bukan produk.");
   return { ...entry, ...normalizeProductContent(entry) };
 }
 
-export async function saveProduct(raw: unknown, options: { textarea?: boolean; summary?: boolean } = {}) {
+export async function saveProduct(raw: unknown, options: { textarea?: boolean; summary?: boolean; createProductId?: string; productCover?: { operation: "keep" | "replace" | "remove"; path?: string } } = {}) {
   const user = await requirePermission("content:write");
   // Trusted server-only mode, never accepted from client fields.
   const input = (options.summary ? productSummaryInputSchema : options.textarea ? productEditorInputSchema : productInputSchema).parse(raw);
+  const createId = options.createProductId ? z.uuid().parse(options.createProductId) : undefined;
   return db.$transaction(async tx => {
     const previous = input.id ? await tx.contentEntry.findUnique({ where: { id: input.id } }) : null;
     if (input.id && !previous) throw new ProductMutationError("NOT_FOUND", "Produk tidak ditemukan.");
@@ -51,6 +54,15 @@ export async function saveProduct(raw: unknown, options: { textarea?: boolean; s
       productStatus: input.details.productStatus, ctaLabel: input.details.ctaLabel, productCta: cta,
       ...(options.summary ? { productFeatures: input.details.productFeatures } : {}),
     } : { ...input.details, productCta: cta };
+    const operation = coverOperationSchema.parse(options.productCover?.operation ?? "keep");
+    if (options.productCover) {
+      details.image = operation === "remove" ? "" : operation === "replace" ? options.productCover.path ?? "" : stored?.details.image ?? "";
+      if (operation === "replace" && !parseProductCoverPath(details.image))
+        throw new ProductMutationError("COVER", "Pilih ulang gambar cover dari perangkat.");
+    }
+    const cover = parseProductCoverPath(details.image);
+    if (cover && (cover.contentId !== (previous?.id ?? createId) || !options.productCover && details.image !== stored?.details.image))
+      throw new ProductMutationError("COVER", "Cover tidak dimiliki produk ini. Pilih gambar melalui editor produk.");
     // Cover/features/legacy metadata come from the database, not hidden client fields.
     const normalized = normalizeProductContent({ translations, details });
     if (options.summary && !Object.hasOwn(previous?.details as Record<string, unknown> ?? {}, "features")) delete (normalized.details as Partial<typeof normalized.details>).features;
@@ -74,8 +86,8 @@ export async function saveProduct(raw: unknown, options: { textarea?: boolean; s
       const result = await tx.contentEntry.updateMany({ where: { id: previous.id, kind: "PRODUCT", version: input.version, deletedAt: null }, data: { ...data, version: { increment: 1 } } });
       if (!result.count) throw new ProductMutationError("VERSION", "Produk telah berubah. Muat ulang versi terbaru sebelum menyimpan.");
     }
-    const saved = previous ? await tx.contentEntry.findUniqueOrThrow({ where: { id: previous.id } }) : await tx.contentEntry.create({ data: { ...data, authorId: user.id } });
-    const snapshot = (row: typeof saved) => ({ slug: row.slug, status: row.status, version: row.version, productStatus: presentProduct(row).details.productStatus });
+    const saved = previous ? await tx.contentEntry.findUniqueOrThrow({ where: { id: previous.id } }) : await tx.contentEntry.create({ data: { ...data, ...(createId ? { id: createId } : {}), authorId: user.id } });
+    const snapshot = (row: typeof saved) => ({ slug: row.slug, status: row.status, version: row.version, productStatus: presentProduct(row).details.productStatus, image: presentProduct(row).details.image });
     await recordAudit(tx, { actorId: user.id, module: "cms", action: previous ? "product.update" : "product.create", recordId: saved.id,
       ...(previous ? { before: snapshot(previous) } : {}), after: snapshot(saved) });
     return saved;

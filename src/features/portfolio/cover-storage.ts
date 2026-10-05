@@ -42,50 +42,56 @@ export async function normalizeCover(raw: unknown) {
   } catch { throw new InvalidCoverError("Gambar tidak valid. Gunakan gambar statis JPG, PNG atau WebP hingga 16 megapiksel."); }
 }
 
-function storageRoot() {
-  const configured = process.env.PORTFOLIO_UPLOAD_DIR;
-  if (configured && !path.isAbsolute(configured)) throw new Error("Upload directory must be absolute.");
-  return configured ? path.resolve(configured) : path.resolve("storage/portfolio-covers");
-}
-async function privateDirectory(directory: string, create = false) {
-  if (create) await mkdir(directory, { recursive: true, mode: 0o700 });
-  if (await realpath(directory) !== directory || ((await stat(directory)).mode & 0o077) !== 0) throw new Error("Unsafe upload directory.");
-}
-async function filename(raw: unknown, create = false) {
-  const ids = coverIdsSchema.parse(raw), root = storageRoot();
-  await privateDirectory(root, create);
-  const directory = path.join(root, ids.contentId);
-  await privateDirectory(directory, create);
-  return { file: path.join(directory, `${ids.assetId}.webp`), directory };
-}
-export async function storeCover(contentId: string, bytes: Buffer) {
-  z.uuid().parse(contentId);
-  const ids = { contentId, assetId: randomUUID() };
-  const target = await filename(ids, true);
-  const file = await open(target.file, "wx", 0o600);
-  try {
-    await file.writeFile(bytes); await file.sync();
-  } catch (error) {
-    await file.close(); await unlink(target.file); throw error;
+export function createCoverStorage(config: { environment: string; directory: string; coverPath: (contentId: string, assetId: string) => string }) {
+  function storageRoot() {
+    const configured = process.env[config.environment];
+    if (configured && !path.isAbsolute(configured)) throw new Error("Upload directory must be absolute.");
+    return configured ? path.resolve(configured) : path.resolve(config.directory);
   }
-  await file.close();
-  const directory = await open(target.directory, "r");
-  try { await directory.sync(); } catch (error) { await unlink(target.file); throw error; } finally { await directory.close(); }
-  const root = await open(storageRoot(), "r");
-  try { await root.sync(); } catch (error) { await unlink(target.file); throw error; } finally { await root.close(); }
-  return { ...ids, path: coverPath(ids.contentId, ids.assetId) };
+  async function privateDirectory(directory: string, create = false) {
+    if (create) await mkdir(directory, { recursive: true, mode: 0o700 });
+    if (await realpath(directory) !== directory || ((await stat(directory)).mode & 0o077) !== 0) throw new Error("Unsafe upload directory.");
+  }
+  async function filename(raw: unknown, create = false) {
+    const ids = coverIdsSchema.parse(raw), root = storageRoot();
+    await privateDirectory(root, create);
+    const directory = path.join(root, ids.contentId);
+    await privateDirectory(directory, create);
+    return { file: path.join(directory, `${ids.assetId}.webp`), directory };
+  }
+  async function storeCover(contentId: string, bytes: Buffer) {
+    z.uuid().parse(contentId);
+    const ids = { contentId, assetId: randomUUID() };
+    const target = await filename(ids, true);
+    const file = await open(target.file, "wx", 0o600);
+    try {
+      await file.writeFile(bytes); await file.sync();
+    } catch (error) {
+      await file.close(); await unlink(target.file); throw error;
+    }
+    await file.close();
+    const directory = await open(target.directory, "r");
+    try { await directory.sync(); } catch (error) { await unlink(target.file); throw error; } finally { await directory.close(); }
+    const root = await open(storageRoot(), "r");
+    try { await root.sync(); } catch (error) { await unlink(target.file); throw error; } finally { await root.close(); }
+    return { ...ids, path: config.coverPath(ids.contentId, ids.assetId) };
+  }
+  async function readCover(raw: unknown) {
+    const target = await filename(raw);
+    const file = await open(target.file, constants.O_RDONLY | constants.O_NOFOLLOW);
+    try {
+      const info = await file.stat();
+      if (!info.isFile() || info.size > MAX_COVER_BYTES || (info.mode & 0o077) !== 0) throw new Error("Invalid cover file.");
+      return await file.readFile();
+    } finally { await file.close(); }
+  }
+  // Only called for a newly created asset whose database mutation did not commit.
+  async function discardUncommittedCover(raw: unknown) {
+    const target = await filename(raw);
+    await unlink(target.file);
+  }
+  return { storeCover, readCover, discardUncommittedCover };
 }
-export async function readCover(raw: unknown) {
-  const target = await filename(raw);
-  const file = await open(target.file, constants.O_RDONLY | constants.O_NOFOLLOW);
-  try {
-    const info = await file.stat();
-    if (!info.isFile() || info.size > MAX_COVER_BYTES || (info.mode & 0o077) !== 0) throw new Error("Invalid cover file.");
-    return await file.readFile();
-  } finally { await file.close(); }
-}
-// Only called for a newly created asset whose database mutation did not commit.
-export async function discardUncommittedCover(raw: unknown) {
-  const target = await filename(raw);
-  await unlink(target.file);
-}
+export const { storeCover, readCover, discardUncommittedCover } = createCoverStorage({
+  environment: "PORTFOLIO_UPLOAD_DIR", directory: "storage/portfolio-covers", coverPath,
+});

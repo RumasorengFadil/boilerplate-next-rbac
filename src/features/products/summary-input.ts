@@ -2,6 +2,7 @@ import { z } from "zod";
 import { detailsSchema } from "../cms/schema";
 import { productSlugSchema, productStatuses } from "./schema";
 import { productSummaryContentSchema, productFeaturesSchema, validateProductSummaryPublication } from "./summary-content";
+import { parseCoverPath } from "../portfolio/cover-schema";
 
 export const productSummaryInputSchema = z.object({
   id: z.uuid().optional(), version: z.coerce.number().int().min(1).default(1),
@@ -10,6 +11,8 @@ export const productSummaryInputSchema = z.object({
   translations: productSummaryContentSchema.shape.translations,
   details: detailsSchema.extend({ productFeatures: productFeaturesSchema }),
 }).strict().superRefine((input, context) => {
+  if (parseCoverPath(input.details.image))
+    context.addIssue({ code: "custom", path: ["details", "image"], message: "Gunakan cover produk, bukan portfolio." });
   if (input.status === "PUBLISHED" || input.status === "SCHEDULED") {
     try { validateProductSummaryPublication({ translations: input.translations, productFeatures: input.details.productFeatures }); }
     catch (error) { if (error instanceof z.ZodError) for (const issue of error.issues)

@@ -3,11 +3,13 @@
 Status: IN PROGRESS
 Pembaruan aktif: 2026-10-05 — Product CRUD/landing management.
 
+Task 4 COMPLETED — perangkat cover/private media. Reuse validasi/normalisasi dan private filesystem portfolio dengan konfigurasi storage terpisah; UUID namespace `/media/products/`, current reference + publication/permission live guards. Preview/keep/replace/remove/cancel, retained File saat gagal, thumbnail existing public card. 83/83 regresi/typecheck/lint/build serta production product+portfolio cover browser PASS. Tidak ada SQL migration, main data writes atau implementasi Task 5–7. Task 1–3/3a–3c tetap COMPLETED; Task5–7 NOT STARTED.
+
 ## Scope aktif yang dikonfirmasi — Product CRUD
 
 ### Refinement 2026-10-05 — Ringkasan-only dan fitur bilingual
 
-Task 3c COMPLETED: operational CLI preview/apply/restore, backup privat terverifikasi, migrasi JSON atomik/idempotent dengan version+audit. Dua produk lokal version1→2 dibersihkan, repeat preview0changes; backup retained. Hanya legacy narasi duplicate dibersihkan; distinct body/formatting menahan seluruh apply. Terjemahan fitur contoh hanya pada UUID contoh dengan array legacy exact-match dan tanpa localized configuration; fitur arbitrary literal ID/EN, configured lists preserved. Seeder summary-only/bilingual, existing seed preserved. Tidak ada SQL migration/perubahan workflow/cover/routes. 80/80 regresi, typecheck/lint/build/browser PASS. Task4–7 belum dimulai.
+Task 3c COMPLETED: operational CLI preview/apply/restore, backup privat terverifikasi, migrasi JSON atomik/idempotent dengan version+audit. Dua produk lokal version1→2 dibersihkan, repeat preview0changes; backup retained. Hanya legacy narasi duplicate dibersihkan; distinct body/formatting menahan seluruh apply. Terjemahan fitur contoh hanya pada UUID contoh dengan array legacy exact-match dan tanpa localized configuration; fitur arbitrary literal ID/EN, configured lists preserved. Seeder summary-only/bilingual, existing seed preserved. Tidak ada SQL migration/perubahan workflow/cover/routes. Verifikasi saat Task3c:80/80 regresi, typecheck/lint/build/browser PASS; tracking berikutnya di atas.
 
 Pengguna menyetujui penghapusan field Detail produk ID/EN yang redundant. Ringkasan/excerpt ID/EN menjadi satu-satunya deskripsi untuk card/detail dan fallback SEO, maksimal 150 karakter (publication minimum 10). Override SEO tetap terpisah. PRODUCT baru setelah integrasi tidak menyimpan body/richBody deskripsi duplikat; ARTICLE/CASE_STUDY tetap unchanged. Fitur produk dapat ditambah/hapus pada form ID/EN, maksimal 12 poin per bahasa dan 100 karakter per poin. Storage baru `details.productFeatures: {id: string[], en: string[]}`; jangan memakai satu array bahasa bersama untuk konten baru.
 
@@ -38,10 +40,10 @@ Tidak mengerjakan waitlist/newsletter, pricing/payment/subscription, akun penggu
 - Typecheck/build, tests, production HTTP/browser dan desktop/mobile diverifikasi sebelum task selesai.
 - Status IN PROGRESS berlaku untuk PRD Phase 2 keseluruhan. Penyelesaian scope Product CRUD tidak menandai fitur Phase 2 yang deferred sebagai selesai.
 - Tracking detail Product CRUD: `docs/features/products.md` (disusun pada Task 1 setelah PRD resolution).
-- Task 1–3 selesai: arsitektur, fondasi kontrak/service/ProductRoute/seeder, admin CRUD/textarea/readiness/CTA/arsip. Migration dan dua contoh produk database lokal diterapkan pada Task 3 setelah backup; konten non-PRODUCT tetap identik. Task 4–7 belum dikerjakan. PRD keseluruhan tetap IN PROGRESS.
+- Task 1–4 selesai: arsitektur, fondasi kontrak/service/ProductRoute/seeder, admin CRUD/textarea/readiness/CTA/arsip dan cover perangkat. Migration dan dua contoh produk database lokal diterapkan pada Task 3 setelah backup; konten non-PRODUCT tetap identik. Task 5–7 belum dikerjakan. PRD keseluruhan tetap IN PROGRESS.
 - Revisi editor setelah Task 2: pengguna menyetujui textarea karena konten pendek/cenderung statis. Task 3 telah menerapkan CRUD/textarea ID/EN beserta adapter save yang aman; task lain tidak dibatalkan/diubah urutannya.
 - Task 3 selesai: ringkasan dan detail textarea ID/EN dibatasi maksimum 150 karakter per field/bahasa, berdasarkan contoh pengguna 109 karakter. Counter, maxLength client dan server validation tersedia; publikasi tetap excerpt minimal 10/body minimal 30. Konten legacy lebih panjang tidak dipotong/migrasikan massal; unchanged text/formatting tetap dipertahankan, teks baru/yang diedit wajib memenuhi batas. Seeder baru memakai deskripsi contoh singkat, tidak menimpa seed existing. Upload cover tetap Task 4.
-- Refinement 3a–3c selesai: kontrak, form/save Ringkasan-only, fitur bilingual/public card, guarded migration/restore dan seeder tersedia; 80/80 regresi dan browser QA PASS. Dua produk lokal dimigrasikan dengan backup. Ketentuan Detail/body minimum pada bullet historis Task 3 digantikan Ringkasan minimum 10 pada action baru. Detail/upload/cache task berikutnya belum selesai.
+- Refinement 3a–3c selesai: kontrak, form/save Ringkasan-only, fitur bilingual/public card, guarded migration/restore dan seeder tersedia; 80/80 regresi saat Task3c dan browser QA PASS. Dua produk lokal dimigrasikan dengan backup. Ketentuan Detail/body minimum pada bullet historis Task 3 digantikan Ringkasan minimum 10 pada action baru. Upload Task4 selesai; detail/SEO/cache berikutnya belum selesai.
 
 ## Sumber PRD awal (dipertahankan)
 

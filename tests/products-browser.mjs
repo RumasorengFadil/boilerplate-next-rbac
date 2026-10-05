@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { mkdtemp } from "node:fs/promises";
-import { createHash, randomUUID } from "node:crypto";
+import { mkdtemp, rm } from "node:fs/promises";
+import { createHash, randomUUID, randomBytes } from "node:crypto";
+import sharp from "sharp";
 import { spawn } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
 // The guarded migration tests exercise real apply/restore; browser covers editing
@@ -11,8 +12,9 @@ assert.equal(target.hostname, "127.0.0.1"); assert.equal(target.port, "55441");
 assert.equal(target.username, "portfolio_test"); assert.equal(target.pathname, "/lunabiner_portfolio_test");
 const origin = "http://127.0.0.1:3010";
 const directory = await mkdtemp("/private/tmp/lunabiner-products-admin-qa-");
+const uploadDirectory = await mkdtemp("/private/tmp/lunabiner-products-browser-uploads-");
 const db = new PrismaClient(), users = [], ids = [], contexts = [], errors = [];
-const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-H", "127.0.0.1", "-p", "3010"], { env: { ...process.env, NODE_ENV: "production" }, stdio: "ignore" });
+const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-H", "127.0.0.1", "-p", "3010"], { env: { ...process.env, PRODUCT_UPLOAD_DIR: uploadDirectory, NODE_ENV: "production" }, stdio: "ignore" });
 let browser;
 async function poll(check) { for (let i = 0; i < 100; i++) { if (await check()) return; await new Promise(resolve => setTimeout(resolve, 150)); } throw new Error("Product browser condition timed out."); }
 async function pageFor(role, width = 1440) {
@@ -31,7 +33,13 @@ try {
   const admin = await pageFor("ADMIN"); await admin.goto(origin + "/dashboard/products/new");
   assert.equal(await admin.locator("[contenteditable=true]").count(), 0);
   assert.deepEqual(await admin.locator('[name="status"] option').evaluateAll(options => options.map(option => option.value)), ["DRAFT", "PUBLISHED", "SCHEDULED"]);
-  assert.equal(await admin.locator('[type="file"], [name="image"]').count(), 0); // Task 4, not prematurely added.
+  assert.equal(await admin.locator('[type="file"]').count(), 1); assert.equal(await admin.locator('[name="image"]').count(), 0);
+  const cover = await sharp(randomBytes(900 * 700 * 3), { raw: { width: 900, height: 700, channels: 3 } }).png().toBuffer();
+  assert.ok(cover.length > 1024 * 1024 && cover.length < 5 * 1024 * 1024);
+  const chooseCover = () => admin.locator('[name="coverFile"]').setInputFiles({ name: "device-cover.png", mimeType: "image/png", buffer: cover });
+  await chooseCover(); await admin.getByAltText("Preview cover produk").waitFor();
+  await admin.getByRole("button", { name: "Hapus cover", exact: true }).click(); assert.equal(await admin.getByAltText("Preview cover produk").count(), 0);
+  await admin.getByRole("button", { name: "Batal ganti/hapus", exact: true }).click(); await chooseCover();
   const slug = "browser-product-" + randomUUID(), title = "Product browser example";
   const description = "Platform komunikasi privat untuk organisasi yang membutuhkan kontrol, keamanan, dan fleksibilitas deployment.";
   for (const locale of ["id", "en"]) {
@@ -49,6 +57,7 @@ try {
   await admin.locator('[id="id.excerpt-error"]').waitFor(); assert.match(await admin.locator('[id="id.excerpt-error"]').innerText(), /maksimal 150/);
   assert.equal((await body.inputValue()).length, 151); assert.equal(await admin.locator('[name="slug"]').inputValue(), slug);
   assert.equal(await db.contentEntry.count({ where: { kind: "PRODUCT", slug } }), 0);
+  assert.match(await admin.getByAltText("Preview cover produk").getAttribute("src"), /^blob:/);
   await body.fill(description); await body.evaluate(element => element.setAttribute("maxlength", "150"));
   await admin.locator('[name="status"]').selectOption("PUBLISHED"); await admin.locator('[name="en.excerpt"]').fill("");
   await admin.getByRole("button", { name: "Simpan produk", exact: true }).click(); await admin.locator('[id="en.excerpt-error"]').waitFor();
@@ -60,8 +69,13 @@ try {
   assert.equal(row.translations.id.body, undefined); assert.equal(row.translations.id.richBody, undefined);
   assert.equal(row.details.features, undefined);
   assert.deepEqual(row.details.productFeatures, { id: ["Chat privat"], en: ["Private chat"] });
+  const originalCover = row.details.image; assert.match(originalCover, new RegExp(`^/media/products/${row.id}/`));
+  const anonymous = await browser.newContext();
+  assert.equal((await anonymous.request.get(origin + originalCover)).status(), 200);
+  assert.equal((await anonymous.request.get(origin + "/_next/image?url=" + encodeURIComponent(originalCover) + "&w=640&q=75")).status(), 400);
   const publicPage = await admin.context().newPage();
   await publicPage.goto(origin + "/id/products"); await publicPage.getByText("Chat privat", { exact: true }).waitFor();
+  const thumbnail = publicPage.locator(`img[src="${originalCover}"]`); await thumbnail.waitFor(); assert.equal(await thumbnail.evaluate(image => image.complete && image.naturalWidth > 0), true);
   assert.equal(await publicPage.getByText("Private chat", { exact: true }).count(), 0);
   await publicPage.goto(origin + "/en/products"); await publicPage.getByText("Private chat", { exact: true }).waitFor(); await publicPage.close();
   await admin.getByRole("button", { name: "Hapus fitur ID 1", exact: true }).click();
@@ -71,6 +85,9 @@ try {
   await admin.getByRole("button", { name: "Simpan produk", exact: true }).click(); await admin.locator('[id="en.features.1-error"]').waitFor();
   assert.equal(await admin.locator('[name="id.feature"]').count(), 0); assert.equal((await extra.inputValue()).length, 101);
   await admin.getByRole("button", { name: "Hapus fitur EN 2", exact: true }).click();
+  await chooseCover(); await admin.getByRole("button", { name: "Batal ganti/hapus", exact: true }).click();
+  assert.equal(await admin.getByAltText("Preview cover produk").getAttribute("src"), originalCover);
+  await chooseCover();
   assert.equal(await body.inputValue(), description);
   await admin.locator('[name="productStatus"]').selectOption("LIVE"); await admin.locator('[name="status"]').selectOption("SCHEDULED");
   await admin.locator('[name="publishedAt"]').fill("2030-01-01T09:30"); await admin.locator('[name="ctaType"]').selectOption("external");
@@ -78,6 +95,10 @@ try {
   await admin.getByRole("button", { name: "Simpan produk", exact: true }).click();
   await poll(async () => (await db.contentEntry.findUniqueOrThrow({ where: { id: row.id } })).status === "SCHEDULED"); await admin.reload();
   row = await db.contentEntry.findUniqueOrThrow({ where: { id: row.id } }); assert.equal(row.publishedAt.toISOString(), "2030-01-01T09:30:00.000Z"); assert.equal(row.details.productStatus, "LIVE"); assert.equal(row.details.productCta.url, "https://demo.example.test");
+  const replacementCover = row.details.image; assert.notEqual(replacementCover, originalCover);
+  assert.equal((await anonymous.request.get(origin + originalCover)).status(), 404);
+  assert.equal((await anonymous.request.get(origin + replacementCover)).status(), 404);
+  assert.equal((await admin.context().request.get(origin + replacementCover)).status(), 200);
   assert.equal(row.details.features, undefined); assert.equal(row.translations.id.body, undefined); assert.equal(row.translations.id.richBody, undefined);
   await admin.screenshot({ path: directory + "/desktop-editor.png", fullPage: true });
   const editor = await pageFor("CONTENT_EDITOR", 390); await editor.goto(`${origin}/dashboard/products/${row.id}`);
@@ -91,13 +112,18 @@ try {
   assert.equal((await db.contentEntry.findUniqueOrThrow({ where: { id: row.id } })).deletedAt, null);
   await admin.getByRole("button", { name: "Arsipkan", exact: true }).click(); await admin.getByRole("button", { name: "Ya, arsipkan", exact: true }).click();
   await admin.waitForURL("**/dashboard/products?view=archived"); await admin.getByRole("link", { name: title, exact: true }).waitFor();
+  assert.equal((await anonymous.request.get(origin + replacementCover)).status(), 404);
   await admin.getByRole("button", { name: "Pulihkan", exact: true }).click(); await admin.getByRole("button", { name: "Ya, pulihkan", exact: true }).click();
   await admin.waitForURL(`**/dashboard/products/${row.id}`); await admin.locator('[name="id.excerpt"]').waitFor();
   row = await db.contentEntry.findUniqueOrThrow({ where: { id: row.id } }); assert.equal(row.status, "DRAFT"); assert.equal(row.details.productStatus, "LIVE"); assert.equal(row.details.productCta.url, "https://demo.example.test");
+  assert.equal(row.details.image, replacementCover);
   await editor.goto(`${origin}/dashboard/products/${row.id}`); assert.equal(await editor.getByRole("button", { name: "Simpan produk", exact: true }).isEnabled(), true);
   await editor.locator('[name="id.excerpt"]').waitFor(); assert.deepEqual(await editor.locator('[name="status"] option').evaluateAll(options => options.map(option => option.value)), ["DRAFT"]);
   await admin.setViewportSize({ width: 390, height: 844 }); assert.equal(await admin.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await admin.screenshot({ path: directory + "/mobile-editor.png", fullPage: true });
+  await admin.getByRole("button", { name: "Hapus cover", exact: true }).click(); await admin.getByRole("button", { name: "Simpan produk", exact: true }).click();
+  await poll(async () => (await db.contentEntry.findUniqueOrThrow({ where: { id: row.id } })).details.image === ""); await admin.reload();
+  assert.equal((await admin.context().request.get(origin + replacementCover)).status(), 404); await anonymous.close();
   await admin.goto(origin + "/dashboard/products"); assert.equal(await admin.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await admin.screenshot({ path: directory + "/mobile-list.png", fullPage: true });
   const rich = { type: "doc", content: [{ type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "a".repeat(180) }] }] };
@@ -110,10 +136,12 @@ try {
   assert.deepEqual(errors, []);
   console.log("PASS: native/server 150-char limit, counters, retained failed form, direct publish/schedule UTC, readiness/CTA, RBAC, slug/UUID routes, archive/cancel/restore, generic redirect, legacy rich metadata save and mobile overflow.");
   console.log("Browser screenshots: " + directory);
+  console.log("PASS: device multipart >1 MiB, retained failed preview/File, cancel/replace/remove, product thumbnails, private media and optimizer bypass prevention.");
 } finally {
   for (const context of contexts) await context.close(); await browser?.close(); server.kill("SIGTERM");
   const owned = await db.contentEntry.findMany({ where: { authorId: { in: users } }, select: { id: true } });
   const records = [...new Set([...ids, ...owned.map(row => row.id)])];
   await db.auditEvent.deleteMany({ where: { recordId: { in: records } } }); await db.productRoute.deleteMany({ where: { contentId: { in: records } } });
   await db.contentEntry.deleteMany({ where: { id: { in: records } } }); await db.user.deleteMany({ where: { id: { in: users } } }); await db.$disconnect();
+  assert.ok(uploadDirectory.startsWith("/private/tmp/lunabiner-products-browser-uploads-")); await rm(uploadDirectory, { recursive: true });
 }

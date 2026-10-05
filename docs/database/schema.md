@@ -2,6 +2,10 @@
 
 ## Product foundation — PRD 002 Task 2
 
+### Product cover — Task 4
+
+Tidak ada migration/tabel/kolom/index/constraint/relation baru. `ContentEntry.details.image` menyimpan referensi `/media/products/<content UUID>/<asset UUID>` atau existing `/images/` asset. Bytes WebP privat berada di persistent filesystem, bukan database/public. Keep/replace/remove di service transaction existing menaikkan version dan memperbarui updatedAt. AuditEvent product.create/update kini menyertakan image before/after (tanpa bytes/nama file asli/credential). Archive/restore mempertahankan image; file lama tidak dihapus otomatis. Failed upload cleanup memastikan referensi tidak committed sebelum unlink. Database utama tidak dimigrasikan/reseed saat Task4. Backup perlu mencakup DB dan volume cover; lihat installation.
+
 ### Product summary refinement — Task 3b
 
 Task 3c lokal selesai: dua PRODUCT (fixed example UUID) version1→2, body/richBody ID/EN dan single-array details.features dihapus setelah backup privat. details.productFeatures bilingual ditambahkan; metadata/CTA/cover/workflow/routes/non-PRODUCT unchanged. Dua AuditEvent `product.content.migrate` (actorId null, module cms, recordId UUID, version/batchId only tanpa body/credential). Restore CLI menggunakan `product.content.restore`, JSON before + version increment, menolak stale/mismatched target/content; tidak mengubah workflow/routes. Tidak ada SQL migration/tabel/kolom/index/constraint baru. Service/seed summary tidak menciptakan ulang keys redundant; legacy restored data tetap readable. Backup retained dan instruksi di installation.

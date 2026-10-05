@@ -7,6 +7,7 @@ import { t, type Locale } from "@/features/website/content";
 import { publishedContent, type presentContent } from "./service";
 import { RichTextContent } from "./rich-text-renderer";
 import { parseCoverPath } from "@/features/portfolio/cover-schema";
+import { parseProductCoverPath } from "@/features/products/cover-schema";
 
 export function PublishedDetail({ entry, locale }: { entry: ReturnType<typeof presentContent>; locale: Locale }) {
   const text = entry.translations[locale];
@@ -33,7 +34,7 @@ export function PublishedDetail({ entry, locale }: { entry: ReturnType<typeof pr
   </>;
   return <><section className="section-space border-b"><div className="site-shell max-w-4xl"><p className="section-kicker">{details.category || entry.kind}</p><h1 className="display-title mt-5 text-4xl sm:text-6xl">{text.title}</h1><p className="mt-6 text-lg leading-8 text-[#64767B]">{text.excerpt}</p>{details.authorName && <p className="mt-4 text-sm">{details.authorName}</p>}</div></section>
     <article className="section-space"><div className="site-shell max-w-4xl space-y-10">
-      {details.image && <Image src={details.image} alt={text.title} width={1200} height={675} className="w-full rounded-2xl" />}
+      {details.image && <Image src={details.image} unoptimized={Boolean(parseProductCoverPath(details.image))} alt={text.title} width={1200} height={675} className="w-full rounded-2xl" />}
       <div className="space-y-5 leading-8 text-[#42565B]">{text.body.split(/\n\s*\n/).map((paragraph, index) => <p className="whitespace-pre-wrap" key={index}>{paragraph}</p>)}</div>
       {(["features", "capabilities", "technology"] as const).map(name => details[name].length > 0 && <section key={name}><h2 className="text-xl font-semibold">{name}</h2><ul className="mt-4 flex flex-wrap gap-3">{details[name].map(item => <li key={item} className="rounded-full border px-4 py-2 text-sm">{item}</li>)}</ul></section>)}
       {details.gallery.length > 0 && <div className="grid gap-4 sm:grid-cols-2">{details.gallery.map(image => <Image key={image} src={image} alt={text.title} width={800} height={500} className="rounded-xl" />)}</div>}
@@ -45,7 +46,7 @@ export function PublishedDetail({ entry, locale }: { entry: ReturnType<typeof pr
 export async function PublishedProducts({ locale }: { locale: Locale }) {
   const entries = await publishedContent("PRODUCT");
   if (!entries.length) return null;
-  return <div className="grid gap-6 md:grid-cols-2">{entries.map(entry => <article key={entry.id} className="rounded-2xl border bg-white p-7"><p className="section-kicker">{entry.details.productStatus}</p><h2 className="mt-6 text-3xl font-semibold">{entry.translations[locale].title}</h2><p className="mt-5 leading-7 text-[#64767B]">{entry.translations[locale].excerpt}</p><ul className="mt-6 space-y-3">{(entry.details.productFeatures?.[locale] ?? entry.details.features).map((item, index) => <li className="border-t pt-3" key={`${index}-${item}`}>{item}</li>)}</ul><Link href={entry.details.ctaPath.replace(/^\/(id|en)\//, `/${locale}/`)} className="mt-6 inline-flex min-h-11 items-center font-semibold text-[#08747A]">{entry.details.ctaLabel[locale] || t(locale,"Diskusikan produk","Discuss product")} →</Link></article>)}</div>;
+  return <div className="grid gap-6 md:grid-cols-2">{entries.map(entry => <article key={entry.id} className="min-w-0 rounded-2xl border bg-white p-7">{entry.details.image && <Image src={entry.details.image} unoptimized={Boolean(parseProductCoverPath(entry.details.image))} alt={entry.translations[locale].title} width={640} height={360} className="mb-6 aspect-video w-full rounded-xl object-cover" />}<p className="section-kicker">{entry.details.productStatus}</p><h2 className="mt-6 text-3xl font-semibold">{entry.translations[locale].title}</h2><p className="mt-5 leading-7 text-[#64767B]">{entry.translations[locale].excerpt}</p><ul className="mt-6 space-y-3">{(entry.details.productFeatures?.[locale] ?? entry.details.features).map((item, index) => <li className="border-t pt-3" key={`${index}-${item}`}>{item}</li>)}</ul><Link href={entry.details.ctaPath.replace(/^\/(id|en)\//, `/${locale}/`)} className="mt-6 inline-flex min-h-11 items-center font-semibold text-[#08747A]">{entry.details.ctaLabel[locale] || t(locale,"Diskusikan produk","Discuss product")} →</Link></article>)}</div>;
 }
 
 export async function PublishedArticles({ locale }: { locale: Locale }) {

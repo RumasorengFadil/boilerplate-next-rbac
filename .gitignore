@@ -8,3 +8,4 @@ coverage/
 *.tsbuildinfo
 .local-backups/
 storage/portfolio-covers/
+storage/product-covers/
