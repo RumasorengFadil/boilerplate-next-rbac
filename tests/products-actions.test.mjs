@@ -39,9 +39,11 @@ test("textarea Server Actions: validation, preserved fields/format, permissions,
     const created = await saveProductAction({ message: "" }, form()); assert.equal(created.success, true); ids.push(created.id);
     let row = await db.contentEntry.findUniqueOrThrow({ where: { id: created.id } });
     assert.equal(row.translations.id.richBody, undefined); assert.equal(row.translations.id.body, undefined);
+    assert.equal(row.details.features, undefined);
     const features = form(row); features.append("id.feature", "Chat privat"); features.append("en.feature", "Private chat");
     assert.equal((await saveProductAction({ message: "" }, features)).success, true);
     row = await db.contentEntry.findUniqueOrThrow({ where: { id: row.id } }); assert.deepEqual(row.details.productFeatures, { id: ["Chat privat"], en: ["Private chat"] });
+    assert.equal(row.details.features, undefined);
     const badFeature = form(row); badFeature.set("en.feature", "x".repeat(101));
     assert.match((await saveProductAction({ message: "" }, badFeature)).fieldErrors["en.features.0"], /100 karakter/);
     const count = form(row); for (let index = 0; index < 12; index++) count.append("id.feature", "Extra");
@@ -87,7 +89,8 @@ test("textarea Server Actions: validation, preserved fields/format, permissions,
       assert.deepEqual(await seedProductExamples(db), { created: 2, skipped: 0 }); ids.push(...productExamples.map(item => item.id));
       for (const id of productExamples.map(item => item.id)) {
         const seed = await db.contentEntry.findUniqueOrThrow({ where: { id } });
-        for (const locale of ["id", "en"]) assert.ok(seed.translations[locale].body.length <= 150 && seed.translations[locale].excerpt.length <= 150);
+        for (const locale of ["id", "en"]) { assert.equal(seed.translations[locale].body, undefined); assert.equal(seed.translations[locale].richBody, undefined); assert.ok(seed.translations[locale].excerpt.length <= 150); }
+        assert.equal(seed.details.features, undefined); assert.ok(seed.details.productFeatures.id.length > 0);
       }
       assert.deepEqual(await seedProductExamples(db), { created: 0, skipped: 2 });
     });

@@ -1,13 +1,8 @@
 import type { PrismaClient } from "@prisma/client";
 import { website } from "../website/content";
-import { plainTextToRichDocument } from "../cms/rich-text";
-import { productInputSchema } from "./schema";
-import { normalizeProductContent } from "./legacy-content";
-
-export const productExamples = [
-  { id: "5ad0c75f-8e38-4b0c-9e24-0aa0d3cc598e", slug: "enterprise-chat" },
-  { id: "a7d40ab3-3222-48b5-b789-f5895b4c268e", slug: "ai-cashflow" },
-] as const;
+import { productSummaryInputSchema } from "./summary-input";
+import { productExamples } from "./examples";
+export { productExamples } from "./examples";
 
 export async function seedProductExamples(client: PrismaClient) {
   return client.$transaction(async tx => {
@@ -21,15 +16,16 @@ export async function seedProductExamples(client: PrismaClient) {
       const example = website.products[index];
       const translation = (locale: "id" | "en") => {
         // Keep the initial textarea concise; readiness labels describe the concept.
-        const richBody = plainTextToRichDocument(example.text[locale]);
-        return { title: example.name, excerpt: example.text[locale], richBody };
+        return { title: example.name, excerpt: example.text[locale] };
       };
-      const input = productInputSchema.parse({ kind: "PRODUCT", slug: sample.slug, status: "PUBLISHED",
+      const input = productSummaryInputSchema.parse({ kind: "PRODUCT", slug: sample.slug, status: "PUBLISHED",
         translations: { id: translation("id"), en: translation("en") },
-        details: { productStatus: "COMING_SOON", features: [...example.items],
+        details: { productStatus: "COMING_SOON", productFeatures: { id: [...sample.features.id], en: [...sample.features.en] },
           productCta: { type: "internal", path: "/consultation" }, ctaLabel: { id: "Diskusikan produk", en: "Discuss this product" } } });
+      const summary = (locale: "id" | "en") => { const { body, richBody, ...text } = input.translations[locale]; void body; void richBody; return text; };
+      const { features, ...details } = input.details; void features;
       await tx.contentEntry.create({ data: { id: sample.id, kind: "PRODUCT", slug: input.slug, status: input.status,
-        ...normalizeProductContent(input), publishedAt: new Date("2026-10-05T00:00:00.000Z") } });
+        translations: { id: summary("id"), en: summary("en") }, details, publishedAt: new Date("2026-10-05T00:00:00.000Z") } });
       created++;
     }
     return { created, skipped };

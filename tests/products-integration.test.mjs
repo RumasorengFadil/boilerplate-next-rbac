@@ -120,7 +120,7 @@ test("product foundation: permissions, routes, lifecycle, optimistic concurrency
       ids.push(...productExamples.map(example => example.id));
       const seed = await db.contentEntry.findUniqueOrThrow({ where: { id: productExamples[0].id } });
       assert.equal(seed.details.productStatus, "COMING_SOON"); assert.equal(seed.status, "PUBLISHED");
-      const edited = await saveProduct({ ...input("admin-renamed-concept", "PUBLISHED", seed.details), translations: seed.translations, id: seed.id, version: seed.version });
+      const edited = await saveProduct({ ...input("admin-renamed-concept", "PUBLISHED", seed.details), translations: seed.translations, id: seed.id, version: seed.version }, { summary: true });
       const archived = await changeProductLifecycle({ id: edited.id, version: edited.version, operation: "archive" });
       assert.deepEqual(await seedProductExamples(db), { created: 0, skipped: 2 });
       assert.deepEqual(await db.contentEntry.findUniqueOrThrow({ where: { id: seed.id } }), archived);

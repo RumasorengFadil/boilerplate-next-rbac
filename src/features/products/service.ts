@@ -53,6 +53,7 @@ export async function saveProduct(raw: unknown, options: { textarea?: boolean; s
     } : { ...input.details, productCta: cta };
     // Cover/features/legacy metadata come from the database, not hidden client fields.
     const normalized = normalizeProductContent({ translations, details });
+    if (options.summary && !Object.hasOwn(previous?.details as Record<string, unknown> ?? {}, "features")) delete (normalized.details as Partial<typeof normalized.details>).features;
     if (options.summary) {
       // Keep existing legacy narrative until backed-up migration; new rows have no duplicate body.
       const old = previous?.translations as Record<"id" | "en", Record<string, unknown>> | undefined;

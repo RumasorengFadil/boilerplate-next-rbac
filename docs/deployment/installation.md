@@ -24,6 +24,21 @@ Urutan aman: cek migration pada target database aplikasi memakai loader environm
 
 ## Upgrade product foundation — PRD 002 Task 2
 
+### Summary cleanup — Task 3c
+
+Deploy runtime Task 3b/3c sebelum cleanup; install/rebuild/restart seperti biasa. Tidak ada SQL migration baru. Hindari admin editing saat apply; reopen form setelah version berubah. Jalankan dari root project dengan Node registerHooks>=22.15/full TypeScript install dan environment loader existing, tidak mencetak credential. CLI hanya menerima database loopback dan confirmation eksplisit:
+
+```sh
+npm run db:migrate:product-summary -- --preview --database lunabiner
+npm run db:migrate:product-summary -- --apply --database lunabiner
+```
+
+Ganti database confirmation sesuai target sebenarnya. Preview hanya IDs/version/conflict flags, no writes. Apply PRODUCT saja (termasuk draft/arsip/schedule), transaction Serializable/advisory lock/version/audit, maksimal10.000 rows. Distinct legacy body/rich format atau invalid/oversized content menahan seluruh apply; tidak ada force/truncation. Backup before/after JSON maksimal10MB dibuat exclusive 0600 pada private non-symlink directory0700, fsync/read-back/schema validated sebelum DB commit. Backup retained walaupun transaction rollback; jangan commit/upload backup. Cleanup menghapus translations.body/richBody dan details.features; metadata/workflow/routes tetap. Known example translation hanya UUID+English-array exact match dan belum ada localized config. Arbitrary features literal, configured lists preserved. Seeder baru bilingual/summary-only; repeat tidak overwrite.
+
+Pemulihan: `npm run db:migrate:product-summary -- --restore <absolute-backup-json> --database lunabiner` memakai path backup nyata di `.local-backups/product-summary/`. File/root harus private; target/kind/version/current after JSON diverifikasi. Stale edit/archive/restore menahan seluruh restore; version bertambah, workflow tidak di-rewind. Backup bukan script untuk overwrite perubahan admin. Restore hanya diuji pada disposable.
+
+Lokal 2026-10-05: dua produk dimigrasikan version1→2; backup `.local-backups/product-summary/eb53b1ab-b8fb-4db8-b342-c5c378e9f57a.json` retained. Repeat preview0changes, seed0created/2preserved. Task 3c tidak reset DB atau menjalankan restore utama. Regression `tests/products-content-migration.test.mjs` guarded disposable55441 menguji rollback/conflicts/concurrency/backup/restore dan unrelated records; browser QA3010 memverifikasi legacy keys tidak muncul kembali setelah save. Public payload cache product baru belum aktif (Task6); reload setelah CLI, version/updatedAt sudah berubah untuk future cache guards.
+
 Task 3b refinement: install/build/restart application seperti biasa, tanpa SQL migration baru. Admin produk kini Ringkasan-only dan daftar fitur ID/EN; produk baru tidak menyimpan body/richBody, record existing masih menyimpan legacy narrative aman sampai backup/migration Task 3c. Public card membaca localized features lebih dahulu (termasuk empty array), lalu fallback single-array legacy. Jangan menghapus JSON legacy manual atau reseed untuk menerjemahkan existing; seed idempotent tidak overwrite. Summary minimum publication 10/maksimum150, fitur12x100/bahasa. Deploy editor/action/service/optional CMS reader bersama, bukan sebagian. Loader test/browser tetap hanya memakai database disposable.
 
 Foundation dan menu admin `/dashboard/products` tersedia (Task 1–3); upload/public detail/cache masih Task 4–6. Task 2 menguji migration/seed pada PostgreSQL disposable; Task 3 menerapkannya ke database lokal lunabiner setelah backup. Gunakan editor produk khusus, bukan generic plain editor untuk menimpa produk rich.

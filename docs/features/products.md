@@ -8,9 +8,19 @@ Pengguna menyetujui menghapus field Detail ID/EN karena redundant. Target form m
 
 Task 3a menyediakan pure `summary-content.ts`: strict content contract tanpa body/richBody, publication validation hanya Ringkasan, literal legacy feature fallback (bukan otomatis menerjemahkan teks arbitrary), dan migration preflight. Existing localized empty lists tetap kosong, tidak muncul kembali dari fallback. Read compatibility menerima panjang legacy existing dan tidak memotong. Preflight menahan body yang berbeda dari Ringkasan, formatting rich yang bukan plain paragraphs, serta konten melewati batas baru. Tidak menulis DB dan tidak menghapus data. Backup/conflict review wajib sebelum apply pada Task 3c.
 
-Task 3a tidak mengubah runtime. **Task 3b kini memakai form/save Ringkasan-only dan fitur bilingual**, sementara seeder/migrasi masih pending 3c. Penjelasan textarea/detail/rich pada bagian Task 3 di bawah adalah snapshot sebelum refinement, bukan UI sekarang. Tidak ada SQL migration/RBAC/route baru.
+Task 3a tidak mengubah runtime. **Task 3b memakai form/save Ringkasan-only dan fitur bilingual; Task 3c sudah menyelesaikan seeder/migrasi lokal**. Penjelasan textarea/detail/rich pada bagian Task 3 di bawah adalah snapshot sebelum refinement, bukan UI sekarang. Tidak ada SQL migration/RBAC/route baru.
 
-Execution refinement: 3a kontrak/adapter/tests COMPLETED → 3b UI/save/public existing integration COMPLETED → 3c backup/migration/seed/browser QA NOT STARTED → Task 4–7 existing. [Task 3a report](../reports/2026/10/05/products_task3a_summary-contract.md).
+Execution refinement: 3a kontrak/adapter/tests COMPLETED → 3b UI/save/public existing integration COMPLETED → 3c backup/migration/seed/browser QA COMPLETED → Task 4–7 NOT STARTED. [Task 3a report](../reports/2026/10/05/products_task3a_summary-contract.md).
+
+## Runtime/data refinement — Task 3c
+
+Seeder baru summary-only, fitur bilingual melalui `examples.ts` dengan fixed UUID, PUBLISHED+COMING_SOON; existing UUID/route tetap preserved. Service summary tidak menciptakan kembali features/body/richBody setelah cleanup. Legacy yang dipulihkan tetap kompatibel hingga explicit migrasi berikutnya.
+
+`content-migration.ts`/CLI operator menyediakan preview/apply/restore lokal: PRODUCT saja, Serializable + advisory lock + version/audit, max10.000 rows, private backup10MB limit. Canonical JSON comparison mengabaikan urutan key; richDocumentSchema normalizes default representation sebelum membandingkan plain rich. Distinct text, heading/marks/links dan invalid/oversized content tetap konflik, bukan force-delete. Backup schema memverifikasi after sebagai hasil converter deterministic; restore menolak target/version/JSON mismatch dan menambah version, bukan rewind status/version.
+
+Apply lokal 2026-10-05: dua produk contoh version1→2, translations body/richBody dan details.features redundant dihapus; productFeatures ID/EN tersimpan. Translations summary/SEO, details lain, UUID/status/readiness/CTA/cover/routes tetap. Terjemahan known hanya jika UUID contoh + array legacy English exact-match + belum ada productFeatures; configured list (termasuk kosong) dan arbitrary legacy tidak ditimpa. Backup ignored `.local-backups/product-summary/eb53b1ab-b8fb-4db8-b342-c5c378e9f57a.json` tetap disimpan (0700/0600/fsync/read-back validated); restore diuji hanya disposable, bukan main. Repeat preview0changes/0conflicts, seed0created/2preserved. Non-PRODUCT unchanged.
+
+80/80 regresi, build/typecheck/lint dan production browser QA PASS; lokal public ID/EN 200 dengan localized features. [Task 3c report](../reports/2026/10/05/products_task3c_data-migration.md). Lihat [installation](../deployment/installation.md) untuk deployment lain. Tidak ada SQL migration, auto GET/build writes, upload/detail/cache task baru.
 
 ## Runtime refinement — Task 3b
 

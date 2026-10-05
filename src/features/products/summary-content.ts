@@ -1,10 +1,15 @@
 import { z } from "zod";
 import { translationSchema } from "../cms/schema";
-import { plainTextToRichDocument } from "../cms/rich-text";
+import { plainTextToRichDocument, richDocumentSchema } from "../cms/rich-text";
 import { PRODUCT_TEXT_MAX } from "./schema";
 
 export const PRODUCT_FEATURE_MAX = 100;
 export const PRODUCT_FEATURE_COUNT_MAX = 12;
+export function productJsonFingerprint(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(productJsonFingerprint).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => `${JSON.stringify(key)}:${productJsonFingerprint(item)}`).join(",")}}`;
+  return JSON.stringify(value);
+}
 const featureList = z.array(z.string().trim().min(1).max(PRODUCT_FEATURE_MAX)).max(PRODUCT_FEATURE_COUNT_MAX);
 export const productFeaturesSchema = z.object({ id: featureList, en: featureList }).strict();
 const summaryTranslation = z.object({
@@ -60,7 +65,7 @@ export function previewProductSummaryConversion(raw: unknown) {
     const summary = content.translations[locale].excerpt;
     if (previous.body && previous.body !== summary) conflicts.push(`${locale}.distinctBody`);
     // Even matching text may carry meaningful formatting; require explicit review.
-    if (previous.richBody && JSON.stringify(previous.richBody) !== JSON.stringify(plainTextToRichDocument(previous.body)))
+    if (previous.richBody && productJsonFingerprint(previous.richBody) !== productJsonFingerprint(richDocumentSchema.parse(plainTextToRichDocument(previous.body))))
       conflicts.push(`${locale}.richFormatting`);
   }
   const parsed = productSummaryContentSchema.safeParse(content);

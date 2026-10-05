@@ -56,6 +56,8 @@ test("conversion preflight accepts duplicates, refuses distinct text/formatting 
   const row = legacy(), before = structuredClone(row), preview = previewProductSummaryConversion(row);
   assert.equal(preview.ready, true); assert.deepEqual(row, before);
   assert.equal(Object.hasOwn(preview.content.translations.id, "body"), false);
+  const reordered = legacy(); reordered.translations.en.richBody = { content: [{ content: [{ text: translation.excerpt, type: "text" }], type: "paragraph" }], type: "doc" };
+  assert.equal(previewProductSummaryConversion(reordered).ready, true);
   const missing = legacy(); missing.translations.id.excerpt = "";
   assert.equal(previewProductSummaryConversion(missing).content.translations.id.excerpt, translation.excerpt);
   row.translations.id.body = "Distinct information that should be reviewed before deletion.";

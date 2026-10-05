@@ -4,6 +4,8 @@
 
 ### Product summary refinement — Task 3b
 
+Task 3c lokal selesai: dua PRODUCT (fixed example UUID) version1→2, body/richBody ID/EN dan single-array details.features dihapus setelah backup privat. details.productFeatures bilingual ditambahkan; metadata/CTA/cover/workflow/routes/non-PRODUCT unchanged. Dua AuditEvent `product.content.migrate` (actorId null, module cms, recordId UUID, version/batchId only tanpa body/credential). Restore CLI menggunakan `product.content.restore`, JSON before + version increment, menolak stale/mismatched target/content; tidak mengubah workflow/routes. Tidak ada SQL migration/tabel/kolom/index/constraint baru. Service/seed summary tidak menciptakan ulang keys redundant; legacy restored data tetap readable. Backup retained dan instruksi di installation.
+
 Tidak ada SQL migration/tabel/kolom/index/constraint baru. `ContentEntry.details.productFeatures` optional JSON `{id: string[], en: string[]}` untuk fitur localized; input baru maksimal 12x100 per bahasa, storage reader kompatibel legacy 30x200. Explicit [] tidak fallback ke `details.features`. Save summary baru menyimpan translations title/excerpt/SEO saja tanpa body/richBody; publication minimum excerpt 10, maksimum 150. Save existing mempertahankan raw legacy body/richBody dan details.features sampai migration backed-up Task 3c. Cover, UUID, routes, readiness, CTA, audit/version transaction unchanged. Tidak menjalankan migrasi/seed/bulk writes database utama pada Task 3b.
 
 Migration `20261005010000_product_foundation` additive, transaction BEGIN/COMMIT. `ContentEntry` tetap UUID dengan JSON translations/details, version/deletedAt dan existing unique/index; hanya relation Prisma productRoutes ditambah, bukan tabel Product paralel atau enum baru.

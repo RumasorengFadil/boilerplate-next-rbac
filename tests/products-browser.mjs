@@ -3,6 +3,8 @@ import { mkdtemp } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
+// The guarded migration tests exercise real apply/restore; browser covers editing
+// already-cleaned summary storage and preventing legacy key resurrection.
 
 const target = new URL(process.env.DATABASE_URL ?? "postgresql://invalid");
 assert.equal(target.hostname, "127.0.0.1"); assert.equal(target.port, "55441");
@@ -56,6 +58,7 @@ try {
   await admin.waitForURL(`**/dashboard/products/${row.id}`); await admin.reload();
   assert.equal(row.status, "PUBLISHED"); assert.equal(row.details.productStatus, "COMING_SOON");
   assert.equal(row.translations.id.body, undefined); assert.equal(row.translations.id.richBody, undefined);
+  assert.equal(row.details.features, undefined);
   assert.deepEqual(row.details.productFeatures, { id: ["Chat privat"], en: ["Private chat"] });
   const publicPage = await admin.context().newPage();
   await publicPage.goto(origin + "/id/products"); await publicPage.getByText("Chat privat", { exact: true }).waitFor();
@@ -75,6 +78,7 @@ try {
   await admin.getByRole("button", { name: "Simpan produk", exact: true }).click();
   await poll(async () => (await db.contentEntry.findUniqueOrThrow({ where: { id: row.id } })).status === "SCHEDULED"); await admin.reload();
   row = await db.contentEntry.findUniqueOrThrow({ where: { id: row.id } }); assert.equal(row.publishedAt.toISOString(), "2030-01-01T09:30:00.000Z"); assert.equal(row.details.productStatus, "LIVE"); assert.equal(row.details.productCta.url, "https://demo.example.test");
+  assert.equal(row.details.features, undefined); assert.equal(row.translations.id.body, undefined); assert.equal(row.translations.id.richBody, undefined);
   await admin.screenshot({ path: directory + "/desktop-editor.png", fullPage: true });
   const editor = await pageFor("CONTENT_EDITOR", 390); await editor.goto(`${origin}/dashboard/products/${row.id}`);
   assert.equal(await editor.getByRole("button", { name: "Simpan produk", exact: true }).isDisabled(), true); assert.equal(await editor.getByRole("button", { name: "Arsipkan", exact: true }).count(), 0);
