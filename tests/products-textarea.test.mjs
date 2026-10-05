@@ -37,5 +37,8 @@ test("plain form boundary ignores client cover/features/kind/rich data and conve
   assert.equal(parsed.kind, "PRODUCT"); assert.equal(parsed.publishedAt, "2030-01-01T09:30:00.000Z");
   assert.equal(parsed.translations.id.richBody, undefined); assert.equal(parsed.details.image, undefined); assert.equal(parsed.details.features, undefined);
   assert.deepEqual(parsed.details.productCta, { type: "internal", path: "/consultation" });
-  form.set("id.body", new Blob(["file content"])); assert.throws(() => parseProductForm(form), /text field/);
+  assert.equal(parsed.translations.id.body, undefined);
+  form.append("id.feature", "Chat privat"); form.append("en.feature", "Private chat");
+  assert.deepEqual(parseProductForm(form).details.productFeatures, { id: ["Chat privat"], en: ["Private chat"] });
+  form.set("id.feature", new Blob(["file content"])); assert.throws(() => parseProductForm(form), /text field/);
 });

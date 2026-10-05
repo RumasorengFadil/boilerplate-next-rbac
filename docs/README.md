@@ -52,6 +52,7 @@
 | [Products editor plan update](reports/2026/10/05/products_plan_textarea.md) | Revisi Task 3 menjadi textarea ID/EN, menjaga compatibility rich existing dan scope public detail/SEO. |
 | [Products Task 3 — Admin](reports/2026/10/05/products_task3_admin.md) | CRUD bilingual bounded textarea, readiness/CTA/arsip, server guards, browser QA dan activation database lokal. |
 | [Products Task 3a — Summary contract](reports/2026/10/05/products_task3a_summary-contract.md) | Kontrak Ringkasan-only, fitur ID/EN dan nonmutating legacy/migration preflight; integrasi UI menunggu Task 3b. |
+| [Products Task 3b — Summary editor](reports/2026/10/05/products_task3b_summary-editor.md) | UI Ringkasan-only, tambah/hapus fitur ID/EN, transactional save dan localized public card; migrasi legacy tetap 3c. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |
 
 Dokumen di `docs/products/PRD/` menyimpan kebutuhan produk sesuai sumber asli, bukan pernyataan bahwa seluruh fiturnya telah diimplementasikan. Status implementasi dicatat terpisah pada laporan yang relevan.

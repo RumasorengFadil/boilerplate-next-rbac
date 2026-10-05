@@ -4,11 +4,15 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { saveProductAction, type ProductState } from "./actions";
 import { PRODUCT_TEXT_MAX, productStatuses, productReadiness, type ProductInput } from "./schema";
+import { PRODUCT_FEATURE_MAX, PRODUCT_FEATURE_COUNT_MAX } from "./summary-content";
 
 export function ProductEditor({ initial, canPublish, readOnly = false }: { initial?: ProductInput; canPublish: boolean; readOnly?: boolean }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(saveProductAction, { message: "" } as ProductState);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [features, setFeatures] = useState(() => Object.fromEntries((["id", "en"] as const).map(locale => [locale,
+    (initial?.details.productFeatures?.[locale] ?? initial?.details.features ?? []).map((text, index) => ({ key: `${locale}-existing-${index}`, text })),
+  ])) as Record<"id" | "en", { key: string; text: string }[]>);
   const value = (name: string, fallback = "") => values[name] ?? fallback;
   const update = (name: string, content: string) => setValues(previous => ({ ...previous, [name]: content }));
   useEffect(() => { if (state.success && state.id) { router.replace(`/dashboard/products/${state.id}`); router.refresh(); } }, [state, router]);
@@ -44,11 +48,23 @@ export function ProductEditor({ initial, canPublish, readOnly = false }: { initi
       <section className="grid min-w-0 gap-5 lg:grid-cols-2">{(["id", "en"] as const).map(locale => <fieldset key={locale} className="card min-w-0 space-y-4"><legend className="font-semibold">{locale === "id" ? "Bahasa Indonesia" : "English"}</legend>
         {field(`${locale}.title`, `Nama produk (${locale.toUpperCase()})`, initial?.translations[locale].title, 180, false, true)}
         {field(`${locale}.excerpt`, `Ringkasan (${locale.toUpperCase()})`, initial?.translations[locale].excerpt, PRODUCT_TEXT_MAX, true)}
-        {field(`${locale}.body`, `Detail produk (${locale.toUpperCase()})`, initial?.translations[locale].body, PRODUCT_TEXT_MAX, true)}
-        <p className="text-xs text-slate-500">Teks biasa, tanpa HTML/Markdown. Publikasi: ringkasan minimal 10 dan detail minimal 30 karakter per bahasa.</p>
+        <p className="text-xs text-slate-500">Ringkasan menjadi deskripsi produk. Teks biasa tanpa HTML/Markdown; minimal 10 karakter untuk publikasi.</p>
+        <div className="space-y-3"><h2 className="font-semibold">Fitur produk ({locale.toUpperCase()})</h2>
+          <p className="text-xs text-slate-500">{features[locale].length}/{PRODUCT_FEATURE_COUNT_MAX} poin · maksimal {PRODUCT_FEATURE_MAX} karakter per poin.</p>
+          {features[locale].map((item, index) => <div key={item.key} className="space-y-2">
+            <label className="grid gap-2 text-sm">Fitur {locale.toUpperCase()} {index + 1}<input className="input min-w-0" name={`${locale}.feature`} value={item.text} maxLength={PRODUCT_FEATURE_MAX} aria-invalid={Boolean(state.fieldErrors?.[`${locale}.features.${index}`])} aria-describedby={state.fieldErrors?.[`${locale}.features.${index}`] ? `${locale}.features.${index}-error` : undefined} onChange={event => setFeatures(previous => ({ ...previous, [locale]: previous[locale].map(feature => feature.key === item.key ? { ...feature, text: event.target.value } : feature) }))} />
+              <span className="text-xs text-slate-500">{item.text.length}/{PRODUCT_FEATURE_MAX} karakter</span>
+            </label>
+            {error(`${locale}.features.${index}`)}
+            <button type="button" className="min-h-11 rounded-md border px-3 text-sm" aria-label={`Hapus fitur ${locale.toUpperCase()} ${index + 1}`} onClick={() => setFeatures(previous => ({ ...previous, [locale]: previous[locale].filter(feature => feature.key !== item.key) }))}>Hapus poin</button>
+          </div>)}
+          {error(`${locale}.features`)}
+          <button type="button" className="min-h-11 rounded-md border px-3 text-sm disabled:opacity-50" disabled={features[locale].length >= PRODUCT_FEATURE_COUNT_MAX} onClick={() => setFeatures(previous => ({ ...previous, [locale]: [...previous[locale], { key: crypto.randomUUID(), text: "" }] }))}>Tambah fitur {locale.toUpperCase()}</button>
+        </div>
         {field(`${locale}.seoTitle`, `Judul SEO (${locale.toUpperCase()})`, initial?.translations[locale].seoTitle, 70)}
         {field(`${locale}.seoDescription`, `Deskripsi SEO (${locale.toUpperCase()})`, initial?.translations[locale].seoDescription, 180)}
       </fieldset>)}</section>
+      {(initial?.translations.id.body || initial?.translations.en.body) && <p className="text-xs text-slate-500">Detail lama tetap disimpan untuk keamanan data hingga migrasi Task 3c. Deskripsi yang ditampilkan memakai Ringkasan.</p>}
       <section className="card min-w-0 space-y-4"><h2 className="font-semibold">CTA produk</h2>
         <label className="grid gap-2 text-sm">Tujuan CTA<select className="input" name="ctaType" value={ctaType} onChange={event => update("ctaType", event.target.value)} aria-invalid={Boolean(state.fieldErrors?.productCta)} aria-describedby={state.fieldErrors?.productCta ? "productCta-error" : undefined}><option value="internal">{internalPath === "/consultation" ? "Konsultasi internal" : `Halaman internal existing (${internalPath})`}</option><option value="external">Aplikasi / demo eksternal (HTTPS)</option></select></label>
         <input type="hidden" name="ctaInternalPath" value={internalPath} />

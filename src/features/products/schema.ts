@@ -46,6 +46,13 @@ export function productValidationErrors(issues: z.ZodError["issues"], textarea =
       field = `${locale}.${name}`;
       label = `${({ title: "Judul", excerpt: "Ringkasan", body: "Konten detail", richBody: "Konten detail", seoTitle: "Judul SEO", seoDescription: "Deskripsi SEO" } as Record<string, string>)[name] ?? "Konten"} ${locale === "id" ? "Bahasa Indonesia" : "Bahasa Inggris"}`;
     } else if (root === "details") {
+      if (locale === "productFeatures") {
+        const language = property === "en" ? "en" : "id";
+        const index = issue.path[3];
+        field = `${language}.features${typeof index === "number" ? `.${index}` : ""}`;
+        errors[field] = `Fitur ${language === "id" ? "Bahasa Indonesia" : "Bahasa Inggris"}${typeof index === "number" ? ` nomor ${index + 1}` : ""}: maksimal 12 poin, masing-masing 1–100 karakter.`;
+        continue;
+      }
       field = String(locale ?? "form");
       label = ({ productStatus: "Kesiapan produk", productCta: "Tujuan CTA", ctaLabel: "Label CTA", image: "Cover", category: "Kategori", tags: "Tags" } as Record<string, string>)[field] ?? "Metadata produk";
     } else label = ({ slug: "Slug", status: "Status publikasi", publishedAt: "Jadwal publikasi" } as Record<string, string>)[field] ?? label;
@@ -54,6 +61,7 @@ export function productValidationErrors(issues: z.ZodError["issues"], textarea =
       ? `${label} maksimal ${issue.params.editorMaximum} karakter. Pendekkan teks sebelum menyimpan.`
       : issue.code === "custom" && issue.params?.publicationMinimum
       ? `${label} minimal ${issue.params.publicationMinimum} karakter${property === "body" ? " teks" : ""} untuk publikasi.`
+      : issue.code === "too_big" && property === "excerpt" ? `${label} maksimal 150 karakter. Pendekkan teks sebelum menyimpan.`
       : field === "slug" ? "Gunakan slug deskriptif dengan huruf kecil, angka dan tanda hubung; bukan nomor atau UUID."
       : field === "status" ? "Pilih DRAFT, PUBLISHED atau SCHEDULED. Gunakan tombol Arsipkan untuk mengarsipkan produk."
       : field === "productCta" ? "Pilih konsultasi internal atau masukkan URL HTTPS yang valid tanpa kredensial."

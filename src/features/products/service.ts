@@ -8,6 +8,7 @@ import { productInputSchema, productEditorInputSchema, productLifecycleSchema, p
 import { normalizeProductContent } from "./legacy-content";
 import { detailsSchema } from "../cms/schema";
 import { plainTextToRichDocument } from "../cms/rich-text";
+import { productSummaryInputSchema } from "./summary-input";
 
 export class ProductMutationError extends Error {
   constructor(public readonly code: "NOT_FOUND" | "ARCHIVED" | "KIND" | "RICH_CONTENT" | "PERMISSION" | "SCHEDULE" | "VERSION" | "LIFECYCLE", message: string) { super(message); }
@@ -17,10 +18,10 @@ export function presentProduct(entry: Awaited<ReturnType<typeof db.contentEntry.
   return { ...entry, ...normalizeProductContent(entry) };
 }
 
-export async function saveProduct(raw: unknown, options: { textarea?: boolean } = {}) {
+export async function saveProduct(raw: unknown, options: { textarea?: boolean; summary?: boolean } = {}) {
   const user = await requirePermission("content:write");
   // Trusted server-only mode, never accepted from client fields.
-  const input = (options.textarea ? productEditorInputSchema : productInputSchema).parse(raw);
+  const input = (options.summary ? productSummaryInputSchema : options.textarea ? productEditorInputSchema : productInputSchema).parse(raw);
   return db.$transaction(async tx => {
     const previous = input.id ? await tx.contentEntry.findUnique({ where: { id: input.id } }) : null;
     if (input.id && !previous) throw new ProductMutationError("NOT_FOUND", "Produk tidak ditemukan.");
@@ -30,7 +31,9 @@ export async function saveProduct(raw: unknown, options: { textarea?: boolean } 
       throw new ProductMutationError("PERMISSION", "Akun Anda tidak memiliki izin publikasi produk.");
     const stored = previous ? normalizeProductContent(previous) : undefined;
     validateProductTextLengths(input, stored?.translations);
-    if (previous && !options.textarea) {
+    if (previous && !options.textarea && !options.summary) {
+      if ((previous.details as Record<string, unknown>).productFeatures)
+        throw new ProductMutationError("RICH_CONTENT", "Gunakan editor produk agar fitur bilingual tidak hilang.");
       const stored = previous.translations as { id: { richBody?: unknown }; en: { richBody?: unknown } };
       for (const locale of ["id", "en"] as const) if (stored[locale].richBody && !input.translations[locale].richBody)
         throw new ProductMutationError("RICH_CONTENT", "Gunakan editor produk agar konten detail tidak hilang.");
@@ -43,12 +46,23 @@ export async function saveProduct(raw: unknown, options: { textarea?: boolean } 
       ...input.translations[locale], richBody: stored?.translations[locale].body === input.translations[locale].body
         ? stored.translations[locale].richBody : plainTextToRichDocument(input.translations[locale].body),
     }])) : input.translations;
-    const details = options.textarea ? { ...detailsSchema.parse(previous?.details ?? {}),
+    const details = options.textarea || options.summary ? { ...detailsSchema.parse(previous?.details ?? {}),
       category: input.details.category, tags: input.details.tags, authorName: input.details.authorName,
       productStatus: input.details.productStatus, ctaLabel: input.details.ctaLabel, productCta: cta,
+      ...(options.summary ? { productFeatures: input.details.productFeatures } : {}),
     } : { ...input.details, productCta: cta };
     // Cover/features/legacy metadata come from the database, not hidden client fields.
     const normalized = normalizeProductContent({ translations, details });
+    if (options.summary) {
+      // Keep existing legacy narrative until backed-up migration; new rows have no duplicate body.
+      const old = previous?.translations as Record<"id" | "en", Record<string, unknown>> | undefined;
+      normalized.translations = Object.fromEntries((["id", "en"] as const).map(locale => {
+        const { body: _body, richBody: _richBody, ...summary } = input.translations[locale];
+        void _body; void _richBody;
+        return [locale, { ...summary, ...(old && Object.hasOwn(old[locale], "body") ? { body: old[locale].body } : {}),
+          ...(old && Object.hasOwn(old[locale], "richBody") ? { richBody: old[locale].richBody } : {}) }];
+      })) as typeof normalized.translations;
+    }
     const publishedAt = input.status === "PUBLISHED"
       ? previous?.status === "PUBLISHED" ? previous.publishedAt ?? new Date() : new Date()
       : input.status === "SCHEDULED" ? new Date(input.publishedAt!) : null;

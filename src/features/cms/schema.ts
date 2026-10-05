@@ -30,6 +30,7 @@ export const detailsSchema = z.object({
   relatedCaseStudies: z.array(z.uuid()).max(6).default([]),
   productStatus: z.enum(["COMING_SOON", "BETA", "LIVE"]).default("COMING_SOON"),
   productCta: productCtaSchema.optional(),
+  productFeatures: z.object({ id: lines, en: lines }).strict().optional(),
   ctaLabel: localized.default({ id: "", en: "" }), ctaPath: z.string().max(200).regex(/^\/(?:id|en)\/[a-z0-9/-]*$/).default("/id/contact"),
 }).strict();
 export const contentInputSchema = z.object({
@@ -46,6 +47,8 @@ export const contentInputSchema = z.object({
     context.addIssue({ code: "custom", path: ["translations"], message: "Rich body is limited to case studies and products." });
   if (input.kind !== "PRODUCT" && input.details.productCta)
     context.addIssue({ code: "custom", path: ["details", "productCta"], message: "Product CTA requires PRODUCT." });
+  if (input.kind !== "PRODUCT" && input.details.productFeatures)
+    context.addIssue({ code: "custom", path: ["details", "productFeatures"], message: "Product features require PRODUCT." });
   if (input.status === "PUBLISHED" || input.status === "SCHEDULED") {
     for (const locale of ["id", "en"] as const) {
       if (input.translations[locale].body.length < 30)

@@ -3,7 +3,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requirePermission } from "@/server/authorization";
 import { parseProductForm } from "./form";
-import { productEditorInputSchema, productLifecycleSchema, productValidationErrors } from "./schema";
+import { productLifecycleSchema, productValidationErrors } from "./schema";
+import { productSummaryInputSchema } from "./summary-input";
 import { saveProduct, changeProductLifecycle, ProductMutationError } from "./service";
 
 export type ProductState = { message: string; success?: boolean; id?: string; version?: number; fieldErrors?: Record<string, string> };
@@ -30,10 +31,10 @@ export async function saveProductAction(_: ProductState, form: FormData): Promis
   await requirePermission("content:write");
   let raw: unknown;
   try { raw = parseProductForm(form); } catch { return { message: "Form harus berisi teks. Periksa kedua bahasa sebelum menyimpan." }; }
-  const parsed = productEditorInputSchema.safeParse(raw);
+  const parsed = productSummaryInputSchema.safeParse(raw);
   if (!parsed.success) return feedback(parsed.error);
   let saved: Awaited<ReturnType<typeof saveProduct>>;
-  try { saved = await saveProduct(parsed.data, { textarea: true }); } catch (error) { return feedback(error); }
+  try { saved = await saveProduct(raw, { summary: true }); } catch (error) { return feedback(error); }
   // Mutation is committed; revalidation failure must not prompt a duplicate create.
   try { invalidateProduct(saved.id); } catch {
     return { success: true, id: saved.id, version: saved.version, message: "Produk tersimpan. Muat ulang halaman untuk memperbarui tampilan." };

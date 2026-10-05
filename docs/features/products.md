@@ -8,9 +8,18 @@ Pengguna menyetujui menghapus field Detail ID/EN karena redundant. Target form m
 
 Task 3a menyediakan pure `summary-content.ts`: strict content contract tanpa body/richBody, publication validation hanya Ringkasan, literal legacy feature fallback (bukan otomatis menerjemahkan teks arbitrary), dan migration preflight. Existing localized empty lists tetap kosong, tidak muncul kembali dari fallback. Read compatibility menerima panjang legacy existing dan tidak memotong. Preflight menahan body yang berbeda dari Ringkasan, formatting rich yang bukan plain paragraphs, serta konten melewati batas baru. Tidak menulis DB dan tidak menghapus data. Backup/conflict review wajib sebelum apply pada Task 3c.
 
-**Runtime form/save/public dan seeder masih Task 3 existing**, belum memakai kontrak baru. Penjelasan textarea/detail/rich di bawah adalah implementasi runtime saat ini, bukan target akhir refinement. Tidak ada perubahan SQL/JSON database/RBAC/route pada Task 3a.
+Task 3a tidak mengubah runtime. **Task 3b kini memakai form/save Ringkasan-only dan fitur bilingual**, sementara seeder/migrasi masih pending 3c. Penjelasan textarea/detail/rich pada bagian Task 3 di bawah adalah snapshot sebelum refinement, bukan UI sekarang. Tidak ada SQL migration/RBAC/route baru.
 
-Execution refinement: 3a kontrak/adapter/tests COMPLETED → 3b UI/save/public existing integration NOT STARTED → 3c backup/migration/seed/browser QA NOT STARTED → Task 4–7 existing. [Task 3a report](../reports/2026/10/05/products_task3a_summary-contract.md).
+Execution refinement: 3a kontrak/adapter/tests COMPLETED → 3b UI/save/public existing integration COMPLETED → 3c backup/migration/seed/browser QA NOT STARTED → Task 4–7 existing. [Task 3a report](../reports/2026/10/05/products_task3a_summary-contract.md).
+
+## Runtime refinement — Task 3b
+
+- Field Detail ID/EN dihapus; hanya Ringkasan (150, publication minimum 10) dan SEO overrides. Fitur per bahasa memiliki tambah/hapus, counter, limit 12x100, label/error accessible dan state tetap saat save gagal. Client keys poin baru UUID; record tetap UUID existing. Tidak memakai Tiptap.
+- `summary-input.ts` memvalidasi boundary baru tanpa body minimum; action menerima title/excerpt/SEO, repeated `id.feature`/`en.feature`, metadata/readiness/CTA/status/UTC. File dalam field teks ditolak. Client image/features legacy/kind/body/richBody diabaikan; direct contract menolak body/richBody.
+- Trusted summary mode memakai RBAC/transaction/version/audit existing. Produk baru tidak menyimpan body/richBody. Produk existing menjaga legacy body/richBody persis dan cover/metadata; localized features authoritative, termasuk [] ketika admin menghapus semuanya. Legacy single-array features masih retained hingga backup migration 3c, tetapi tidak mengalahkan configured localized array.
+- Generic legacy writes diblokir pada record yang sudah memiliki productFeatures agar tidak menghapus konfigurasi bilingual. Shared CMS hanya menambah optional storage reader `productFeatures`; non-PRODUCT input tidak boleh memakai field tersebut. Aturan publication artikel/portfolio unchanged.
+- Public card existing memilih fitur berdasarkan locale, lalu fallback legacy bila localized configuration belum ada. Ringkasan tetap deskripsi. Layout publik tidak berubah; detail/SEO baru, DB-only fallback removal dan cache masih Task 5–6.
+- Tidak menjalankan bulk update/seed/migration database utama. Terjemahan seed known, penghapusan legacy redundant JSON dan backup/conflict review menunggu 3c. Existing legacy summary/features yang melampaui batas ditampilkan utuh; save baru meminta disesuaikan, tidak truncate otomatis.
 
 ## Pembaruan requirement setelah Task 2 — textarea produk
 

@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { productFeaturesSchema, productSummaryContentSchema, validateProductSummaryPublication, readProductSummaryContent, previewProductSummaryConversion } from "../src/features/products/summary-content.ts";
 import { plainTextToRichDocument } from "../src/features/cms/rich-text.ts";
+import { productSummaryInputSchema } from "../src/features/products/summary-input.ts";
+import { contentInputSchema } from "../src/features/cms/schema.ts";
 
 const translation = { title: "Enterprise Chat", excerpt: "Private communications for your organization." };
 const content = () => ({ translations: { id: { ...translation }, en: { ...translation } }, productFeatures: { id: ["Chat privat perusahaan"], en: ["Private company chat"] } });
@@ -27,6 +29,15 @@ test("features are bilingual, independently removable and bounded at 12 points o
   assert.equal(productFeaturesSchema.safeParse({ id: Array(12).fill("a".repeat(100)), en: [] }).success, true);
   for (const bad of [{ id: ["a".repeat(101)], en: [] }, { id: Array(13).fill("Feature"), en: [] }, { id: [" "], en: [] }, { id: [], en: [], other: [] }, ["Private company chat"]])
     assert.equal(productFeaturesSchema.safeParse(bad).success, false);
+});
+
+test("product summary input publishes without body, enforces schedule and isolates features from articles", () => {
+  const raw = { kind: "PRODUCT", slug: "summary-example", status: "PUBLISHED", translations: content().translations, details: { productFeatures: content().productFeatures } };
+  assert.equal(productSummaryInputSchema.safeParse(raw).success, true);
+  assert.equal(productSummaryInputSchema.safeParse({ ...raw, status: "SCHEDULED" }).success, false);
+  const injected = structuredClone(raw); injected.translations.id.body = "Injected detail";
+  assert.equal(productSummaryInputSchema.safeParse(injected).success, false);
+  assert.equal(contentInputSchema.safeParse({ ...raw, kind: "ARTICLE", status: "DRAFT" }).success, false);
 });
 
 test("legacy read is nonmutating, retains literal features and honors explicit empty localized lists", () => {

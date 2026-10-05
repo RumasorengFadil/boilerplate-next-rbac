@@ -24,6 +24,8 @@ Urutan aman: cek migration pada target database aplikasi memakai loader environm
 
 ## Upgrade product foundation — PRD 002 Task 2
 
+Task 3b refinement: install/build/restart application seperti biasa, tanpa SQL migration baru. Admin produk kini Ringkasan-only dan daftar fitur ID/EN; produk baru tidak menyimpan body/richBody, record existing masih menyimpan legacy narrative aman sampai backup/migration Task 3c. Public card membaca localized features lebih dahulu (termasuk empty array), lalu fallback single-array legacy. Jangan menghapus JSON legacy manual atau reseed untuk menerjemahkan existing; seed idempotent tidak overwrite. Summary minimum publication 10/maksimum150, fitur12x100/bahasa. Deploy editor/action/service/optional CMS reader bersama, bukan sebagian. Loader test/browser tetap hanya memakai database disposable.
+
 Foundation dan menu admin `/dashboard/products` tersedia (Task 1–3); upload/public detail/cache masih Task 4–6. Task 2 menguji migration/seed pada PostgreSQL disposable; Task 3 menerapkannya ke database lokal lunabiner setelah backup. Gunakan editor produk khusus, bukan generic plain editor untuk menimpa produk rich.
 
 Activation lokal 2026-10-05: migration `20261005010000_product_foundation`, dua seed PRODUCT dan empat route reservations; non-PRODUCT unchanged. Backup custom PostgreSQL sebelum activation disimpan privat pada `.local-backups/products-task3-ZvGScv/before.dump` (0700 directory/0600 file, archive list verified, restore utama tidak dijalankan). Retain backup; jangan commit/upload atau menghapusnya otomatis. Deployment lain tetap mengikuti langkah upgrade di bawah.
