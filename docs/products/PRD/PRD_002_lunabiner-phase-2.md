@@ -1,3 +1,38 @@
+# PRD 002 — LunaBiner Phase 2
+
+Status: IN PROGRESS
+Pembaruan aktif: 2026-10-05 — Product CRUD/landing management.
+
+## Scope aktif yang dikonfirmasi — Product CRUD
+
+Briefing dikonfirmasi pengguna melalui “oke gas saya setujui”. Gunakan PRD aktif ini karena Product Management dan Product Landing Pages sudah tercakup; tidak membuat PRD duplikat. Requirement berikut memperinci/menggantikan workflow produk pada sumber awal di bawah, bukan mengaktifkan seluruh Phase 2.
+
+- Menu Produk khusus admin; create/list/edit, arsip soft delete dan pulihkan sebagai DRAFT. Record UUID, public detail memakai slug deskriptif. Ikuti pola portfolio tanpa mengubah fitur portfolio/artikel.
+- Publikasi produk hanya DRAFT/PUBLISHED/SCHEDULED, langsung berdasarkan pilihan admin tanpa REVIEW wajib. ARCHIVED bukan opsi editor; arsip terpisah. PUBLISHED langsung eligible, SCHEDULED eligible saat tanggal UTC due. DRAFT, future schedule dan arsip tidak masuk public/detail/SEO/OG/sitemap/media anonymous.
+- Kesiapan terpisah dari publikasi: COMING_SOON/BETA/LIVE, tampil sebagai Segera hadir/Beta/Tersedia dengan label ID/EN. Kesiapan tidak mempublish produk otomatis dan tidak memaksa URL demo. Pulihkan mempertahankan kesiapan, tetapi publikasi kembali DRAFT.
+- Konten title/excerpt/detail Tiptap/SEO ID/EN, rich renderer server yang aman. Detail `/id/products/[slug]` dan `/en/products/[slug]`; daftar cards berisi cover, nama, ringkasan, kesiapan dan tautan detail.
+- Cover/thumbnail upload dari perangkat, UUID assets, preview/keep/replace/remove/cancel, validation/server authorization dan private persistent storage mengikuti portfolio. Cover yang sama untuk list/detail; tidak menambah inline/gallery uploads.
+- CTA halaman detail: konsultasi internal default atau URL eksternal HTTPS opsional, label ID/EN. Tautan eksternal tidak di-fetch server dan tidak membangun aplikasi/demo/transaksi. Validasi URL/protokol dan rendering link aman.
+- Public product mengambil database saja, tanpa fallback statis ketika inventory kosong/gagal. Seeder memasukkan Enterprise Chat dan AI Cashflow sebagai konsep COMING_SOON memakai UUID, idempotent dan tidak overwrite edit/status produk existing. Tidak mengarang kesiapan, fitur aktif, pelanggan atau pricing.
+- Metadata → OpenGraph → Twitter → Canonical → Schema.org sesuai konteks halaman/produk; sitemap hanya canonical eligible. History slug/UUID jika terpetakan redirect hanya untuk eligible; unknown/private tidak dibocorkan.
+- Rendering mengikuti fallback portfolio yang telah disetujui: static-independent intro melalui streaming SSR, cache payload publik di belakang live eligibility/revision guards, invalidation setelah mutasi. Tidak mengaktifkan Cache Components/PPR global atau menyebut streaming SSR sebagai PPR/ISR.
+- Zod external boundaries, requireUser/requirePermission, existing RBAC content:read/write/publish, optimistic version/transaction/audit. Validation friendly dan input form dipertahankan saat gagal. Desktop/mobile konsisten identitas LunaBiner dan adaptasi section/card/spacing/CTA BisaDev.
+
+### Batas scope aktif
+
+Tidak mengerjakan waitlist/newsletter, pricing/payment/subscription, akun pengguna produk, aplikasi Enterprise Chat/AI Cashflow, CMS→RAG, gallery/inline upload, search/pagination baru, cloud media, multi-instance coordination atau deployment production. Requirement sumber awal terkait fitur-fitur itu tetap deferred, bukan acceptance task aktif ini.
+
+### Acceptance dan tracking
+
+- UUID, slug ownership/history, seed idempotent, version/RBAC, archive/restore dan direct status teruji.
+- ID/EN rich content, readiness independen, perangkat upload dan CTA internal/HTTPS teruji tanpa private data leakage.
+- Public DB-only list/detail, empty/error, metadata/schema/OG/sitemap serta cache/streaming konsisten dengan publication date.
+- Typecheck/build, tests, production HTTP/browser dan desktop/mobile diverifikasi sebelum task selesai.
+- Status IN PROGRESS berlaku untuk PRD Phase 2 keseluruhan. Penyelesaian scope Product CRUD tidak menandai fitur Phase 2 yang deferred sebagai selesai.
+- Tracking detail Product CRUD: `docs/features/products.md` (disusun pada Task 1 setelah PRD resolution).
+
+## Sumber PRD awal (dipertahankan)
+
 PRD Phase 2 — LunaBiner
 1. Objective
 Phase 2 bertujuan mengubah website LunaBiner dari sekadar company profile menjadi:

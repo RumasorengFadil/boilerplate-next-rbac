@@ -46,6 +46,8 @@
 | [Portfolio rendering/cache — Task 5B.2](reports/2026/10/04/portfolio_rendering_cache.md) | Streaming Work, revision-keyed payload cache dengan live publication guards dan action invalidation. |
 | [Portfolio production cache — Task 5B.3](reports/2026/10/04/portfolio_cache_production.md) | Bukti SQL cold/warm, Server Action tag expiry, HTTP streaming dan warm-cache lifecycle/privacy. |
 | [Portfolio final QA — Task 6](reports/2026/10/04/portfolio_final_qa.md) | Acceptance PRD 003–006, 50 tests, production/browser/visual QA dan batas operasional. |
+| [Products architecture/tracking](features/products.md) | Scope aktif PRD 002, audit kondisi existing, target CRUD/readiness/CTA/upload/detail dan urutan task. |
+| [Products Task 1 — Architecture](reports/2026/10/05/products_task1_architecture.md) | PRD resolution, keputusan arsitektur dan baseline; runtime product baru belum diimplementasikan. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |
 
 Dokumen di `docs/products/PRD/` menyimpan kebutuhan produk sesuai sumber asli, bukan pernyataan bahwa seluruh fiturnya telah diimplementasikan. Status implementasi dicatat terpisah pada laporan yang relevan.
