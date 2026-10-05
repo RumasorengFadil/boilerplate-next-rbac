@@ -19,6 +19,7 @@ export const seoDocumentSchema = z.object({
   publishedAt: z.iso.datetime().optional(),
   modifiedAt: z.iso.datetime().optional(),
   illustrative: z.boolean().default(false),
+  creativeWorkStatus: z.enum(["Concept", "Beta", "Released"]).optional(),
 }).strict();
 export type SeoDocument = z.infer<typeof seoDocumentSchema>;
 export type SeoPageKey = z.infer<typeof seoPageKeySchema>;
@@ -28,5 +29,6 @@ export const schemaItemSchema = z.object({
   description: z.string().trim().min(1).max(500),
   path: pagePath.optional(),
   concept: z.boolean().default(false),
+  creativeWorkStatus: z.enum(["Concept", "Beta", "Released"]).optional(),
 }).strict().refine(item => !item.concept || item.type === "CreativeWork", "Only a CreativeWork can be labeled as a concept.");
 export type SchemaItem = z.infer<typeof schemaItemSchema>;

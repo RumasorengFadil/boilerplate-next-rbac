@@ -37,6 +37,7 @@ export function buildPageSchema(input: SeoDocument, rawItems: SchemaItem[] = [])
       ...(document.publishedAt ? { datePublished: document.publishedAt } : {}),
       ...(document.modifiedAt ? { dateModified: document.modifiedAt } : {}),
       ...(document.illustrative ? { genre: document.locale === "id" ? "Contoh ilustratif" : "Illustrative example" } : {}),
+      ...(document.creativeWorkStatus ? { creativeWorkStatus: document.creativeWorkStatus } : {}),
     });
   }
   if (items.length) {
@@ -49,7 +50,7 @@ export function buildPageSchema(input: SeoDocument, rawItems: SchemaItem[] = [])
         "@type": item.type, name: item.name, description: item.description,
         ...(item.path !== undefined ? { url: pageUrl(document.locale, item.path) } : {}),
         ...(item.type === "Service" ? { provider: organization } : {}),
-        ...(item.concept ? { creativeWorkStatus: "Concept" } : {}),
+        ...(item.creativeWorkStatus ? { creativeWorkStatus: item.creativeWorkStatus } : item.concept ? { creativeWorkStatus: "Concept" } : {}),
       } })),
     });
   }

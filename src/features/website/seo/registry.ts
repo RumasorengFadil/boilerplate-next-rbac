@@ -22,8 +22,8 @@ export const seoPages: Record<SeoPageKey, PageDefinition> = {
   },
   products: {
     path: "/products", pageType: "CollectionPage",
-    id: { title: "LunaBiner Labs & Eksplorasi Produk", description: "Kenali eksplorasi produk LunaBiner Labs, termasuk konsep Enterprise Chat dan AI Cashflow. Lihat arah pengembangan dan diskusikan kebutuhan bisnis Anda.", keywords: ["LunaBiner Labs", "Enterprise Chat", "AI Cashflow", "konsep produk bisnis"], category: "LUNABINER LABS" },
-    en: { title: "LunaBiner Labs & Product Explorations", description: "Discover LunaBiner Labs product explorations, including Enterprise Chat and AI Cashflow concepts. Explore their direction and discuss your business needs.", keywords: ["LunaBiner Labs", "Enterprise Chat", "AI Cashflow", "business product concepts"], category: "LUNABINER LABS" },
+    id: { title: "Produk LunaBiner Labs untuk Bisnis", description: "Jelajahi produk LunaBiner Labs, fitur dan kesiapan masing-masing. Kenali arah pengembangan produk dan diskusikan kesesuaiannya dengan kebutuhan bisnis Anda.", keywords: ["LunaBiner Labs", "produk LunaBiner", "produk teknologi bisnis", "pengembangan produk"], category: "LUNABINER LABS" },
+    en: { title: "LunaBiner Labs Products for Business", description: "Explore LunaBiner Labs products, features and readiness. Discover product development direction and discuss how it fits your business needs.", keywords: ["LunaBiner Labs", "LunaBiner products", "business technology products", "product development"], category: "LUNABINER LABS" },
   },
   insights: {
     path: "/insights", pageType: "CollectionPage", entityType: "Blog",

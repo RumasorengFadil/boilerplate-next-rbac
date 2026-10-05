@@ -69,7 +69,7 @@ test("public route SEO validates locales and describes the published listing ins
       ids.push(entry.id);
       for (const locale of ["id", "en"]) {
         const seo = await getPublicPageSeo(key, locale);
-        if (key === "work") assert.equal(seo.metadata.description, getPageSeo(key, locale).description);
+        if (key === "work" || key === "products") assert.equal(seo.metadata.description, getPageSeo(key, locale).description);
         else assert.ok(seo.metadata.description.includes(text.excerpt));
         assert.ok(seo.metadata.openGraph.images[0].url.endsWith("/opengraph-image/main"));
         const list = seo.schema["@graph"].find(node => node["@type"] === "ItemList");

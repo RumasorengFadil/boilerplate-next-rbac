@@ -1,12 +1,29 @@
-import { getPublicPageSeo } from "@/features/website/seo/routes";
+import { getPublicPageSeo, publicSeoLocale } from "@/features/website/seo/routes";
+import { getPageSeo } from "@/features/website/seo";
 import { JsonLd } from "@/features/website/seo/json-ld";
 import { Cta, SectionIntro } from "@/features/website/components";
-import { t, type Locale, website } from "@/features/website/content";
-import { PublishedProducts } from "@/features/cms/public";
+import { t, type Locale } from "@/features/website/content";
+import { publishedProducts } from "@/features/products/public-data";
+import { ProductGrid } from "@/features/products/public";
 export const dynamic = "force-dynamic";
-const products = website.products;
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale }> }) {
-  return (await getPublicPageSeo("products", (await params).locale)).metadata;
+  return getPageSeo("products", publicSeoLocale((await params).locale)).metadata;
 }
 
-export default async function Products({ params }: { params: Promise<{ locale: Locale }> }) { const { locale } = await params; const seo = await getPublicPageSeo("products", locale); const cms = await PublishedProducts({ locale }); return <><JsonLd data={seo.schema} /><section className="section-space border-b"><div className="site-shell"><SectionIntro as="h1" kicker="LUNABINER LABS" title={t(locale, "Produk yang sedang kami siapkan untuk kebutuhan bisnis berikutnya.", "Products we are preparing for the next business need.")} body={t(locale, "Preview konsep produk LunaBiner. Ini bukan fitur aktif pada MVP company profile.", "A preview of LunaBiner product concepts. These are not active MVP company-profile features.")} /></div></section><section className="section-space bg-[#EAF5F4]"><div className="site-shell grid gap-6 md:grid-cols-2">{cms ? <div className="md:col-span-2">{cms}</div> : products.map((product, i) => <article className="rounded-2xl border bg-white p-7" key={product.name}><span className="text-xs font-bold tracking-[.18em] text-[#F5A033]">0{i + 1} / LABS</span><h2 className="mt-10 text-3xl font-semibold tracking-[-.04em]">{product.name}</h2><p className="mt-5 leading-7 text-[#64767B]">{product.text[locale]}</p><ul className="mt-8 grid gap-3 text-sm">{product.items.map(x => <li key={x} className="border-t pt-3">{x}</li>)}</ul></article>)}</div></section><Cta locale={locale} /></>; }
+export default async function Products({ params }: { params: Promise<{ locale: Locale }> }) {
+  const locale = publicSeoLocale((await params).locale);
+  let entries: Awaited<ReturnType<typeof publishedProducts>> = [], failed = false;
+  let seo = getPageSeo("products", locale);
+  try {
+    entries = await publishedProducts();
+    seo = await getPublicPageSeo("products", locale);
+  } catch {
+    failed = true;
+  }
+  const content = failed ? <p role="alert" className="rounded-2xl border bg-white p-7 text-[#64767B]">{t(locale, "Produk belum dapat dimuat. Silakan coba kembali nanti.", "Products could not be loaded. Please try again later.")}</p> : <ProductGrid entries={entries} locale={locale} />;
+  return <><JsonLd data={seo.schema} />
+    <section className="section-space border-b"><div className="site-shell"><SectionIntro as="h1" kicker="LUNABINER LABS" title={t(locale, "Produk untuk kebutuhan bisnis yang terus berkembang.", "Products for evolving business needs.")} body={t(locale, "Jelajahi produk LunaBiner dan lihat kesiapan masing-masing sebelum mendiskusikan kebutuhan Anda.", "Explore LunaBiner products and their readiness before discussing your needs.")} /></div></section>
+    <section className="section-space bg-[#EAF5F4]"><div className="site-shell">{content}</div></section>
+    <Cta locale={locale} />
+  </>;
+}

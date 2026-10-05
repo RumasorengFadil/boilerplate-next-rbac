@@ -1,6 +1,15 @@
 # Products — active scope, architecture and tracking
 
-Tanggal: 2026-10-05. Active PRD: [PRD 002](../products/PRD/PRD_002_lunabiner-phase-2.md), confirmed Product CRUD scope, status IN PROGRESS. Task 1–4 selesai; public detail/cache/final QA tetap Task 5–7. Bagian Task 2–3 di bawah merekam snapshot historis; runtime Task4 dan Ringkasan-only Task3b/3c adalah perilaku sekarang.
+Tanggal: 2026-10-05. Active PRD: [PRD 002](../products/PRD/PRD_002_lunabiner-phase-2.md), confirmed Product CRUD scope, status IN PROGRESS. Task1–5 selesai; cache/streaming dan QA final tetap Task6–7. Bagian Task2–4 di bawah merekam snapshot tahap tersebut; runtime Task5 dan Ringkasan-only Task3b/3c adalah perilaku sekarang.
+
+## Runtime — Task 5 public product/SEO
+
+- List `/id/products`, `/en/products` hanya DB eligible, max200 sesuai card collection existing. Static website.products tidak dipakai sebagai fallback. Empty menampilkan belum ada produk; query/schema/data failure menampilkan pesan unavailable tanpa invent inventory/ItemList. Halaman error list tetap HTML200 berisi alert; detail/OG/sitemap error DB tidak disamarkan sebagai404/fallback. Intro tidak mengklaim semua produk masih konsep. Card berisi cover, localized readiness, title/Ringkasan/features dan tautan slug detail, bukan CTA demo langsung.
+- Detail `/{locale}/products/{slug}` memakai title/Ringkasan sekali, cover yang sama, fitur ID/EN, readiness dan CTA internal/HTTPS tervalidasi. COMING_SOON menjelaskan konsep dan perlunya konfirmasi, bukan produk aktif. BETA/LIVE label Beta/Tersedia (Available), independen publishing. Legacy body/rich tetap readable/stored untuk safety tetapi tidak dirender menjadi deskripsi duplikat; Ringkasan authoritative. No Tiptap/gallery/pricing/reviews/sections fiktif. External CTA target_blank/noopener/noreferrer, tidak di-fetch atau auto-navigate; default internal locale-neutral /consultation.
+- `public-data.ts` React cache request-only list; `getProductSeoContent` request-only resolver ProductRoute + live public guard. Metadata/page/schema memakai hasil yang sama. Unknown/private/current/history/UUID404; eligible alias308 ke canonical slug only. Guards selesai sebelum render detail agar HTTP status benar, tanpa private title/target disclosure. No persistent cache/PPR/ISR/streaming optimization baru (Task6).
+- Metadata lengkap melalui existing buildSeo; localized SEO overrides atau visible title/Ringkasan fallback, product name/category/tags keywords, canonical/hreflang/x-default, branded unique OG/Twitter image per slug+locale. Registry list stable/generic, tidak mencantumkan static concepts ketika inventory kosong. Collection schema menautkan actual eligible canonical products; detail WebPage+CreativeWork Concept/Beta/Released dan actual dates/Organization references. Tidak memakai offers/pricing/rating/SoftwareApplication capability fiktif.
+- Public GET `/{locale}/products/{slug}/opengraph-image/main` Node force-dynamic1200x630 PNG/no-store. Local logo public/images/lunabiner-logo.png, localized headline/category/description, tidak mengambil private cover/demo/external image. Invalid/private404, eligible aliases308 ke canonical image, errors propagate500. Sitemap dynamic mencakup PRODUCT eligible/current slug dengan real updatedAt dan ID/EN alternates, tanpa cap200; tidak alias/UUID/media/future/draft/arsip. No new mutations/migration/API upload.
+- Verification:84/84 regression, typecheck/lint/build PASS. Production public HTTP/browser3011:empty/catalog, actual404/308/withdrawal/due schedule, six distinct PNGs, schema/canonical/CTA/cover IDEN; desktop1440/mobile390 no overflow/page errors/demo fetch. Admin/cover browser3010 PASS. Main read-only enterprise-chat ID dan ai-cashflow EN200 tanpa restart/reseed. Artifacts `/private/tmp/lunabiner-products-public-qa-df8jfi`, admin `/private/tmp/lunabiner-products-admin-qa-cHZrX1`. Fixtures/temp uploads cleaned; report [Task5](../reports/2026/10/05/products_task5_public-seo.md).
 
 ## Runtime — Task 4 perangkat cover/private media
 
@@ -24,7 +33,7 @@ Task 3a menyediakan pure `summary-content.ts`: strict content contract tanpa bod
 
 Task 3a tidak mengubah runtime. **Task 3b memakai form/save Ringkasan-only dan fitur bilingual; Task 3c sudah menyelesaikan seeder/migrasi lokal**. Penjelasan textarea/detail/rich pada bagian Task 3 di bawah adalah snapshot sebelum refinement, bukan UI sekarang. Tidak ada SQL migration/RBAC/route baru.
 
-Execution refinement: 3a kontrak/adapter/tests COMPLETED → 3b UI/save/public existing integration COMPLETED → 3c backup/migration/seed/browser QA COMPLETED → Task 4 COMPLETED → Task 5–7 NOT STARTED. [Task 3a report](../reports/2026/10/05/products_task3a_summary-contract.md).
+Execution refinement:3a–3c COMPLETED → Task4 COMPLETED → Task5 COMPLETED → Task6–7 NOT STARTED. [Task 3a report](../reports/2026/10/05/products_task3a_summary-contract.md).
 
 ## Runtime/data refinement — Task 3c
 
@@ -90,7 +99,7 @@ Bagian ini mencatat keputusan keseluruhan. Status runtime per bagian mengacu pad
 
 ### Ownership/domain
 
-Feature `src/features/products/` memiliki kontrak, service/lifecycle, legacy adapter, seed, live resolver, actions/form/editor. Public rendering masih Task 5–6. Reuse CMS ContentEntry dan authorization/audit; portfolio tetap rich editor. Jangan memasukkan product-only rules ke portable architecture blueprint atau mengubah perilaku ARTICLE/CASE_STUDY tanpa kebutuhan terukur.
+Feature `src/features/products/` memiliki kontrak, service/lifecycle, legacy adapter, seed, live resolver, actions/form/editor/public-data/presentation. Public rendering Task5 tersedia; persistent cache/streaming tetap Task6. Reuse CMS ContentEntry dan authorization/audit; portfolio tetap rich editor. Jangan memasukkan product-only rules ke portable architecture blueprint atau mengubah perilaku ARTICLE/CASE_STUDY tanpa kebutuhan terukur.
 
 Database foundation Task 2: ProductRoute adalah namespace product sendiri, mengikuti jaminan ownership/history portfolio. UUID primary key, value unik/deskriptif atau UUID compatibility, contentId UUID FK restrict ke ContentEntry, createdAt dan index contentId; validation kind PRODUCT dan reservations immutable/transactional. Current slug dan UUID dicadangkan, slug lama tetap milik record meskipun diarsipkan. Namespace product tidak mengunci slug portfolio. Migration/backfill konflik atomik diuji pada disposable; activation main selesai Task 3. ContentEntry.productRoutes ditambahkan di Prisma; deletedAt/index publication existing direuse, tidak menambah enum publishing.
 
@@ -102,7 +111,7 @@ Product editor hanya DRAFT/PUBLISHED/SCHEDULED, bukan REVIEW/ARCHIVED. Readiness
 
 ### Admin/body/CTA
 
-Menu `/dashboard/products`: aktif/arsip, create `/new`, edit UUID. Form title/excerpt/SEO ID/EN, textarea detail ID/EN, readiness dan publication/UTC schedule; cover file pada Task 4. Kategori/tags/basic metadata mengikuti pola yang relevan. Tidak ada panel narasi duplikat atau toolbar Tiptap. Minimum publikasi excerpt 10/body 30 karakter kedua bahasa; maksimum teks baru/edited excerpt/body 150. Legacy unchanged dan rich internal tetap memakai ceiling/allowlist storage existing (body 30.000). Validation friendly merujuk field textarea per bahasa; input dipertahankan saat gagal. Unchanged rich existing tidak dihapus otomatis.
+Menu `/dashboard/products`: aktif/arsip, create `/new`, edit UUID. Form title/Ringkasan/SEO IDEN, localized features12x100, readiness dan publication/UTC schedule; cover file tersedia. Kategori/tags/basic metadata existing. Tidak ada Detail terpisah/Tiptap. Publikasi Ringkasan minimum10/maksimum150 kedua bahasa, tanpa body minimum baru. Legacy rich/metadata readable dan retained jika belum dimigrasikan; validation friendly, input dipertahankan saat gagal. Unchanged legacy rich tidak dihapus otomatis.
 
 CTA detail mempunyai tujuan konsultasi internal default atau HTTPS eksternal opsional, label ID/EN. Tidak wajib demo untuk BETA/LIVE. Kontrak membedakan tipe tujuan; URL menolak javascript/data/protocol-relative dan credential URL. Render external link aman (noopener/noreferrer bila new tab), tidak fetch URL di server. Legacy configured valid CTA harus diaudit/dipertahankan secara eksplisit saat adapter dibuat; default baru tidak boleh diam-diam menimpa configured CTA existing. Tidak menambahkan waitlist/payment/user account.
 
@@ -112,7 +121,7 @@ Input perangkat mengikuti portfolio: JPEG/PNG/WebP statis maksimal 5 MiB, decode
 
 ### Public/SEO/rendering
 
-Daftar `/id/products`, `/en/products` menjadi database-only; card link detail slug, localized readiness badge, cover/nama/ringkasan. Empty/error state eksplisit. Detail menggunakan title/excerpt, readiness, cover, teks body paragraf dan CTA dengan kompatibilitas rich existing; intro copy tidak mengklaim seluruh katalog selalu COMING_SOON. Seeder dua konsep existing idempotent, fixed UUID, tidak overwrite admin edits/restore/publish existing; seed baru boleh tampil sebagai PUBLISHED+COMING_SOON dengan jelas konsep, bukan aplikasi siap pakai. Narasi default ID/EN hanya berasal dari informasi existing, tanpa mengarang sections/capabilities.
+Daftar `/id/products`, `/en/products` database-only; card link detail slug, localized readiness badge, cover/nama/Ringkasan. Empty/error state eksplisit. Detail menggunakan title/Ringkasan/readiness/cover/features/CTA tanpa body duplikat; intro tidak mengklaim seluruh katalog COMING_SOON. Legacy rich/read compatibility tetap, tidak auto cleanup pada GET. Seeder existing idempotent fixedUUID, tidak overwrite admin edits/restore/publish; seed PUBLISHED+COMING_SOON konsep, bukan aplikasi siap pakai. Tidak mengarang sections/capabilities.
 
 Metadata → OG → Twitter → Canonical → Schema mengikuti halaman/detail. Detail memakai schema sesuai fakta (CreativeWork/concept ketika belum tersedia), tanpa fabricated offers/pricing/review/rating. Registry dan schema contracts ditambah secara scoped, contextual branded OG; sitemap hanya eligible canonical product slugs, tidak alias/UUID/private/media. Route alias eligible 308; unknown/private 404 tanpa target/title leak. Guard metadata/canonical selesai sebelum response detail flush.
 
@@ -128,7 +137,7 @@ Enterprise Chat / AI Cashflow perlu slug enterprise-chat / ai-cashflow dan UUID 
 2. Task 2 — schema/contracts/service/route reservations/seeder: COMPLETED; main activation dilakukan pada Task 3.
 3. Task 3 — menu admin dan CRUD/textarea ID/EN/readiness/CTA/archive, adapter save kompatibel existing: COMPLETED; batas 150 dan browser desktop/mobile terverifikasi.
 4. Task 4 — perangkat cover/private media: COMPLETED.
-5. Task 5 — public list/detail/SEO/OG/sitemap: NOT STARTED.
+5. Task 5 — public list/detail/SEO/OG/sitemap: COMPLETED.
 6. Task 6 — streaming/cache/invalidation: NOT STARTED.
 7. Task 7 — final regression/browser/visual QA: NOT STARTED.
 

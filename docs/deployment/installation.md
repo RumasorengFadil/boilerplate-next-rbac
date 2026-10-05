@@ -24,6 +24,12 @@ Urutan aman: cek migration pada target database aplikasi memakai loader environm
 
 ## Upgrade product foundation — PRD 002 Task 2
 
+### Public product pages — Task 5
+
+Build/restart setelah menambahkan routes /{locale}/products/{slug} dan detail opengraph-image/main; tidak ada migration/seed/data cleanup. Deploy routes, public-data/presentation dan SEO/sitemap helpers bersama. Set NEXT_PUBLIC_APP_URL origin HTTPS resmi sebelum build; local QA localhost bukan origin produksi. Public collection DB-only, empty/error tidak reseed/fallback. ProductRoute foundation wajib sudah diterapkan; unknown/private404, eligible aliases308 ke canonical. Query live membutuhkan DATABASE_URL; tidak menyajikan full-page proxy cache yang mengabaikan publication/locale. Branded OG memerlukan bundled logo/Node tracing seperti bagian SEO existing, tidak fetch demo/cover eksternal. Product persistent cache/streaming belum ditambah (Task6).
+
+QA Task5: `tests/products-public.test.mjs` dan `products-public-browser.mjs`, serial setelah build/regression selesai pada disposable55441. Browser self-spawn3011 dengan private temporary product upload directory, public ID/EN/details/OG/schema/sitemap/404/308/CTA/cover dan desktop/mobile. Fixtures/temp uploads dibersihkan; jangan menjalankan pada database utama. Report/tracking [Products](../features/products.md).
+
 ### Summary cleanup — Task 3c
 
 Deploy runtime Task 3b/3c sebelum cleanup; install/rebuild/restart seperti biasa. Tidak ada SQL migration baru. Hindari admin editing saat apply; reopen form setelah version berubah. Jalankan dari root project dengan Node registerHooks>=22.15/full TypeScript install dan environment loader existing, tidak mencetak credential. CLI hanya menerima database loopback dan confirmation eksplisit:

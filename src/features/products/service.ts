@@ -94,7 +94,7 @@ export async function saveProduct(raw: unknown, options: { textarea?: boolean; s
   });
 }
 
-// Live, uncached foundation query; HTTP redirect/metadata is implemented in Task 5.
+// Live eligibility/route resolution; HTTP consumers must guard before disclosing canonical slugs.
 export async function resolvePublishedProduct(raw: unknown) {
   const parsed = productRouteSchema.safeParse(raw);
   if (!parsed.success) return null;

@@ -3,7 +3,9 @@
 Status: IN PROGRESS
 Pembaruan aktif: 2026-10-05 — Product CRUD/landing management.
 
-Task 4 COMPLETED — perangkat cover/private media. Reuse validasi/normalisasi dan private filesystem portfolio dengan konfigurasi storage terpisah; UUID namespace `/media/products/`, current reference + publication/permission live guards. Preview/keep/replace/remove/cancel, retained File saat gagal, thumbnail existing public card. 83/83 regresi/typecheck/lint/build serta production product+portfolio cover browser PASS. Tidak ada SQL migration, main data writes atau implementasi Task 5–7. Task 1–3/3a–3c tetap COMPLETED; Task5–7 NOT STARTED.
+Task5 COMPLETED — DB-only list (empty/error), slug detail/eligible308/private404, readiness/summary/features/cover/CTA, complete localized metadata/schema/contextual branded OG/sitemap. 84/84 regression/typecheck/lint/build, production public+admin browser PASS; main existing detail ID/EN200 read-only. Request memoization saja; persistent cache/streaming tetap Task6. Tidak ada SQL migration/seed/main data writes. Task1–5 COMPLETED; Task6–7 NOT STARTED, PRD overall IN PROGRESS.
+
+Task4 COMPLETED — private device cover/UUID/media guards/preview/keep/replace/remove/cancel/retained File. Verifikasi saat Task4:83/83 tests/typecheck/lint/build dan browser product/portfolio PASS, tanpa migration/main writes/task berikutnya. Tracking terbaru Task5 di atas.
 
 ## Scope aktif yang dikonfirmasi — Product CRUD
 
@@ -40,10 +42,10 @@ Tidak mengerjakan waitlist/newsletter, pricing/payment/subscription, akun penggu
 - Typecheck/build, tests, production HTTP/browser dan desktop/mobile diverifikasi sebelum task selesai.
 - Status IN PROGRESS berlaku untuk PRD Phase 2 keseluruhan. Penyelesaian scope Product CRUD tidak menandai fitur Phase 2 yang deferred sebagai selesai.
 - Tracking detail Product CRUD: `docs/features/products.md` (disusun pada Task 1 setelah PRD resolution).
-- Task 1–4 selesai: arsitektur, fondasi kontrak/service/ProductRoute/seeder, admin CRUD/textarea/readiness/CTA/arsip dan cover perangkat. Migration dan dua contoh produk database lokal diterapkan pada Task 3 setelah backup; konten non-PRODUCT tetap identik. Task 5–7 belum dikerjakan. PRD keseluruhan tetap IN PROGRESS.
+- Task1–5 selesai: arsitektur/foundation/admin/cover perangkat, DB-only public list/detail/SEO/OG/sitemap. Migration/contoh lokal diterapkan Task3 setelah backup; non-PRODUCT identik. Task6–7 belum dikerjakan, PRD keseluruhan IN PROGRESS.
 - Revisi editor setelah Task 2: pengguna menyetujui textarea karena konten pendek/cenderung statis. Task 3 telah menerapkan CRUD/textarea ID/EN beserta adapter save yang aman; task lain tidak dibatalkan/diubah urutannya.
 - Task 3 selesai: ringkasan dan detail textarea ID/EN dibatasi maksimum 150 karakter per field/bahasa, berdasarkan contoh pengguna 109 karakter. Counter, maxLength client dan server validation tersedia; publikasi tetap excerpt minimal 10/body minimal 30. Konten legacy lebih panjang tidak dipotong/migrasikan massal; unchanged text/formatting tetap dipertahankan, teks baru/yang diedit wajib memenuhi batas. Seeder baru memakai deskripsi contoh singkat, tidak menimpa seed existing. Upload cover tetap Task 4.
-- Refinement 3a–3c selesai: kontrak, form/save Ringkasan-only, fitur bilingual/public card, guarded migration/restore dan seeder tersedia; 80/80 regresi saat Task3c dan browser QA PASS. Dua produk lokal dimigrasikan dengan backup. Ketentuan Detail/body minimum pada bullet historis Task 3 digantikan Ringkasan minimum 10 pada action baru. Upload Task4 selesai; detail/SEO/cache berikutnya belum selesai.
+- Refinement3a–3c selesai: Ringkasan-only/features/guarded migration/seeder, verifikasi saat Task3c80/80 dan browser PASS. Dua produk lokal dimigrasikan dengan backup. Detail/body minimum historis digantikan Ringkasan minimum10; cover Task4 dan public detail/SEO Task5 selesai. Cache/streaming Task6 dan finalQA Task7 belum selesai.
 
 ## Sumber PRD awal (dipertahankan)
 
