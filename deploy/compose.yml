@@ -1,0 +1,71 @@
+name: lunabiner-${DEPLOY_ENV:?set DEPLOY_ENV to staging or production}
+
+services:
+  app:
+    image: ${APP_IMAGE:?set APP_IMAGE to an immutable image tag}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?set NEXT_PUBLIC_APP_URL}
+      PORTFOLIO_UPLOAD_DIR: /data/portfolio-covers
+      PRODUCT_UPLOAD_DIR: /data/product-covers
+      AI_ASSISTANT_ENABLED: ${AI_ASSISTANT_ENABLED:-false}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai-compatible}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+    ports:
+      - "127.0.0.1:${APP_PORT:?set APP_PORT}:3000"
+    volumes:
+      - portfolio-covers:/data/portfolio-covers
+      - product-covers:/data/product-covers
+      - next-cache:/app/.next/cache
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # Run explicitly before an app-image promotion; it must not run on `up -d`.
+  migrate:
+    image: ${MIGRATION_IMAGE:?set MIGRATION_IMAGE to its matching commit tag}
+    restart: "no"
+    profiles: [operations]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  db:
+    image: postgres:16.10-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  next-cache:
+  portfolio-covers:
+  product-covers:
+  postgres-data:

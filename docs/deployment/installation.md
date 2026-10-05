@@ -8,6 +8,14 @@
 
 Production memerlukan `DATABASE_URL` yang dapat dijangkau server aplikasi. `npm run build` menjalankan `prisma generate` sebelum `next build`; output Next.js dibuat standalone. Gunakan secret manager platform untuk semua variabel non-publik.
 
+## VPS Docker staging dan production
+
+Deployment VPS menggunakan image Next.js standalone dan Compose yang dipisahkan per environment. Kontrak container tersedia pada [`deploy/`](../../deploy/): `compose.yml` tidak menyimpan secret dan setiap environment memakai `.env` privat yang tidak dilacak Git. Jangan menjalankan production dan staging dalam Compose project, database, atau volume upload yang sama.
+
+Image aplikasi dan image migration dibuat dari [`Dockerfile`](../../Dockerfile). Image runtime berjalan sebagai user non-root, hanya mengekspos port melalui loopback, dan menerima storage cover melalui volume persisten. Service `migrate` adalah operasi eksplisit; migration tidak boleh dijalankan saat request atau build.
+
+Sebelum deploy ke VPS, gunakan dokumentasi operasi pada [`deploy/README.md`](../../deploy/README.md). Reverse proxy, TLS, DNS, backup/restore PostgreSQL dan koordinasi dengan workload Hermes tetap merupakan task infrastruktur tersendiri dan tidak boleh diasumsikan dari konfigurasi Compose.
+
 `npm run dev` juga menjalankan `prisma generate` sebelum Next.js. Cache Prisma development membandingkan fingerprint datamodel generated client; schema berubah atau cache lama tanpa fingerprint akan mengganti instance dan melepas pool lama. Production tidak memakai cache global development. Setelah migration/generation, restart dev server jika proses masih memuat modul generated client lama. Error delegate undefined (misalnya consultationBooking.findMany) adalah runtime client/cache, berbeda dari error tabel belum dimigrasikan. Tidak perlu reset database: jalankan generate, deploy migration yang belum diterapkan, lalu restart proses.
 
 ```sh
