@@ -44,3 +44,8 @@ Men-deploy LunaBiner Next.js ke VPS Hostinger Ubuntu 24.04 secara aman dan dapat
 - Deploy `develop` dan `main` berjalan melalui GitHub Actions dengan approval production dan dapat di-rollback ke image SHA sebelumnya.
 - Hermes tetap tersedia setelah konfigurasi reverse proxy diterapkan.
 - Backup dan prosedur restore PostgreSQL + volume upload terdokumentasi dan diverifikasi secara terukur.
+
+## Tracking
+
+- Task 1 — Container runtime dan Compose: COMPLETED.
+- Task 2 — GitHub Actions CI/CD: COMPLETED.

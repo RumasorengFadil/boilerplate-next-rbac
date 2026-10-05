@@ -43,6 +43,7 @@
 | [PRD 006 — Portfolio direct status](products/PRD/PRD_006_portfolio-direct-status.md) | Status langsung tanpa urutan REVIEW wajib; arsip tetap soft-delete existing. |
 | [PRD 007 — VPS Docker CI/CD deployment](products/PRD/PRD_007_vps-docker-cicd-deployment.md) | Deployment Docker pada VPS Hostinger dengan staging, production, CI/CD, domain, persistence dan rollback. |
 | [VPS deployment — Task 1](reports/2026/10/06/vps_deployment_task1_containerization.md) | Container Next.js, Compose environment terisolasi, persistence dan hasil verifikasi lokal. |
+| [VPS deployment — Task 2](reports/2026/10/06/vps_deployment_task2_github_actions.md) | GitHub Actions untuk validasi, GHCR image immutable dan deploy SSH per environment. |
 | [Portfolio direct status](reports/2026/10/04/portfolio_direct_status.md) | Guard CASE_STUDY, publish/schedule langsung, regression public/sitemap/RBAC dan arsip. |
 | [Portfolio PPR feasibility — Task 5B.1](reports/2026/10/04/portfolio_ppr_feasibility.md) | Bukti build terisolasi, hambatan route configs/root locale dan rekomendasi fallback; belum mengubah rendering production. |
 | [Portfolio rendering/cache — Task 5B.2](reports/2026/10/04/portfolio_rendering_cache.md) | Streaming Work, revision-keyed payload cache dengan live publication guards dan action invalidation. |

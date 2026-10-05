@@ -16,6 +16,19 @@ Image aplikasi dan image migration dibuat dari [`Dockerfile`](../../Dockerfile).
 
 Sebelum deploy ke VPS, gunakan dokumentasi operasi pada [`deploy/README.md`](../../deploy/README.md). Reverse proxy, TLS, DNS, backup/restore PostgreSQL dan koordinasi dengan workload Hermes tetap merupakan task infrastruktur tersendiri dan tidak boleh diasumsikan dari konfigurasi Compose.
 
+## GitHub Actions dan environment deployment
+
+Workflow [Build and deploy](../../.github/workflows/deploy.yml) memvalidasi setiap pull request menuju `develop` atau `main`. Push ke `develop` membangun image staging dan menjalankan job environment `staging`; push ke `main` membangun image production dan menjalankan job environment `production`. Image runtime dan migrator dipublikasikan ke GHCR dengan digest immutable dari commit yang sama. Job deploy menarik image berdasarkan digest, menjalankan `prisma migrate deploy` secara eksplisit, dan baru kemudian memperbarui container aplikasi.
+
+Sebelum workflow dapat men-deploy, buat GitHub Environments `staging` dan `production`. Batasi branch deployment masing-masing ke `develop` dan `main`; untuk production, aktifkan required reviewer bila paket GitHub repository mendukungnya. Simpan konfigurasi berikut sebagai *environment-specific* secret, bukan repository secret:
+
+- `DEPLOY_HOST` — alamat IP/hostname VPS.
+- `DEPLOY_USER` — user deploy non-root pada VPS.
+- `DEPLOY_SSH_PRIVATE_KEY` — private key khusus deployment.
+- `DEPLOY_KNOWN_HOSTS` — baris host key VPS yang telah diverifikasi out-of-band.
+
+Tambahkan `DEPLOY_DIRECTORY` sebagai environment variable (bukan secret), misalnya `/opt/lunabiner/staging` atau `/opt/lunabiner/production`. Direktori itu harus berisi `compose.yml` dan `.env` private yang dibuat pada VPS. `GITHUB_TOKEN` digunakan hanya untuk push image GHCR; jangan ganti dengan personal access token kecuali diperlukan oleh kebijakan registry.
+
 `npm run dev` juga menjalankan `prisma generate` sebelum Next.js. Cache Prisma development membandingkan fingerprint datamodel generated client; schema berubah atau cache lama tanpa fingerprint akan mengganti instance dan melepas pool lama. Production tidak memakai cache global development. Setelah migration/generation, restart dev server jika proses masih memuat modul generated client lama. Error delegate undefined (misalnya consultationBooking.findMany) adalah runtime client/cache, berbeda dari error tabel belum dimigrasikan. Tidak perlu reset database: jalankan generate, deploy migration yang belum diterapkan, lalu restart proses.
 
 ```sh
