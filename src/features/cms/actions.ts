@@ -1,6 +1,7 @@
 "use server";
 import { revalidatePath, updateTag } from "next/cache";
 import { PORTFOLIO_PUBLIC_TAG } from "@/features/portfolio/public-data";
+import { PRODUCT_PUBLIC_TAG } from "@/features/products/public-data";
 import { requirePermission } from "@/server/authorization";
 import { saveContent } from "./service";
 import { contentInputSchema } from "./schema";
@@ -14,6 +15,7 @@ export async function saveContentAction(_: ContentState, form: FormData): Promis
   try {
     const entry = await saveContent(parsed.data);
     if (entry.kind === "CASE_STUDY") updateTag(PORTFOLIO_PUBLIC_TAG);
+    if (entry.kind === "PRODUCT") updateTag(PRODUCT_PUBLIC_TAG);
     revalidatePath("/dashboard/content");
     for (const locale of ["id", "en"]) revalidatePath(`/${locale}`, "layout");
     return { message: "Konten tersimpan. Reindex AI setelah perubahan publikasi.", id: entry.id, version: entry.version, success: true };

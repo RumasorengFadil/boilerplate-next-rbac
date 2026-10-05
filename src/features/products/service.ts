@@ -100,9 +100,13 @@ export async function resolvePublishedProduct(raw: unknown) {
   if (!parsed.success) return null;
   const route = await db.productRoute.findUnique({ where: { value: parsed.data }, select: { contentId: true } });
   if (!route) return null;
-  const row = await db.contentEntry.findFirst({ where: { ...publicContentWhere("PRODUCT"), id: route.contentId } });
+  const { productRevisionSelect, productRevisionContent } = await import("./public-data");
+  const row = await db.contentEntry.findFirst({ where: { ...publicContentWhere("PRODUCT"), id: route.contentId },
+    select: { ...productRevisionSelect, slug: true } });
   if (!row) return null;
-  return { entry: presentProduct(row), canonicalSlug: row.slug, redirect: parsed.data !== row.slug };
+  const [entry] = await productRevisionContent([row]);
+  if (!entry || entry.slug !== row.slug) return null;
+  return { entry, canonicalSlug: row.slug, redirect: parsed.data !== row.slug };
 }
 
 export async function changeProductLifecycle(raw: unknown) {

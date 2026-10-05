@@ -2,7 +2,8 @@ import "./server-loader.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderToStaticMarkup, renderToPipeableStream } from "react-dom/server";
+import { PassThrough } from "node:stream";
 import { createElement } from "react";
 const target = new URL(process.env.DATABASE_URL ?? "postgresql://invalid");
 assert.equal(target.hostname, "127.0.0.1"); assert.equal(target.port, "55441");
@@ -15,13 +16,21 @@ const { getPublicPageSeo } = await import("../src/features/website/seo/routes.ts
 const { buildSeo } = await import("../src/features/website/seo/index.ts");
 const { buildPublicSitemap } = await import("../src/features/website/seo/sitemap.ts");
 const { default: Products } = await import("../src/app/(public)/[locale]/products/page.tsx");
+async function renderPage(element) {
+  const output = new PassThrough();
+  let html = "";
+  output.on("data", chunk => { html += chunk; });
+  const done = new Promise((resolve, reject) => { output.on("end", resolve); output.on("error", reject); });
+  const rendering = renderToPipeableStream(element, { onAllReady() { rendering.pipe(output); }, onShellError(error) { output.destroy(error); } });
+  try { await done; return html; } finally { rendering.abort(); }
+}
 test("DB-only products share eligible localized detail/SEO/schema/sitemap and safe CTA rendering", async () => {
   const ids = [];
   const translations = { id: { title: "Produk QA <script>unsafe</script>", excerpt: "Ringkasan produk bisnis untuk pengujian.", seoTitle: "Judul SEO produk QA", seoDescription: "Deskripsi SEO produk bisnis khusus untuk pengujian." },
     en: { title: "QA Business Product", excerpt: "A business product description for testing.", seoTitle: "QA Product SEO Title", seoDescription: "An English product SEO description for testing." } };
   try {
     assert.equal((await publishedProducts()).length, 0);
-    const empty = renderToStaticMarkup(await Products({ params: Promise.resolve({ locale: "id" }) }));
+    const empty = await renderPage(await Products({ params: Promise.resolve({ locale: "id" }) }));
     assert.match(empty, /Belum ada produk/); assert.doesNotMatch(empty, /Enterprise Chat|AI Cashflow/);
     assert.ok(!(await getPublicPageSeo("products", "id")).schema["@graph"].some(node => node["@type"] === "ItemList"));
     for (const [status, due, deletedAt] of [["DRAFT", true, null], ["REVIEW", true, null], ["ARCHIVED", true, null], ["SCHEDULED", false, null], ["PUBLISHED", true, new Date()], ["SCHEDULED", true, null], ["PUBLISHED", true, null]]) {
@@ -73,7 +82,7 @@ test("DB-only products share eligible localized detail/SEO/schema/sitemap and sa
     const original = db.contentEntry.findMany;
     try {
       db.contentEntry.findMany = async () => { throw new Error("Synthetic database failure"); };
-      const failed = renderToStaticMarkup(await Products({ params: Promise.resolve({ locale: "en" }) }));
+      const failed = await renderPage(await Products({ params: Promise.resolve({ locale: "en" }) }));
       assert.match(failed, /Products could not be loaded/); assert.doesNotMatch(failed, /Enterprise Chat|AI Cashflow|Synthetic database failure/);
     } finally { db.contentEntry.findMany = original; }
   } finally {

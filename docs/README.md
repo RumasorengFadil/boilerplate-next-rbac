@@ -56,6 +56,7 @@
 | [Products Task 3c — Data migration](reports/2026/10/05/products_task3c_data-migration.md) | Backup/apply/guarded restore, cleanup dua produk lokal, bilingual seeder dan idempotency/regression/browser QA. |
 | [Products Task 4 — Cover upload](reports/2026/10/05/products_task4_cover-upload.md) | Upload perangkat, UUID/private WebP/media guards, retained File retry, thumbnails dan regresi desktop/mobile. |
 | [Products Task 5 — Public SEO](reports/2026/10/05/products_task5_public-seo.md) | DB-only list/detail slug/readiness/CTA, localized metadata/schema/OG/sitemap, eligible308/private404 dan desktop/mobile QA. |
+| [Products Task 6 — Rendering cache](reports/2026/10/05/products_task6_rendering-cache.md) | Streaming intro dan guarded revision payload cache; live privacy serta Server Action tag expiry. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |
 
 Dokumen di `docs/products/PRD/` menyimpan kebutuhan produk sesuai sumber asli, bukan pernyataan bahwa seluruh fiturnya telah diimplementasikan. Status implementasi dicatat terpisah pada laporan yang relevan.

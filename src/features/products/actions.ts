@@ -1,5 +1,6 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { PRODUCT_PUBLIC_TAG } from "./public-data";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { requirePermission } from "@/server/authorization";
@@ -12,6 +13,7 @@ import { storeCover, normalizeCover, discardUncommittedCover, InvalidCoverError 
 
 export type ProductState = { message: string; success?: boolean; id?: string; version?: number; fieldErrors?: Record<string, string> };
 function invalidateProduct(id: string) {
+  updateTag(PRODUCT_PUBLIC_TAG);
   revalidatePath("/dashboard/products");
   revalidatePath(`/dashboard/products/${id}`);
   revalidatePath("/dashboard/content");
