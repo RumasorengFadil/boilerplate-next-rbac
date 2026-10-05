@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { website } from "../website/content";
-import { plainTextToRichDocument, type RichNode } from "../cms/rich-text";
+import { plainTextToRichDocument } from "../cms/rich-text";
 import { productInputSchema } from "./schema";
 import { normalizeProductContent } from "./legacy-content";
 
@@ -20,12 +20,8 @@ export async function seedProductExamples(client: PrismaClient) {
       if (previous || reservation) { skipped++; continue; }
       const example = website.products[index];
       const translation = (locale: "id" | "en") => {
-        const intro = locale === "id" ? "Konsep produk LunaBiner. Segera hadir; ketersediaan dapat didiskusikan melalui konsultasi." : "A LunaBiner product concept. Coming soon; discuss availability through consultation.";
-        const richBody: RichNode = { type: "doc", content: [
-          ...plainTextToRichDocument(intro + "\n\n" + example.text[locale]).content!,
-          { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: locale === "id" ? "Rencana kapabilitas" : "Planned capabilities" }] },
-          { type: "bulletList", content: example.items.map(text => ({ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text }] }] })) },
-        ] };
+        // Keep the initial textarea concise; readiness labels describe the concept.
+        const richBody = plainTextToRichDocument(example.text[locale]);
         return { title: example.name, excerpt: example.text[locale], richBody };
       };
       const input = productInputSchema.parse({ kind: "PRODUCT", slug: sample.slug, status: "PUBLISHED",

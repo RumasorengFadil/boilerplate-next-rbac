@@ -24,7 +24,9 @@ Urutan aman: cek migration pada target database aplikasi memakai loader environm
 
 ## Upgrade product foundation — PRD 002 Task 2
 
-Foundation sudah tersedia, tetapi menu admin baru/public detail/upload belum dibuat (Task 3–7). Task 2 hanya menerapkan migration dan seed pada PostgreSQL disposable; database aplikasi utama belum diubah. Jangan menjalankan generic plain editor untuk menimpa produk rich; runtime akan menolaknya agar detail tidak hilang.
+Foundation dan menu admin `/dashboard/products` tersedia (Task 1–3); upload/public detail/cache masih Task 4–6. Task 2 menguji migration/seed pada PostgreSQL disposable; Task 3 menerapkannya ke database lokal lunabiner setelah backup. Gunakan editor produk khusus, bukan generic plain editor untuk menimpa produk rich.
+
+Activation lokal 2026-10-05: migration `20261005010000_product_foundation`, dua seed PRODUCT dan empat route reservations; non-PRODUCT unchanged. Backup custom PostgreSQL sebelum activation disimpan privat pada `.local-backups/products-task3-ZvGScv/before.dump` (0700 directory/0600 file, archive list verified, restore utama tidak dijalankan). Retain backup; jangan commit/upload atau menghapusnya otomatis. Deployment lain tetap mengikuti langkah upgrade di bawah.
 
 Sebelum aktivasi, backup database, audit PRODUCT existing untuk slug/UUID conflicts dan gunakan loader Next environment pada contoh instalasi untuk `prisma migrate deploy`. Migration `20261005010000_product_foundation` tidak reset/mengubah JSON/status/version; konflik membatalkan DDL/backfill. Generate client/rebuild/restart proses setelah migration agar delegate productRoute tersedia. Jangan menghapus reservations untuk memaksa konflik selesai.
 
@@ -34,9 +36,11 @@ Opsional memasukkan contoh konsep yang telah disetujui pada target database yang
 npm run db:seed:products
 ```
 
-Runner membutuhkan Node registerHooks >=22.15/full install TypeScript, membaca Next .env.local sebelum Prisma, tidak mencetak credential. DATABASE_URL dari secret manager yang sudah diset tetap dipakai. Tidak seed saat build/GET/deploy. Dua contoh Enterprise Chat/AI Cashflow dibuat PUBLISHED+COMING_SOON dengan rich ID/EN, CTA konsultasi dan fixed UUID. Existing UUID/route owner PRODUCT dipertahankan (termasuk rename/arsip); UUID beda kind/race/insert conflict membatalkan transaction. Tidak membuat ulang produk atau overwrite konten admin. Seed berulang melaporkan created/preserved. Readiness bukan klaim produk LIVE.
+Runner membutuhkan Node registerHooks >=22.15/full install TypeScript, membaca Next .env.local sebelum Prisma, tidak mencetak credential. DATABASE_URL dari secret manager yang sudah diset tetap dipakai. Tidak seed saat build/GET/deploy. Dua contoh Enterprise Chat/AI Cashflow dibuat PUBLISHED+COMING_SOON dengan deskripsi singkat ID/EN maksimal 150, derived rich representation, CTA konsultasi dan fixed UUID. Existing UUID/route owner PRODUCT dipertahankan (termasuk rename/arsip); UUID beda kind/race/insert conflict membatalkan transaction. Tidak membuat ulang produk atau overwrite konten admin. Seed berulang melaporkan created/preserved. Readiness bukan klaim produk LIVE.
 
 QA product: `tests/products.test.mjs` (contracts/adapter), `tests/products-integration.test.mjs` (transaction/RBAC/status/seed), `tests/products-migration.test.mjs` (backfill valid/conflict/invalid rollback pada schema sintetis UUID). Integration/migration dan suite SEO memakai guard loopback 127.0.0.1 port 55441/role portfolio_test/database lunabiner_portfolio_test. Jalankan serial pada disposable bersih dengan DATABASE_URL eksplisit, tanpa seed CLI bersamaan atau prisma generate selama tes Prisma aktif. Jangan memakai database utama untuk cleanup tests. Lihat [Products](../features/products.md).
+
+Task 3 menambah `tests/products-textarea.test.mjs` dan `tests/products-actions.test.mjs` (150/151, hostile payload, preserved fields/legacy format, RBAC, version/slug, schedule/CTA, arsip/restore). `tests/products-browser.mjs` membutuhkan DATABASE_URL disposable yang sama, PLAYWRIGHT_MODULE dan PLAYWRIGHT_EXECUTABLE lokal; self-spawn production Next di port 3010, cleanup synthetic fixtures/server dalam finally. Jalankan setelah production build tanpa proses lain pada 3010. Tidak menyentuh server utama 3000. Editor ringkasan/detail memakai maxLength/counter 150 dengan server enforcement; legacy panjang unchanged boleh disimpan, tidak dipotong. Browser QA screenshots terakhir berada lokal di `/private/tmp/lunabiner-products-admin-qa-ANxbdH`; hasil tercatat di report Task 3.
 
 ## Upgrade portfolio foundation
 

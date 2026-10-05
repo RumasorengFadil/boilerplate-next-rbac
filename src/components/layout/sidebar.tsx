@@ -9,6 +9,7 @@ const items: { href: string; label: string; icon: typeof LayoutDashboard; permis
   { href: "/dashboard/users", label: "Pengguna", icon: Users, permission: "users:read" },
   { href: "/dashboard/content", label: "Konten website", icon: FolderKanban, permission: "content:read" },
   { href: "/dashboard/portfolio", label: "Portfolio", icon: FolderKanban, permission: "content:read" },
+  { href: "/dashboard/products", label: "Produk", icon: FolderKanban, permission: "content:read" },
   { href: "/dashboard/ai", label: "LunaBiner AI", icon: LayoutDashboard, permission: "ai:manage" },
   { href: "/dashboard/leads", label: "Lead", icon: Users, permission: "leads:read" },
   { href: "/dashboard/analytics", label: "Analytics", icon: LayoutDashboard, permission: "analytics:read" },

@@ -28,11 +28,11 @@ export function ContentEditor({ initial, canPublish, portfolio = false, readOnly
   };
   return <form action={form => { if (portfolio && coverFile) form.set("coverFile", coverFile); action(form); }} className="mt-6 space-y-6">
     {readOnly && <p className="rounded-lg border bg-amber-50 p-4 text-sm">Konten sudah dipublikasikan/dijadwalkan. Hubungi publisher untuk perubahan; akun ini hanya dapat mengedit draft/review.</p>}
-    {!portfolio && !initial && <p className="text-sm">Untuk studi kasus, gunakan <Link href="/dashboard/portfolio/new" className="font-semibold text-[#08747A] underline">Tambah portfolio</Link>.</p>}
+    {!portfolio && !initial && <p className="text-sm">Gunakan menu khusus untuk <Link href="/dashboard/portfolio/new" className="font-semibold text-[#08747A] underline">Tambah portfolio</Link> atau <Link href="/dashboard/products/new" className="font-semibold text-[#08747A] underline">Tambah produk</Link>.</p>}
     <fieldset disabled={pending || readOnly} className="min-w-0 space-y-6">
     {initial?.id && <input type="hidden" name="id" value={initial.id} />}<input type="hidden" name="version" value={state.version ?? initial?.version ?? 1} />
     <section className="card grid gap-4 sm:grid-cols-2">
-      {portfolio ? <><input type="hidden" name="kind" value="CASE_STUDY" /><p className="text-sm font-semibold">Studi kasus / Portfolio</p></> : <label className="grid gap-2 text-sm">Jenis konten<select name="kind" className="input" value={kind} onChange={event => setKind(event.target.value as typeof kind)} disabled={Boolean(initial?.id)}>{contentKinds.filter(value => value !== "CASE_STUDY").map(value => <option key={value}>{value}</option>)}</select></label>}
+      {portfolio ? <><input type="hidden" name="kind" value="CASE_STUDY" /><p className="text-sm font-semibold">Studi kasus / Portfolio</p></> : <label className="grid gap-2 text-sm">Jenis konten<select name="kind" className="input" value={kind} onChange={event => setKind(event.target.value as typeof kind)} disabled={Boolean(initial?.id)}>{contentKinds.filter(value => value === "ARTICLE").map(value => <option key={value}>{value}</option>)}</select></label>}
       {!portfolio && initial?.id && <input type="hidden" name="kind" value={kind} />}
       {field("slug", "Slug (huruf kecil dan tanda hubung)", initial?.slug, false, true)}
       <label className="grid gap-2 text-sm">{portfolio ? "Status portfolio" : "Workflow"}<select name="status" className="input" {...valueProps("status", initialStatus)}>{contentStatuses.filter(value => (!portfolio || value !== "ARCHIVED") && (canPublish || ["DRAFT", "REVIEW"].includes(value) || readOnly && initial?.status === value)).map(value => <option key={value}>{value}</option>)}</select></label>

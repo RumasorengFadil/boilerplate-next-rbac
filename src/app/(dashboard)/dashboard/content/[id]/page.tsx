@@ -14,6 +14,7 @@ export default async function EditContent({ params }: { params: Promise<{ id: st
   const row = await db.contentEntry.findUnique({ where: { id } });
   if (!row) notFound();
   if (row.kind === "CASE_STUDY") redirect(`/dashboard/portfolio/${row.id}`);
+  if (row.kind === "PRODUCT") redirect(`/dashboard/products/${row.id}`);
   const entry = presentContent(row);
   return <section><h1 className="page-title">Edit konten</h1><ContentEditor canPublish={hasPermission(user.role, "content:publish")} initial={{ id, kind: entry.kind, slug: entry.slug, status: entry.status, version: entry.version, publishedAt: entry.publishedAt?.toISOString() ?? null, translations: entry.translations, details: entry.details }} /></section>;
 }

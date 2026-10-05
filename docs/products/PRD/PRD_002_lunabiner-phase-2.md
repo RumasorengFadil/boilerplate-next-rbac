@@ -30,8 +30,9 @@ Tidak mengerjakan waitlist/newsletter, pricing/payment/subscription, akun penggu
 - Typecheck/build, tests, production HTTP/browser dan desktop/mobile diverifikasi sebelum task selesai.
 - Status IN PROGRESS berlaku untuk PRD Phase 2 keseluruhan. Penyelesaian scope Product CRUD tidak menandai fitur Phase 2 yang deferred sebagai selesai.
 - Tracking detail Product CRUD: `docs/features/products.md` (disusun pada Task 1 setelah PRD resolution).
-- Task 1–2 selesai: arsitektur dan fondasi kontrak/service/ProductRoute/seeder. Task 3–7 belum dikerjakan; migration/seed database utama belum diterapkan pada Task 2. PRD keseluruhan tetap IN PROGRESS.
-- Revisi editor setelah Task 2: pengguna menyetujui textarea karena konten pendek/cenderung statis. Task 3 berubah dari CRUD/Tiptap menjadi CRUD/textarea ID/EN beserta adapter save yang aman; task lain tidak dibatalkan/diubah urutannya. Revisi ini baru dokumentasi, bukan klaim textarea sudah terimplementasi.
+- Task 1–3 selesai: arsitektur, fondasi kontrak/service/ProductRoute/seeder, admin CRUD/textarea/readiness/CTA/arsip. Migration dan dua contoh produk database lokal diterapkan pada Task 3 setelah backup; konten non-PRODUCT tetap identik. Task 4–7 belum dikerjakan. PRD keseluruhan tetap IN PROGRESS.
+- Revisi editor setelah Task 2: pengguna menyetujui textarea karena konten pendek/cenderung statis. Task 3 telah menerapkan CRUD/textarea ID/EN beserta adapter save yang aman; task lain tidak dibatalkan/diubah urutannya.
+- Task 3 selesai: ringkasan dan detail textarea ID/EN dibatasi maksimum 150 karakter per field/bahasa, berdasarkan contoh pengguna 109 karakter. Counter, maxLength client dan server validation tersedia; publikasi tetap excerpt minimal 10/body minimal 30. Konten legacy lebih panjang tidak dipotong/migrasikan massal; unchanged text/formatting tetap dipertahankan, teks baru/yang diedit wajib memenuhi batas. Seeder baru memakai deskripsi contoh singkat, tidak menimpa seed existing. Upload cover tetap Task 4.
 
 ## Sumber PRD awal (dipertahankan)
 

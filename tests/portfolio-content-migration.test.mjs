@@ -89,6 +89,7 @@ test("content migration is atomic, backed up, idempotent, limited to cases and s
     });
   } finally {
     await db.auditEvent.deleteMany({ where: { recordId: { in: ids } } }); await db.portfolioRoute.deleteMany({ where: { contentId: { in: ids } } });
+    await db.productRoute.deleteMany({ where: { contentId: { in: ids } } });
     await db.contentEntry.deleteMany({ where: { id: { in: ids } } }); await db.$disconnect();
   }
 });

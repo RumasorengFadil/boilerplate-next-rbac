@@ -4,8 +4,10 @@ import { hasPermission } from "@/lib/permissions";
 import { requirePermission } from "@/server/authorization";
 import { recordAudit } from "@/server/audit";
 import { publicContentWhere } from "@/features/cms/service";
-import { productInputSchema, productLifecycleSchema, productRouteSchema } from "./schema";
+import { productInputSchema, productEditorInputSchema, productLifecycleSchema, productRouteSchema, validateProductTextLengths } from "./schema";
 import { normalizeProductContent } from "./legacy-content";
+import { detailsSchema } from "../cms/schema";
+import { plainTextToRichDocument } from "../cms/rich-text";
 
 export class ProductMutationError extends Error {
   constructor(public readonly code: "NOT_FOUND" | "ARCHIVED" | "KIND" | "RICH_CONTENT" | "PERMISSION" | "SCHEDULE" | "VERSION" | "LIFECYCLE", message: string) { super(message); }
@@ -15,17 +17,20 @@ export function presentProduct(entry: Awaited<ReturnType<typeof db.contentEntry.
   return { ...entry, ...normalizeProductContent(entry) };
 }
 
-export async function saveProduct(raw: unknown) {
+export async function saveProduct(raw: unknown, options: { textarea?: boolean } = {}) {
   const user = await requirePermission("content:write");
-  const input = productInputSchema.parse(raw);
+  // Trusted server-only mode, never accepted from client fields.
+  const input = (options.textarea ? productEditorInputSchema : productInputSchema).parse(raw);
   return db.$transaction(async tx => {
     const previous = input.id ? await tx.contentEntry.findUnique({ where: { id: input.id } }) : null;
     if (input.id && !previous) throw new ProductMutationError("NOT_FOUND", "Produk tidak ditemukan.");
     if (previous && previous.kind !== "PRODUCT") throw new ProductMutationError("KIND", "Jenis konten tidak dapat diubah.");
-    if (previous?.deletedAt) throw new ProductMutationError("ARCHIVED", "Pulihkan produk dari arsip sebelum mengedit.");
+    if (previous?.deletedAt || previous?.status === "ARCHIVED") throw new ProductMutationError("ARCHIVED", "Pulihkan produk dari arsip sebelum mengedit.");
     if (!hasPermission(user.role, "content:publish") && (["PUBLISHED", "SCHEDULED"].includes(input.status) || previous && ["PUBLISHED", "SCHEDULED"].includes(previous.status)))
       throw new ProductMutationError("PERMISSION", "Akun Anda tidak memiliki izin publikasi produk.");
-    if (previous) {
+    const stored = previous ? normalizeProductContent(previous) : undefined;
+    validateProductTextLengths(input, stored?.translations);
+    if (previous && !options.textarea) {
       const stored = previous.translations as { id: { richBody?: unknown }; en: { richBody?: unknown } };
       for (const locale of ["id", "en"] as const) if (stored[locale].richBody && !input.translations[locale].richBody)
         throw new ProductMutationError("RICH_CONTENT", "Gunakan editor produk agar konten detail tidak hilang.");
@@ -34,8 +39,16 @@ export async function saveProduct(raw: unknown) {
     const rawDetails = (raw as { details: Record<string, unknown> }).details;
     const cta = input.details.productCta ?? (previous ? normalizeProductContent(previous).details.productCta
       : Object.hasOwn(rawDetails, "ctaPath") ? normalizeProductContent(input).details.productCta : { type: "internal" as const, path: "/consultation" });
-    const normalized = normalizeProductContent({ translations: input.translations,
-      details: { ...input.details, productCta: cta } });
+    const translations = options.textarea ? Object.fromEntries((["id", "en"] as const).map(locale => [locale, {
+      ...input.translations[locale], richBody: stored?.translations[locale].body === input.translations[locale].body
+        ? stored.translations[locale].richBody : plainTextToRichDocument(input.translations[locale].body),
+    }])) : input.translations;
+    const details = options.textarea ? { ...detailsSchema.parse(previous?.details ?? {}),
+      category: input.details.category, tags: input.details.tags, authorName: input.details.authorName,
+      productStatus: input.details.productStatus, ctaLabel: input.details.ctaLabel, productCta: cta,
+    } : { ...input.details, productCta: cta };
+    // Cover/features/legacy metadata come from the database, not hidden client fields.
+    const normalized = normalizeProductContent({ translations, details });
     const publishedAt = input.status === "PUBLISHED"
       ? previous?.status === "PUBLISHED" ? previous.publishedAt ?? new Date() : new Date()
       : input.status === "SCHEDULED" ? new Date(input.publishedAt!) : null;
@@ -71,7 +84,8 @@ export async function changeProductLifecycle(raw: unknown) {
   return db.$transaction(async tx => {
     const previous = await tx.contentEntry.findFirst({ where: { id: input.id, kind: "PRODUCT" } });
     if (!previous) throw new ProductMutationError("NOT_FOUND", "Produk tidak ditemukan.");
-    if (input.operation === "restore" ? !previous.deletedAt : Boolean(previous.deletedAt))
+    const archived = Boolean(previous.deletedAt) || previous.status === "ARCHIVED";
+    if (input.operation === "restore" ? !archived : archived)
       throw new ProductMutationError("LIFECYCLE", "Status arsip produk telah berubah. Muat ulang halaman.");
     const result = await tx.contentEntry.updateMany({ where: { id: input.id, kind: "PRODUCT", version: input.version, deletedAt: previous.deletedAt },
       data: { deletedAt: input.operation === "archive" ? new Date() : null, status: input.operation === "archive" ? "ARCHIVED" : "DRAFT", publishedAt: null, version: { increment: 1 } } });

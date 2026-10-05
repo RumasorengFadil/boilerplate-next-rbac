@@ -50,6 +50,7 @@
 | [Products Task 1 — Architecture](reports/2026/10/05/products_task1_architecture.md) | PRD resolution, keputusan arsitektur dan baseline; runtime product baru belum diimplementasikan. |
 | [Products Task 2 — Foundation](reports/2026/10/05/products_task2_foundation.md) | UUID/slug reservations, contracts, transactional service, readiness/CTA/legacy compatibility dan seeder; main activation belum dilakukan. |
 | [Products editor plan update](reports/2026/10/05/products_plan_textarea.md) | Revisi Task 3 menjadi textarea ID/EN, menjaga compatibility rich existing dan scope public detail/SEO. |
+| [Products Task 3 — Admin](reports/2026/10/05/products_task3_admin.md) | CRUD bilingual bounded textarea, readiness/CTA/arsip, server guards, browser QA dan activation database lokal. |
 | [AI Phase 2 tracking](reports/2026/10/03/ai_assistant_phase2_completion.md) | Checklist implementasi terbaru, hasil pengujian dan pekerjaan aktivasi yang tersisa. |
 
 Dokumen di `docs/products/PRD/` menyimpan kebutuhan produk sesuai sumber asli, bukan pernyataan bahwa seluruh fiturnya telah diimplementasikan. Status implementasi dicatat terpisah pada laporan yang relevan.
