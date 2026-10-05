@@ -2,6 +2,14 @@
 
 Tanggal: 2026-10-05. Active PRD: [PRD 002](../products/PRD/PRD_002_lunabiner-phase-2.md), confirmed Product CRUD scope, status IN PROGRESS. Dokumen ini memisahkan fondasi Task 2 yang sudah tersedia, snapshot awal dan target Task 3–7.
 
+## Pembaruan requirement setelah Task 2 — textarea produk
+
+Pengguna menyetujui detail produk memakai textarea teks biasa ID/EN, bukan Tiptap, karena konten pendek/cenderung statis. Nama/title, ringkasan, readiness, CTA, cover dan SEO tetap field terpisah. Detail `/products/[slug]` tetap dalam scope; tidak turun menjadi daftar card saja. Tidak menambah rich formatting/Markdown/HTML editor produk atau mengubah editor portfolio.
+
+Task 3 mencakup textarea serta adapter save yang sesuai fondasi Task 2: body berasal dari teks input; representation rich internal boleh direuse agar kontrak/storage existing kompatibel tanpa UI Tiptap. Pada record rich existing, perubahan field lain/teks yang tidak berubah menjaga richBody; perubahan teks yang disengaja memakai derived representation teks baru, bukan richBody lama yang menimpa input baru. Guard generic plain writes tetap melindungi konten. Adapter/read/save/validation tests perlu menguji teks baru, seed rich, edit teks dan unchanged formatting sebelum activation.
+
+Task 5 akan merender detail teks sebagai paragraf aman untuk konten baru, mempertahankan kompatibilitas data rich existing, dan tetap mengerjakan SEO per produk. Tidak ada janji ranking dari jenis editor. Tidak perlu SQL migration baru atau menghapus dukungan richBody/dependency Tiptap hanya untuk perubahan UI ini. Runtime Task 2 belum diubah oleh revisi dokumentasi ini; implementasi adapter/form menunggu Task 3.
+
 ## Implementasi aktual — Task 2
 
 - `src/features/products/schema.ts` menerima PRODUCT UUID/descriptive slug, publishing DRAFT/PUBLISHED/SCHEDULED, readiness COMING_SOON/BETA/LIVE melalui details.productStatus, rich ID/EN dan minima publication. Lifecycle adalah kontrak terpisah. Feedback aman per field/bahasa tersedia; integrasi form baru Task 3.
@@ -11,7 +19,7 @@ Tanggal: 2026-10-05. Active PRD: [PRD 002](../products/PRD/PRD_002_lunabiner-pha
 - Migration `20261005010000_product_foundation` menambah ProductRoute/reservation triggers dan ContentEntry.productRoutes relation; backfill additive/atomic. Canonical slug, UUID dan history berbagi namespace product, terpisah dari portfolio. Lihat [database schema](../database/schema.md).
 - Seeder `npm run db:seed:products`: dua UUID tetap, Enterprise Chat/AI Cashflow PUBLISHED+COMING_SOON, rich ID/EN dari contoh existing dan CTA konsultasi. Satu transaction; existing UUID milik PRODUCT atau route slug reserved berarti preserved, bukan duplicate/overwrite/restore. UUID beda kind atau insert race/conflict menggagalkan transaction. Tidak ada akun/seed otomatis GET/build.
 - Migration dan runner diuji di disposable PostgreSQL port 55441. **Database utama belum dimigrasikan/di-seed pada Task 2**; activation/restart harus dijalankan terarah sebelum menu produk Task 3 digunakan. Tidak menghapus atau mengubah data utama.
-- Admin Products/Tiptap UI, cover upload/product media, DB-only public detail/SEO/sitemap dan streaming cache belum tersedia. Generic editor lama masih plain dan menawarkan REVIEW/ARCHIVED yang product service menolak; setelah rich save gunakan editor khusus yang akan dibuat Task 3. Public Products existing belum membaca CTA baru/rich detail dan masih memakai fallback; jangan menganggap fondasi ini sebagai UI final.
+- Admin Products/textarea UI baru, cover upload/product media, DB-only public detail/SEO/sitemap dan streaming cache belum tersedia. Generic editor lama masih plain dan menawarkan REVIEW/ARCHIVED yang product service menolak; setelah rich save gunakan editor khusus beserta adapter yang akan dibuat Task 3. Public Products existing belum membaca CTA baru/detail dan masih memakai fallback; jangan menganggap fondasi ini sebagai UI final.
 
 ## Snapshot sebelum implementasi (Task 1)
 
@@ -40,7 +48,7 @@ Product editor hanya DRAFT/PUBLISHED/SCHEDULED, bukan REVIEW/ARCHIVED. Readiness
 
 ### Admin/body/CTA
 
-Menu `/dashboard/products`: aktif/arsip, create `/new`, edit UUID. Form title/excerpt/SEO ID/EN, Tiptap detail ID/EN, readiness, publication/UTC schedule dan cover file; kategori/tags/basic metadata mengikuti pola yang relevan. Tidak menambahkan panel narasi duplikat. Minimum publikasi mengikuti portfolio (excerpt 10 karakter/body 30 karakter teks kedua bahasa), rich JSON limits/allowlist sama. Validation friendly per kolom/bahasa dan input dipertahankan saat gagal.
+Menu `/dashboard/products`: aktif/arsip, create `/new`, edit UUID. Form title/excerpt/SEO ID/EN, textarea detail ID/EN, readiness dan publication/UTC schedule; cover file pada Task 4. Kategori/tags/basic metadata mengikuti pola yang relevan. Tidak menambahkan panel narasi duplikat atau toolbar Tiptap. Minimum publikasi mengikuti portfolio (excerpt 10 karakter/body 30 karakter teks kedua bahasa, maksimal body 30.000). Kompatibilitas rich internal tetap memakai limits/allowlist existing. Validation friendly merujuk field textarea per bahasa; input dipertahankan saat gagal. Task 3 harus menyesuaikan adapter save agar plain input baru tidak ditolak/dikalahkan richBody lama; unchanged rich existing tidak dihapus otomatis.
 
 CTA detail mempunyai tujuan konsultasi internal default atau HTTPS eksternal opsional, label ID/EN. Tidak wajib demo untuk BETA/LIVE. Kontrak membedakan tipe tujuan; URL menolak javascript/data/protocol-relative dan credential URL. Render external link aman (noopener/noreferrer bila new tab), tidak fetch URL di server. Legacy configured valid CTA harus diaudit/dipertahankan secara eksplisit saat adapter dibuat; default baru tidak boleh diam-diam menimpa configured CTA existing. Tidak menambahkan waitlist/payment/user account.
 
@@ -50,7 +58,7 @@ Input perangkat mengikuti portfolio: JPEG/PNG/WebP statis maksimal 5 MiB, decode
 
 ### Public/SEO/rendering
 
-Daftar `/id/products`, `/en/products` menjadi database-only; card link detail slug, localized readiness badge, cover/nama/ringkasan. Empty/error state eksplisit. Detail menggunakan title/excerpt, readiness, cover, rich body dan CTA; intro copy tidak mengklaim seluruh katalog selalu COMING_SOON. Seeder dua konsep existing idempotent, fixed UUID, tidak overwrite admin edits/restore/publish existing; seed baru boleh tampil sebagai PUBLISHED+COMING_SOON dengan jelas konsep, bukan aplikasi siap pakai. Narasi default ID/EN hanya berasal dari informasi existing, tanpa mengarang sections/capabilities.
+Daftar `/id/products`, `/en/products` menjadi database-only; card link detail slug, localized readiness badge, cover/nama/ringkasan. Empty/error state eksplisit. Detail menggunakan title/excerpt, readiness, cover, teks body paragraf dan CTA dengan kompatibilitas rich existing; intro copy tidak mengklaim seluruh katalog selalu COMING_SOON. Seeder dua konsep existing idempotent, fixed UUID, tidak overwrite admin edits/restore/publish existing; seed baru boleh tampil sebagai PUBLISHED+COMING_SOON dengan jelas konsep, bukan aplikasi siap pakai. Narasi default ID/EN hanya berasal dari informasi existing, tanpa mengarang sections/capabilities.
 
 Metadata → OG → Twitter → Canonical → Schema mengikuti halaman/detail. Detail memakai schema sesuai fakta (CreativeWork/concept ketika belum tersedia), tanpa fabricated offers/pricing/review/rating. Registry dan schema contracts ditambah secara scoped, contextual branded OG; sitemap hanya eligible canonical product slugs, tidak alias/UUID/private/media. Route alias eligible 308; unknown/private 404 tanpa target/title leak. Guard metadata/canonical selesai sebelum response detail flush.
 
@@ -64,7 +72,7 @@ Enterprise Chat / AI Cashflow perlu slug enterprise-chat / ai-cashflow dan UUID 
 
 1. Task 1 — audit arsitektur, keputusan data dan baseline: COMPLETED; typecheck, lint dan production build PASS.
 2. Task 2 — schema/contracts/service/route reservations/seeder: COMPLETED; migrasi/seeder/regresi diverifikasi pada database disposable, main activation belum dilakukan.
-3. Task 3 — menu admin dan CRUD/Tiptap/readiness/CTA/archive: NOT STARTED.
+3. Task 3 — menu admin dan CRUD/textarea ID/EN/readiness/CTA/archive, adapter save kompatibel existing: NOT STARTED (requirement editor direvisi setelah Task 2).
 4. Task 4 — perangkat cover/private media: NOT STARTED.
 5. Task 5 — public list/detail/SEO/OG/sitemap: NOT STARTED.
 6. Task 6 — streaming/cache/invalidation: NOT STARTED.

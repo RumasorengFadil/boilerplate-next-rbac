@@ -10,7 +10,7 @@ Briefing dikonfirmasi pengguna melalui “oke gas saya setujui”. Gunakan PRD a
 - Menu Produk khusus admin; create/list/edit, arsip soft delete dan pulihkan sebagai DRAFT. Record UUID, public detail memakai slug deskriptif. Ikuti pola portfolio tanpa mengubah fitur portfolio/artikel.
 - Publikasi produk hanya DRAFT/PUBLISHED/SCHEDULED, langsung berdasarkan pilihan admin tanpa REVIEW wajib. ARCHIVED bukan opsi editor; arsip terpisah. PUBLISHED langsung eligible, SCHEDULED eligible saat tanggal UTC due. DRAFT, future schedule dan arsip tidak masuk public/detail/SEO/OG/sitemap/media anonymous.
 - Kesiapan terpisah dari publikasi: COMING_SOON/BETA/LIVE, tampil sebagai Segera hadir/Beta/Tersedia dengan label ID/EN. Kesiapan tidak mempublish produk otomatis dan tidak memaksa URL demo. Pulihkan mempertahankan kesiapan, tetapi publikasi kembali DRAFT.
-- Konten title/excerpt/detail Tiptap/SEO ID/EN, rich renderer server yang aman. Detail `/id/products/[slug]` dan `/en/products/[slug]`; daftar cards berisi cover, nama, ringkasan, kesiapan dan tautan detail.
+- Konten title/excerpt/SEO ID/EN dengan field biasa; detail produk memakai textarea teks biasa ID/EN, bukan Tiptap, sesuai pembaruan briefing yang disetujui setelah Task 2. Paragraf dirender aman tanpa HTML/Markdown dari input. Detail `/id/products/[slug]` dan `/en/products/[slug]` tetap dikerjakan; daftar cards berisi cover, nama, ringkasan, kesiapan dan tautan detail.
 - Cover/thumbnail upload dari perangkat, UUID assets, preview/keep/replace/remove/cancel, validation/server authorization dan private persistent storage mengikuti portfolio. Cover yang sama untuk list/detail; tidak menambah inline/gallery uploads.
 - CTA halaman detail: konsultasi internal default atau URL eksternal HTTPS opsional, label ID/EN. Tautan eksternal tidak di-fetch server dan tidak membangun aplikasi/demo/transaksi. Validasi URL/protokol dan rendering link aman.
 - Public product mengambil database saja, tanpa fallback statis ketika inventory kosong/gagal. Seeder memasukkan Enterprise Chat dan AI Cashflow sebagai konsep COMING_SOON memakai UUID, idempotent dan tidak overwrite edit/status produk existing. Tidak mengarang kesiapan, fitur aktif, pelanggan atau pricing.
@@ -25,12 +25,13 @@ Tidak mengerjakan waitlist/newsletter, pricing/payment/subscription, akun penggu
 ### Acceptance dan tracking
 
 - UUID, slug ownership/history, seed idempotent, version/RBAC, archive/restore dan direct status teruji.
-- ID/EN rich content, readiness independen, perangkat upload dan CTA internal/HTTPS teruji tanpa private data leakage.
+- ID/EN teks detail dari textarea, readiness independen, perangkat upload dan CTA internal/HTTPS teruji tanpa private data leakage. Kompatibilitas richBody Task 2 dijaga; perubahan field lain tidak boleh diam-diam menghilangkan format/konten existing. Tiptap portfolio tetap, tidak dicabut dari dependencies.
 - Public DB-only list/detail, empty/error, metadata/schema/OG/sitemap serta cache/streaming konsisten dengan publication date.
 - Typecheck/build, tests, production HTTP/browser dan desktop/mobile diverifikasi sebelum task selesai.
 - Status IN PROGRESS berlaku untuk PRD Phase 2 keseluruhan. Penyelesaian scope Product CRUD tidak menandai fitur Phase 2 yang deferred sebagai selesai.
 - Tracking detail Product CRUD: `docs/features/products.md` (disusun pada Task 1 setelah PRD resolution).
 - Task 1–2 selesai: arsitektur dan fondasi kontrak/service/ProductRoute/seeder. Task 3–7 belum dikerjakan; migration/seed database utama belum diterapkan pada Task 2. PRD keseluruhan tetap IN PROGRESS.
+- Revisi editor setelah Task 2: pengguna menyetujui textarea karena konten pendek/cenderung statis. Task 3 berubah dari CRUD/Tiptap menjadi CRUD/textarea ID/EN beserta adapter save yang aman; task lain tidak dibatalkan/diubah urutannya. Revisi ini baru dokumentasi, bukan klaim textarea sudah terimplementasi.
 
 ## Sumber PRD awal (dipertahankan)
 
