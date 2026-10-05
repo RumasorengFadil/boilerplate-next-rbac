@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed:portfolio": "node --import ./scripts/typescript-loader.mjs scripts/seed-portfolio.mjs",
+    "db:seed:products": "node --import ./scripts/typescript-loader.mjs scripts/seed-products.mjs",
     "db:preview:portfolio-content": "node --import ./scripts/typescript-loader.mjs scripts/preview-portfolio-content.mjs",
     "db:migrate:portfolio-content": "node --import ./scripts/typescript-loader.mjs scripts/migrate-portfolio-content.mjs"
   },

@@ -60,7 +60,8 @@ test("portfolio direct statuses preserve publication, permissions, version and s
     assert.ok(await resolvePublishedPortfolio(row.slug));
     assert.ok((await buildPublicSitemap()).some(item => item.url.endsWith("/work/" + row.slug)));
     row = await savePortfolio(payload("PUBLISHED", row)); assert.ok(await resolvePublishedPortfolio(row.slug));
-    for (const kind of ["ARTICLE", "PRODUCT"]) {
+    // Product now uses direct publication under the approved PRD 002 scope.
+    for (const kind of ["ARTICLE"]) {
       const translations = { id: { title: text.title, excerpt: text.excerpt, body: "Complete generic editorial context with sufficient publication text." }, en: { title: text.title, excerpt: text.excerpt, body: "Complete generic editorial context with sufficient publication text." } };
       await assert.rejects(() => saveContent({ ...payload("PUBLISHED"), kind, translations }), /review first/);
     }

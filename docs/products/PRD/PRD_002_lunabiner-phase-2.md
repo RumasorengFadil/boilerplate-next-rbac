@@ -30,6 +30,7 @@ Tidak mengerjakan waitlist/newsletter, pricing/payment/subscription, akun penggu
 - Typecheck/build, tests, production HTTP/browser dan desktop/mobile diverifikasi sebelum task selesai.
 - Status IN PROGRESS berlaku untuk PRD Phase 2 keseluruhan. Penyelesaian scope Product CRUD tidak menandai fitur Phase 2 yang deferred sebagai selesai.
 - Tracking detail Product CRUD: `docs/features/products.md` (disusun pada Task 1 setelah PRD resolution).
+- Task 1–2 selesai: arsitektur dan fondasi kontrak/service/ProductRoute/seeder. Task 3–7 belum dikerjakan; migration/seed database utama belum diterapkan pada Task 2. PRD keseluruhan tetap IN PROGRESS.
 
 ## Sumber PRD awal (dipertahankan)
 

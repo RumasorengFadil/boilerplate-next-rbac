@@ -22,6 +22,22 @@ Jika query baru gagal `Unknown argument deletedAt`, tetapi `prisma/schema.prisma
 
 Urutan aman: cek migration pada target database aplikasi memakai loader environment di atas; terapkan hanya migration tertunda yang telah direview; jalankan `npm run db:generate`; hentikan proses Next dev proyek yang benar secara graceful; jalankan `npm run dev` kembali pada host/port semula. Pastikan tidak ada duplikat server pada port lain. Verifikasi halaman melalui HTTP, bukan hanya typecheck. Jangan menghapus filter deletedAt, reset database atau menghapus node_modules untuk mengatasi stale runtime ini. Jika muncul missing column/table setelah restart, itu masalah migration yang berbeda dari validation error client.
 
+## Upgrade product foundation — PRD 002 Task 2
+
+Foundation sudah tersedia, tetapi menu admin baru/public detail/upload belum dibuat (Task 3–7). Task 2 hanya menerapkan migration dan seed pada PostgreSQL disposable; database aplikasi utama belum diubah. Jangan menjalankan generic plain editor untuk menimpa produk rich; runtime akan menolaknya agar detail tidak hilang.
+
+Sebelum aktivasi, backup database, audit PRODUCT existing untuk slug/UUID conflicts dan gunakan loader Next environment pada contoh instalasi untuk `prisma migrate deploy`. Migration `20261005010000_product_foundation` tidak reset/mengubah JSON/status/version; konflik membatalkan DDL/backfill. Generate client/rebuild/restart proses setelah migration agar delegate productRoute tersedia. Jangan menghapus reservations untuk memaksa konflik selesai.
+
+Opsional memasukkan contoh konsep yang telah disetujui pada target database yang benar:
+
+```sh
+npm run db:seed:products
+```
+
+Runner membutuhkan Node registerHooks >=22.15/full install TypeScript, membaca Next .env.local sebelum Prisma, tidak mencetak credential. DATABASE_URL dari secret manager yang sudah diset tetap dipakai. Tidak seed saat build/GET/deploy. Dua contoh Enterprise Chat/AI Cashflow dibuat PUBLISHED+COMING_SOON dengan rich ID/EN, CTA konsultasi dan fixed UUID. Existing UUID/route owner PRODUCT dipertahankan (termasuk rename/arsip); UUID beda kind/race/insert conflict membatalkan transaction. Tidak membuat ulang produk atau overwrite konten admin. Seed berulang melaporkan created/preserved. Readiness bukan klaim produk LIVE.
+
+QA product: `tests/products.test.mjs` (contracts/adapter), `tests/products-integration.test.mjs` (transaction/RBAC/status/seed), `tests/products-migration.test.mjs` (backfill valid/conflict/invalid rollback pada schema sintetis UUID). Integration/migration dan suite SEO memakai guard loopback 127.0.0.1 port 55441/role portfolio_test/database lunabiner_portfolio_test. Jalankan serial pada disposable bersih dengan DATABASE_URL eksplisit, tanpa seed CLI bersamaan atau prisma generate selama tes Prisma aktif. Jangan memakai database utama untuk cleanup tests. Lihat [Products](../features/products.md).
+
 ## Upgrade portfolio foundation
 
 Terapkan migration `20261004010000_portfolio_foundation` dengan loader environment pada contoh di atas, kemudian generate client/restart dev server. Migration additive: jangan reset database atau menghapus route reservations untuk mengatasi conflict. Jika migration gagal karena namespace slug/UUID bertabrakan, audit record konflik dan koreksi secara terarah sebelum retry sesuai workflow Prisma.

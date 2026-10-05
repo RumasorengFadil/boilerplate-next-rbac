@@ -4,6 +4,11 @@ import assert from "node:assert/strict";
 import { randomUUID, createHash } from "node:crypto";
 import { mkdtemp, writeFile } from "node:fs/promises";
 
+// This suite writes and cleans synthetic rows; never use a default/main database.
+const target = new URL(process.env.DATABASE_URL ?? "postgresql://invalid");
+assert.equal(target.hostname, "127.0.0.1"); assert.equal(target.port, "55441");
+assert.equal(target.username, "portfolio_test"); assert.equal(target.pathname, "/lunabiner_portfolio_test");
+
 const { seoPageKeys, seoDocumentSchema } = await import("../src/features/website/seo/contracts.ts");
 const { getPageSeoDocument: getPageSeo } = await import("../src/features/website/seo/registry.ts");
 const { getPageSeo: getPageSeoBundle, buildSeo } = await import("../src/features/website/seo/index.ts");
@@ -47,6 +52,7 @@ test("sitemap shares canonical/hreflang, real CMS dates and publication visibili
     const complete = await buildPublicSitemap();
     for (const entry of batch) assert.ok(complete.some(item => item.url === pageUrl("id", "/insights/" + entry.slug)));
   } finally {
+    await db.productRoute.deleteMany({ where: { contentId: { in: ids } } });
     await db.portfolioRoute.deleteMany({ where: { contentId: { in: ids } } });
     await db.contentEntry.deleteMany({ where: { id: { in: ids } } });
   }
@@ -74,6 +80,7 @@ test("public route SEO validates locales and describes the published listing ins
       }
     }
   } finally {
+    await db.productRoute.deleteMany({ where: { contentId: { in: ids } } });
     await db.portfolioRoute.deleteMany({ where: { contentId: { in: ids } } });
     await db.contentEntry.deleteMany({ where: { id: { in: ids } } });
   }
@@ -192,6 +199,7 @@ test("published CMS SEO overrides use real author/dates and strip markup, missin
     assert.ok(project.seo.keywords.length > 0); // Complete metadata even without optional CMS tags/category.
     assert.equal(project.seo.entityType,"CreativeWork");assert.equal(project.seo.illustrative,true);
   } finally {
+    await db.productRoute.deleteMany({ where: { contentId: { in: ids } } });
     await db.portfolioRoute.deleteMany({ where: { contentId: { in: ids } } });
     await db.contentEntry.deleteMany({where:{id:{in:ids}}});
   }

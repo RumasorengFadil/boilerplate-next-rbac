@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { richDocumentSchema, richTextToPlainText } from "./rich-text";
 import { parseCoverPath } from "../portfolio/cover-schema";
+import { productCtaSchema } from "../products/cta-schema";
 
 export const contentKinds = ["ARTICLE", "CASE_STUDY", "PRODUCT"] as const;
 export const contentStatuses = ["DRAFT", "REVIEW", "SCHEDULED", "PUBLISHED", "ARCHIVED"] as const;
@@ -28,6 +29,7 @@ export const detailsSchema = z.object({
   relatedServices: z.array(z.enum(["software", "automation", "ai", "data"])).max(4).default([]),
   relatedCaseStudies: z.array(z.uuid()).max(6).default([]),
   productStatus: z.enum(["COMING_SOON", "BETA", "LIVE"]).default("COMING_SOON"),
+  productCta: productCtaSchema.optional(),
   ctaLabel: localized.default({ id: "", en: "" }), ctaPath: z.string().max(200).regex(/^\/(?:id|en)\/[a-z0-9/-]*$/).default("/id/contact"),
 }).strict();
 export const contentInputSchema = z.object({
@@ -40,8 +42,10 @@ export const contentInputSchema = z.object({
     context.addIssue({ code: "custom", path: ["details", "image"], message: "Uploaded covers are portfolio-only." });
   if (input.kind === "CASE_STUDY" && (/^\d+$/.test(input.slug) || z.uuid().safeParse(input.slug).success))
     context.addIssue({ code: "custom", path: ["slug"], message: "Use a descriptive case-study slug." });
-  if (input.kind !== "CASE_STUDY" && (input.translations.id.richBody || input.translations.en.richBody))
-    context.addIssue({ code: "custom", path: ["translations"], message: "Rich body is currently limited to case studies." });
+  if (input.kind === "ARTICLE" && (input.translations.id.richBody || input.translations.en.richBody))
+    context.addIssue({ code: "custom", path: ["translations"], message: "Rich body is limited to case studies and products." });
+  if (input.kind !== "PRODUCT" && input.details.productCta)
+    context.addIssue({ code: "custom", path: ["details", "productCta"], message: "Product CTA requires PRODUCT." });
   if (input.status === "PUBLISHED" || input.status === "SCHEDULED") {
     for (const locale of ["id", "en"] as const) {
       if (input.translations[locale].body.length < 30)

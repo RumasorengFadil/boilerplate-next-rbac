@@ -31,6 +31,10 @@ export type ContentSaveOptions = {
 export async function saveContent(raw: unknown, options: ContentSaveOptions = {}) {
   const user = await requirePermission("content:write");
   const input = contentInputSchema.parse(raw);
+  if (input.kind === "PRODUCT") {
+    if (Object.keys(options).length) throw new Error("Product cannot use portfolio options.");
+    return (await import("@/features/products/service")).saveProduct(raw);
+  }
   const publisher = hasPermission(user.role, "content:publish");
   if ((options.createPortfolioId || options.portfolioCover) && input.kind !== "CASE_STUDY") throw new Error("Invalid portfolio options.");
   if (options.createPortfolioId && input.id) throw new Error("Cannot change portfolio identifier.");

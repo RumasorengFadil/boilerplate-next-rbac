@@ -83,12 +83,22 @@ model ContentEntry {
   updatedAt   DateTime @updatedAt
   deletedAt   DateTime?
   portfolioRoutes PortfolioRoute[]
+  productRoutes ProductRoute[]
   @@unique([kind, slug])
   @@index([kind, status, publishedAt])
   @@index([kind, deletedAt, status, publishedAt])
 }
 
 model PortfolioRoute {
+  id String @id @default(uuid()) @db.Uuid
+  value String @unique
+  contentId String @db.Uuid
+  content ContentEntry @relation(fields: [contentId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  @@index([contentId])
+}
+
+model ProductRoute {
   id String @id @default(uuid()) @db.Uuid
   value String @unique
   contentId String @db.Uuid
