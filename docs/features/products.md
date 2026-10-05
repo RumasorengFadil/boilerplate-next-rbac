@@ -1,6 +1,14 @@
 # Products — active scope, architecture and tracking
 
-Tanggal: 2026-10-05. Active PRD: [PRD 002](../products/PRD/PRD_002_lunabiner-phase-2.md), confirmed Product CRUD scope, status IN PROGRESS. Task1–6 selesai; Task7 belum dimulai. Bagian tahap sebelumnya adalah snapshot; runtime Task6 dan Ringkasan-only Task3b/3c adalah perilaku sekarang.
+Tanggal: 2026-10-05. Active PRD: [PRD 002](../products/PRD/PRD_002_lunabiner-phase-2.md), overall IN PROGRESS. Scope Product CRUD: COMPLETED (Task1–7 dan refinement3a–3c). Bagian tahap sebelumnya adalah snapshot; runtime Task6 dan Ringkasan-only Task3b/3c adalah perilaku sekarang.
+
+## Final acceptance — Task 7
+
+- 91/91 scoped serial tests, typecheck/lint/build PASS. Production admin3010/public3011/SEO HTTP55445/cache3012 semuanya PASS, hanya database disposable. UUID/slug/seed/version/audit/RBAC, direct statuses/readiness independen, Ringkasan150/features12x100 IDEN, retained friendly failed forms, legacy preservation/migration/backup/restore dan device cover/private media teruji.
+- Public DB-only empty/error/detail/CTA/cover/readiness/IDEN, full metadata/OG/Twitter/canonical/schema/sitemap dan actual404/308 teruji. SEO HTTP22 public routes/root lang/hreflang/private noindex/robots PASS. Cache production SQL cold1/warm0/live guards, actual post-commit tag expiry save/archive/restore, intro-before-query, warm privacy dan real-clock due schedule PASS; tidak mengklaim PPR/ISR.
+- Desktop/mobile screenshots inspected: admin /private/tmp/lunabiner-products-admin-qa-BWKKWZ; public /private/tmp/lunabiner-products-public-qa-R8gVB7. Section/card/grid/spacing/typography mengikuti adaptasi BisaDev, logo/teal-orange/content LunaBiner tetap. Synthetic noise/teal covers hanya fixture QA, bukan production asset.
+- Main3000 GET-only products IDEN dan existing Enterprise Chat/AI Cashflow detail200 dengan satu canonical/H1/schema. Tidak ada main writes/restart/migration/seed. Disposable ContentEntry/User/AuditEvent/ProductRoute/PortfolioRoute final0; QA servers/database stopped, temp covers cleaned, screenshots retained. No LLM/embedding/demo fetch.
+- Tidak ada task implementasi CRUD produk tersisa dalam scope yang disetujui. Review pengguna dan operator production origin/deploy/private volume/cache/UTC/backup-restore tetap terpisah. Waitlist/pricing/apps/newsletter/CMS→RAG/gallery/cloud/multi-instance/search-pagination tetap deferred. [Final report](../reports/2026/10/05/products_task7_final-qa.md).
 
 ## Runtime — Task 6 streaming/cache/invalidation
 
@@ -148,6 +156,6 @@ Enterprise Chat / AI Cashflow perlu slug enterprise-chat / ai-cashflow dan UUID 
 4. Task 4 — perangkat cover/private media: COMPLETED.
 5. Task 5 — public list/detail/SEO/OG/sitemap: COMPLETED.
 6. Task 6 — streaming/cache/invalidation: COMPLETED.
-7. Task 7 — final regression/browser/visual QA: NOT STARTED.
+7. Task 7 — final regression/browser/visual QA: COMPLETED.
 
 Execution order: Task 1 → Task 2 → Task 3 → Task 4 → Task 5 → Task 6 → Task 7. Hanya satu active task; perlu konfirmasi setelah report. Task tambahan in-scope memakai suffix, tidak merombak nomor yang selesai. [Task 1 report](../reports/2026/10/05/products_task1_architecture.md). PRD Phase 2 tetap IN PROGRESS walaupun product scope kelak selesai; unrelated waitlist/newsletter/RAG/production delivery tidak otomatis diaktifkan.

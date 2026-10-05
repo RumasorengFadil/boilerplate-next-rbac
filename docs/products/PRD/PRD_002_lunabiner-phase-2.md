@@ -1,7 +1,9 @@
 # PRD 002 — LunaBiner Phase 2
 
 Status: IN PROGRESS
-Task6 COMPLETED — streaming intro/list, cache payload revision di belakang live guards dan invalidasi Server Actions. 89/89 regression/typecheck/lint/build PASS; production SQL cache/tag/HTTP streaming/real clock lifecycle dan public desktop/mobile PASS. Task1–6 selesai; Task7 belum dimulai; tidak ada perubahan database/main writes/PPR global. PRD overall IN PROGRESS.
+Product CRUD scope status: COMPLETED (Task1–7 dan refinement3a–3c).
+Task7 COMPLETED — final acceptance91/91 scoped regression/typecheck/lint/build, production admin/public/cache/SEO HTTP22 routes dan visual desktop/mobile PASS. Database disposable fixtures/route/audit/user final0, QA stopped; main GET-only200, tanpa main writes/restart/schema changes. Report: docs/reports/2026/10/05/products_task7_final-qa.md. Deferred Phase2/deployment tetap terpisah; PRD overall IN PROGRESS.
+Snapshot Task6 COMPLETED — streaming intro/list, cache payload revision di belakang live guards dan invalidasi Server Actions. Verifikasi saat Task6:89/89 regression/typecheck/lint/build PASS; production SQL cache/tag/HTTP streaming/real clock lifecycle dan public desktop/mobile PASS. Tidak ada perubahan database/main writes/PPR global.
 Pembaruan aktif: 2026-10-05 — Product CRUD/landing management.
 
 Snapshot Task5 COMPLETED — DB-only list (empty/error), slug detail/eligible308/private404, readiness/summary/features/cover/CTA, complete localized metadata/schema/contextual branded OG/sitemap. Verifikasi saat Task5:84/84 regression/typecheck/lint/build, production public+admin browser PASS; main existing detail ID/EN200 read-only. Pada tahap tersebut request memoization saja; Task6 kini menambah cache/streaming seperti tracking terbaru di atas. Tidak ada SQL migration/seed/main data writes.
@@ -43,10 +45,10 @@ Tidak mengerjakan waitlist/newsletter, pricing/payment/subscription, akun penggu
 - Typecheck/build, tests, production HTTP/browser dan desktop/mobile diverifikasi sebelum task selesai.
 - Status IN PROGRESS berlaku untuk PRD Phase 2 keseluruhan. Penyelesaian scope Product CRUD tidak menandai fitur Phase 2 yang deferred sebagai selesai.
 - Tracking detail Product CRUD: `docs/features/products.md` (disusun pada Task 1 setelah PRD resolution).
-- Task1–6 selesai: arsitektur/foundation/admin/cover perangkat, DB-only public list/detail/SEO/OG/sitemap dan guarded cache/streaming. Migration/contoh lokal diterapkan Task3 setelah backup; non-PRODUCT identik. Task7 final QA belum dikerjakan, PRD keseluruhan IN PROGRESS.
+- Task1–7 selesai: arsitektur/foundation/admin/cover perangkat, DB-only public list/detail/SEO/OG/sitemap, guarded cache/streaming dan final QA. Migration/contoh lokal diterapkan Task3 setelah backup; non-PRODUCT identik. Product CRUD scope COMPLETED; PRD keseluruhan IN PROGRESS untuk scope deferred.
 - Revisi editor setelah Task 2: pengguna menyetujui textarea karena konten pendek/cenderung statis. Task 3 telah menerapkan CRUD/textarea ID/EN beserta adapter save yang aman; task lain tidak dibatalkan/diubah urutannya.
 - Task 3 selesai: ringkasan dan detail textarea ID/EN dibatasi maksimum 150 karakter per field/bahasa, berdasarkan contoh pengguna 109 karakter. Counter, maxLength client dan server validation tersedia; publikasi tetap excerpt minimal 10/body minimal 30. Konten legacy lebih panjang tidak dipotong/migrasikan massal; unchanged text/formatting tetap dipertahankan, teks baru/yang diedit wajib memenuhi batas. Seeder baru memakai deskripsi contoh singkat, tidak menimpa seed existing. Upload cover tetap Task 4.
-- Refinement3a–3c selesai: Ringkasan-only/features/guarded migration/seeder, verifikasi saat Task3c80/80 dan browser PASS. Dua produk lokal dimigrasikan dengan backup. Detail/body minimum historis digantikan Ringkasan minimum10; cover Task4, public detail/SEO Task5 dan cache/streaming Task6 selesai. FinalQA Task7 belum selesai.
+- Refinement3a–3c selesai: Ringkasan-only/features/guarded migration/seeder, verifikasi saat Task3c80/80 dan browser PASS. Dua produk lokal dimigrasikan dengan backup. Detail/body minimum historis digantikan Ringkasan minimum10; cover Task4, public detail/SEO Task5, cache/streaming Task6 dan finalQA Task7 selesai.
 
 ## Sumber PRD awal (dipertahankan)
 
