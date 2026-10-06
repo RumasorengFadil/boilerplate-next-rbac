@@ -1,0 +1,10 @@
+services:
+  app:
+    labels:
+      - traefik.http.routers.${TRAEFIK_REDIRECT_ROUTER_NAME:?set TRAEFIK_REDIRECT_ROUTER_NAME}.rule=Host(`${REDIRECT_FROM_HOST:?set REDIRECT_FROM_HOST}`)
+      - traefik.http.routers.${TRAEFIK_REDIRECT_ROUTER_NAME:?set TRAEFIK_REDIRECT_ROUTER_NAME}.entrypoints=websecure
+      - traefik.http.routers.${TRAEFIK_REDIRECT_ROUTER_NAME:?set TRAEFIK_REDIRECT_ROUTER_NAME}.tls.certresolver=letsencrypt
+      - traefik.http.routers.${TRAEFIK_REDIRECT_ROUTER_NAME:?set TRAEFIK_REDIRECT_ROUTER_NAME}.middlewares=${TRAEFIK_REDIRECT_MIDDLEWARE_NAME:?set TRAEFIK_REDIRECT_MIDDLEWARE_NAME}
+      - traefik.http.middlewares.${TRAEFIK_REDIRECT_MIDDLEWARE_NAME:?set TRAEFIK_REDIRECT_MIDDLEWARE_NAME}.redirectregex.regex=^https?://lunabiner\\.tech/(.*)
+      - traefik.http.middlewares.${TRAEFIK_REDIRECT_MIDDLEWARE_NAME:?set TRAEFIK_REDIRECT_MIDDLEWARE_NAME}.redirectregex.replacement=https://lunabiner.com/$${1}
+      - traefik.http.middlewares.${TRAEFIK_REDIRECT_MIDDLEWARE_NAME:?set TRAEFIK_REDIRECT_MIDDLEWARE_NAME}.redirectregex.permanent=true

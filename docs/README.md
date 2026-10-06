@@ -45,6 +45,7 @@
 | [VPS deployment — Task 1](reports/2026/10/06/vps_deployment_task1_containerization.md) | Container Next.js, Compose environment terisolasi, persistence dan hasil verifikasi lokal. |
 | [VPS deployment — Task 2](reports/2026/10/06/vps_deployment_task2_github_actions.md) | GitHub Actions untuk validasi, GHCR image immutable dan deploy SSH per environment. |
 | [VPS deployment — Task 3a](reports/2026/10/06/vps_deployment_task3a_traefik_audit.md) | Audit read-only Traefik, Hermes, port publik, firewall dan temuan keamanan. |
+| [VPS deployment — Task 3b](reports/2026/10/06/vps_deployment_task3b_traefik_contract.md) | Kontrak Traefik, redirect domain production, CI overlay dan verifikasi konfigurasi. |
 | [Portfolio direct status](reports/2026/10/04/portfolio_direct_status.md) | Guard CASE_STUDY, publish/schedule langsung, regression public/sitemap/RBAC dan arsip. |
 | [Portfolio PPR feasibility — Task 5B.1](reports/2026/10/04/portfolio_ppr_feasibility.md) | Bukti build terisolasi, hambatan route configs/root locale dan rekomendasi fallback; belum mengubah rendering production. |
 | [Portfolio rendering/cache — Task 5B.2](reports/2026/10/04/portfolio_rendering_cache.md) | Streaming Work, revision-keyed payload cache dengan live publication guards dan action invalidation. |

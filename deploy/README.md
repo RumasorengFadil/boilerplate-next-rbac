@@ -3,7 +3,7 @@
 This directory is the host-side Docker Compose contract for LunaBiner. It is
 used twice on the VPS: once for `staging` and once for `production`. Each
 environment has a dedicated Compose project, PostgreSQL volume, upload volumes,
-cache volume, loopback application port, and private environment file.
+cache volume, Traefik router labels, and private environment file.
 
 ## Host layout
 
@@ -22,9 +22,15 @@ Copy `deploy/.env.example` to each `.env`, set restrictive permissions, and
 never commit those files. Use different random credentials for every database
 and use the matching environment-specific image tags.
 
-`APP_PORT` is bound to `127.0.0.1` only. Nginx on the host is the only public
-entry point and proxies the appropriate hostname to that port. Do not publish
-PostgreSQL or container port 3000 to the public internet.
+The existing host-level Traefik service is the only public entry point. Each
+environment declares an `APP_HOST`, unique router/service names, and an
+internal port `3000` through Docker labels; the application does not publish a
+host port. Do not publish PostgreSQL or container port 3000 to the public
+internet. Traefik discovers the labels through its read-only Docker socket.
+
+For production, also copy `compose.production.yml` and set the redirect router
+variables. This overlay terminates TLS for `lunabiner.tech` and sends a
+permanent redirect to `https://lunabiner.com` while preserving the path.
 
 ## Deploy sequence
 
@@ -35,6 +41,15 @@ docker compose --env-file .env -f compose.yml pull
 docker compose --env-file .env -f compose.yml --profile operations run --rm migrate
 docker compose --env-file .env -f compose.yml up -d --remove-orphans
 docker compose --env-file .env -f compose.yml ps
+```
+
+For production, include the redirect overlay in every command:
+
+```sh
+docker compose --env-file .env -f compose.yml -f compose.production.yml pull
+docker compose --env-file .env -f compose.yml -f compose.production.yml --profile operations run --rm migrate
+docker compose --env-file .env -f compose.yml -f compose.production.yml up -d --remove-orphans
+docker compose --env-file .env -f compose.yml -f compose.production.yml ps
 ```
 
 Run a database backup before a migration that is not known to be additive. A
@@ -54,6 +69,7 @@ tested database restore plan.
 the PostgreSQL database and both upload volumes together; an image registry is
 not a backup. The `next-cache` volume is disposable and may be recreated.
 
-This Compose project deliberately does not define an Nginx service. The VPS has
-an existing Docker workload (Hermes), so host-level Nginx and its current ports
-must be inspected before any proxy changes are made.
+This Compose project deliberately does not define an Nginx service. The VPS
+already has Traefik and Hermes Docker projects. Configure LunaBiner labels only
+after verifying Traefik remains healthy; do not publish service ports as a
+workaround for routing errors.
