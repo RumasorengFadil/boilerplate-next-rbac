@@ -73,3 +73,8 @@ This Compose project deliberately does not define an Nginx service. The VPS
 already has Traefik and Hermes Docker projects. Configure LunaBiner labels only
 after verifying Traefik remains healthy; do not publish service ports as a
 workaround for routing errors.
+
+`release.sh` is installed at `/opt/lunabiner/release.sh` by host bootstrap. It
+receives the short-lived GitHub Actions registry token on standard input, pulls
+the immutable image digest, applies migrations, starts the target Compose
+project, then logs out of GHCR. It never stores a registry token on the VPS.

@@ -83,6 +83,8 @@ jobs:
       APP_IMAGE: ${{ needs.publish.outputs.app_image }}
       MIGRATION_IMAGE: ${{ needs.publish.outputs.migrator_image }}
       DEPLOY_ENV: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      GHCR_USERNAME: ${{ github.actor }}
+      GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       DEPLOY_DIRECTORY: ${{ vars.DEPLOY_DIRECTORY }}
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -111,23 +113,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ssh -i "$RUNNER_TEMP/ssh/id_ed25519" \
+          printf '%s\n' "$GHCR_TOKEN" | ssh -i "$RUNNER_TEMP/ssh/id_ed25519" \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="$RUNNER_TEMP/ssh/known_hosts" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
-            "APP_IMAGE='$APP_IMAGE' MIGRATION_IMAGE='$MIGRATION_IMAGE' DEPLOY_ENV='$DEPLOY_ENV' bash -s -- '$DEPLOY_DIRECTORY'" <<'REMOTE'
-          set -euo pipefail
-          deploy_directory="$1"
-          cd "$deploy_directory"
-
-          compose_files=(-f compose.yml)
-          if [ "$DEPLOY_ENV" = "production" ]; then
-            compose_files+=(-f compose.production.yml)
-          fi
-
-          docker compose --env-file .env "${compose_files[@]}" pull app migrate
-          docker compose --env-file .env "${compose_files[@]}" --profile operations run --rm migrate
-          docker compose --env-file .env "${compose_files[@]}" up -d --remove-orphans
-          docker compose --env-file .env "${compose_files[@]}" ps
-          REMOTE
+            "/opt/lunabiner/release.sh '$DEPLOY_DIRECTORY' '$APP_IMAGE' '$MIGRATION_IMAGE' '$DEPLOY_ENV' '$GHCR_USERNAME'"
