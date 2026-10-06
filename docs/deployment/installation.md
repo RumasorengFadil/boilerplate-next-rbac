@@ -31,6 +31,8 @@ Sebelum workflow dapat men-deploy, buat GitHub Environments `staging` dan `produ
 
 Tambahkan `DEPLOY_DIRECTORY` sebagai environment variable (bukan secret), misalnya `/opt/lunabiner/staging` atau `/opt/lunabiner/production`. Direktori itu harus berisi `compose.yml` dan `.env` private yang dibuat pada VPS. `GITHUB_TOKEN` digunakan hanya untuk push image GHCR; jangan ganti dengan personal access token kecuali diperlukan oleh kebijakan registry.
 
+Host bootstrap membuat user Docker non-root `lunabiner-deploy` dan key SSH deployment khusus. Private key tersebut tidak boleh disimpan di repository, Docker image, ataupun server VPS. Simpan nilainya sebagai `DEPLOY_SSH_PRIVATE_KEY` pada kedua GitHub Environment setelah konfirmasi operator. Set `DEPLOY_USER=lunabiner-deploy`, `DEPLOY_DIRECTORY=/opt/lunabiner/staging` untuk staging dan `/opt/lunabiner/production` untuk production. Konfigurasi GHCR pull akan diselesaikan bersama Task 3c.2b; jangan menyimpan registry password statis pada host.
+
 `npm run dev` juga menjalankan `prisma generate` sebelum Next.js. Cache Prisma development membandingkan fingerprint datamodel generated client; schema berubah atau cache lama tanpa fingerprint akan mengganti instance dan melepas pool lama. Production tidak memakai cache global development. Setelah migration/generation, restart dev server jika proses masih memuat modul generated client lama. Error delegate undefined (misalnya consultationBooking.findMany) adalah runtime client/cache, berbeda dari error tabel belum dimigrasikan. Tidak perlu reset database: jalankan generate, deploy migration yang belum diterapkan, lalu restart proses.
 
 ```sh

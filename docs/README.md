@@ -47,6 +47,7 @@
 | [VPS deployment — Task 3a](reports/2026/10/06/vps_deployment_task3a_traefik_audit.md) | Audit read-only Traefik, Hermes, port publik, firewall dan temuan keamanan. |
 | [VPS deployment — Task 3b](reports/2026/10/06/vps_deployment_task3b_traefik_contract.md) | Kontrak Traefik, redirect domain production, CI overlay dan verifikasi konfigurasi. |
 | [VPS deployment — Task 3c.1](reports/2026/10/06/vps_deployment_task3c1_firewall.md) | Firewall edge VPS, verifikasi attachment/rule, dan dampak terhadap akses container publik. |
+| [VPS deployment — Task 3c.2a](reports/2026/10/06/vps_deployment_task3c2_host_bootstrap.md) | User deploy non-root, directory Compose terisolasi, environment private dan verifikasi host. |
 | [Portfolio direct status](reports/2026/10/04/portfolio_direct_status.md) | Guard CASE_STUDY, publish/schedule langsung, regression public/sitemap/RBAC dan arsip. |
 | [Portfolio PPR feasibility — Task 5B.1](reports/2026/10/04/portfolio_ppr_feasibility.md) | Bukti build terisolasi, hambatan route configs/root locale dan rekomendasi fallback; belum mengubah rendering production. |
 | [Portfolio rendering/cache — Task 5B.2](reports/2026/10/04/portfolio_rendering_cache.md) | Streaming Work, revision-keyed payload cache dengan live publication guards dan action invalidation. |

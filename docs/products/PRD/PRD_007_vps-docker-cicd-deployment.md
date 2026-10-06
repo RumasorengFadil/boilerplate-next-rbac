@@ -52,5 +52,6 @@ Men-deploy LunaBiner Next.js ke VPS Hostinger Ubuntu 24.04 secara aman dan dapat
 - Task 3a — Audit Traefik, Hermes, dan port publik: COMPLETED.
 - Task 3b — Integrasi Traefik dan persiapan host: COMPLETED (repository contract only).
 - Task 3c.1 — Firewall edge VPS: COMPLETED.
-- Task 3c.2 — Akses deploy, direktori host, dan GHCR: PENDING.
+- Task 3c.2a — Akses deploy dan direktori host: COMPLETED.
+- Task 3c.2b — GitHub Environment secret dan GHCR pull: PENDING CONFIRMATION.
 - Task 3c.3 — Rotasi credential Hermes: PENDING CONFIRMATION.
